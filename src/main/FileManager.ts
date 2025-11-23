@@ -61,7 +61,7 @@ export class FileManager {
     }, DEBOUNCE_MS);
   }
 
-  private readAndEmit() {
+  public readAndEmit() {
     console.log('[FileManager] Reading data files...');
     try {
       const groups = this.parseGroups();

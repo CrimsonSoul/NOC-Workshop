@@ -53,6 +53,10 @@ function setupIpc() {
     await shell.openExternal(url);
   });
 
+  ipcMain.handle(IPC_CHANNELS.DATA_RELOAD, async () => {
+    fileManager?.readAndEmit();
+  });
+
   ipcMain.on(IPC_CHANNELS.AUTH_SUBMIT, (_event, { username, password }) => {
     if (authCallback) {
       authCallback(username, password);

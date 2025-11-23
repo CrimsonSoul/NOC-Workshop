@@ -88,10 +88,12 @@ export default function App() {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
+  const [isReloading, setIsReloading] = useState(false);
 
   useEffect(() => {
     window.api.subscribeToData((newData) => {
       setData(newData);
+      setIsReloading(false);
     });
     window.api.onAuthRequested((req) => {
       setAuthRequest(req);
@@ -117,6 +119,17 @@ export default function App() {
     setManualRemoves([]);
   };
 
+  const handleRefresh = async () => {
+    if (!window.api) return;
+    try {
+      setIsReloading(true);
+      await window.api.reloadData();
+    } catch (error) {
+      console.error('Failed to refresh data', error);
+      setIsReloading(false);
+    }
+  };
+
   return (
     <div className="app-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ height: '80px', background: 'var(--bg-app)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'relative', zIndex: 10 }}>
@@ -126,7 +139,30 @@ export default function App() {
           </div>
         </div>
         <RotatingCode />
-        <WorldClock />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <TactileButton
+            onClick={handleRefresh}
+            variant="secondary"
+            active={isReloading}
+            disabled={isReloading}
+            style={{ minWidth: '140px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
+          >
+            {isReloading && (
+              <span
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTopColor: 'var(--accent-primary)',
+                  animation: 'spin 1s linear infinite'
+                }}
+              />
+            )}
+            {isReloading ? 'Refreshing...' : 'Refresh data'}
+          </TactileButton>
+          <WorldClock />
+        </div>
       </header>
 
       <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px' }}>
@@ -159,7 +195,10 @@ export default function App() {
         />
       )}
 
-      <style>{`@keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }`}</style>
+      <style>{`
+        @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }
