@@ -1,0 +1,16 @@
+appId: com.operators-atelier.app
+productName: Operators Atelier
+directories:
+  output: dist_electron
+files:
+  - dist/**/*
+  - package.json
+  - node_modules
+extraResources:
+  - from: "resources"
+    to: "."
+    filter:
+      - "*.xlsx"
+win:
+  target: dir
+  artifactName: ${productName}-${version}-win.${ext}

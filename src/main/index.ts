@@ -19,14 +19,19 @@ async function createWindow() {
       preload: process.env.MAIN_WINDOW_PRELOAD,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false // needed for some preload things sometimes, but false is safer usually. keeping false unless needed.
+      sandbox: false, // needed for some preload things sometimes, but false is safer usually. keeping false unless needed.
+      webviewTag: true
     }
   });
 
   if (process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     await mainWindow.loadURL(process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    const indexHtml = join(process.env.MAIN_WINDOW_DIST || '', 'index.html');
+    // In production, electron-builder packs renderer to dist/renderer
+    // The environment variable MAIN_WINDOW_DIST usually points to dist/renderer/index.html's parent
+    // but verifying it's set correctly by electron-vite.
+    // If we assume standard electron-vite behavior:
+    const indexHtml = join(__dirname, '../renderer/index.html');
     await mainWindow.loadFile(indexHtml);
   }
 
