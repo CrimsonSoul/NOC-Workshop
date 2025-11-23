@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TactileButton } from './components/TactileButton';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
@@ -88,15 +88,35 @@ export default function App() {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [justSynced, setJustSynced] = useState(false);
+  const glowTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     window.api.subscribeToData((newData) => {
       setData(newData);
+      if (glowTimeout.current) {
+        clearTimeout(glowTimeout.current);
+      }
+      setLastUpdated(newData.lastUpdated ?? Date.now());
+      setJustSynced(true);
+      glowTimeout.current = setTimeout(() => setJustSynced(false), 2000);
     });
     window.api.onAuthRequested((req) => {
       setAuthRequest(req);
     });
+    return () => {
+      if (glowTimeout.current) {
+        clearTimeout(glowTimeout.current);
+      }
+    };
   }, []);
+
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return 'Awaiting sync';
+    const date = new Date(lastUpdated);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
 
   const handleAddToAssembler = (contact: Contact) => {
     setManualRemoves(prev => prev.filter(e => e !== contact.email));
@@ -125,8 +145,32 @@ export default function App() {
             NOC<br />WORKSHOP
           </div>
         </div>
-        <RotatingCode />
-        <WorldClock />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+            <RotatingCode />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-serif)', fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '999px',
+                  background: justSynced ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                  color: justSynced ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  boxShadow: justSynced ? '0 0 12px rgba(255, 215, 0, 0.35)' : 'none',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {justSynced ? 'Synced just now' : 'Data steady'}
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                {formatLastUpdated()}
+              </div>
+            </div>
+          </div>
+          <WorldClock />
+        </div>
       </header>
 
       <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px' }}>
