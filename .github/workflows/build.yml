@@ -9,9 +9,9 @@ on:
       - closed
 
 jobs:
-  build:
+  build-windows:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,22 +28,11 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Prepare apps folder
-        run: |
-          rm -rf apps
-          mkdir -p apps
-          if [ -d "dist" ]; then
-            cp -r dist/. apps/
-          else
-            echo "dist directory not found after build"
-            exit 1
-          fi
+      - name: Package Windows portable build
+        run: npx electron-builder --config electron-builder.yml --win portable
 
-      - name: Create portable archive
-        run: zip -r apps.zip apps
-
-      - name: Upload apps archive
+      - name: Upload portable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apps-portable
-          path: apps.zip
+          name: operators-atelier-windows-portable
+          path: release/*

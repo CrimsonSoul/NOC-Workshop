@@ -1,0 +1,19 @@
+appId: com.operators.atelier
+productName: OperatorsAtelier
+asar: true
+files:
+  - dist/**
+  - package.json
+  - node_modules/**
+  - resources/**
+extraResources:
+  - from: resources
+    to: resources
+directories:
+  output: release
+  buildResources: resources
+win:
+  target:
+    - target: portable
+      arch: x64
+  artifactName: "${productName}-${version}-Portable.${ext}"
