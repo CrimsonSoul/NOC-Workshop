@@ -7,5 +7,5 @@ files:
   - package.json
   - node_modules
 win:
-  target: zip
+  target: nsis
   artifactName: ${productName}-${version}-win.${ext}
