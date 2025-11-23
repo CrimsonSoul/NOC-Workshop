@@ -1,0 +1,11 @@
+appId: com.operators-atelier.app
+productName: Operators Atelier
+directories:
+  output: dist_electron
+files:
+  - dist/**/*
+  - package.json
+  - node_modules
+win:
+  target: zip
+  artifactName: ${productName}-${version}-win.${ext}

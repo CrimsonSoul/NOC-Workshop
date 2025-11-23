@@ -25,6 +25,7 @@ export const AssemblerTab: React.FC<Props> = ({
 }) => {
   const [adhocInput, setAdhocInput] = useState('');
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'manifest' | 'teams'>('manifest');
 
   // The Set Math
   const manifest = useMemo(() => {
@@ -40,13 +41,11 @@ export const AssemblerTab: React.FC<Props> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleTeams = () => {
-    // msteams:/l/meeting/new?subject=[Date]&attendees=[List]
+  const teamsUrl = useMemo(() => {
     const dateStr = new Date().toLocaleDateString();
     const attendees = manifest.join(',');
-    const url = `msteams:/l/meeting/new?subject=NOC Briefing ${dateStr}&attendees=${attendees}`;
-    window.open(url); // or bridge.openPath(url) if needed, but window.open works for protocols usually
-  };
+    return `https://teams.microsoft.com/l/meeting/new?subject=NOC Briefing ${dateStr}&attendees=${attendees}`;
+  }, [manifest]);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', height: '100%' }}>
@@ -101,61 +100,80 @@ export const AssemblerTab: React.FC<Props> = ({
         </Panel>
       </div>
 
-      {/* Right Column: Manifest */}
+      {/* Right Column: Manifest or Teams */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', color: 'var(--text-primary)' }}>
-            Manifest ({manifest.length})
+            {viewMode === 'manifest' ? `Manifest (${manifest.length})` : 'Microsoft Teams'}
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <TactileButton onClick={onResetManual} variant="secondary">Reset</TactileButton>
-            <TactileButton onClick={handleTeams} variant="secondary">Teams</TactileButton>
-            <TactileButton onClick={handleCopy} active={copied}>
-              {copied ? 'STAMPED' : 'Copy List'}
-            </TactileButton>
+            {viewMode === 'teams' ? (
+              <TactileButton onClick={() => setViewMode('manifest')} variant="secondary">
+                Back to Manifest
+              </TactileButton>
+            ) : (
+              <>
+                <TactileButton onClick={onResetManual} variant="secondary">Reset</TactileButton>
+                <TactileButton onClick={() => setViewMode('teams')} variant="secondary">Teams</TactileButton>
+                <TactileButton onClick={handleCopy} active={copied}>
+                  {copied ? 'STAMPED' : 'Copy List'}
+                </TactileButton>
+              </>
+            )}
           </div>
         </div>
 
-        <div style={{
-          flex: 1,
-          background: '#fff', // Receipt look
-          color: '#000',
-          fontFamily: 'Courier New, monospace',
-          padding: '24px',
-          overflow: 'auto',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          position: 'relative'
-        }}>
-          {/* Paper texture overlay effect could go here */}
-          <div style={{ borderBottom: '2px dashed #000', paddingBottom: '12px', marginBottom: '12px', textAlign: 'center' }}>
-            *** OFFICIAL LOG ***<br/>
-            {new Date().toLocaleString().toUpperCase()}
+        {viewMode === 'manifest' ? (
+          <div style={{
+            flex: 1,
+            background: '#fff', // Receipt look
+            color: '#000',
+            fontFamily: 'Courier New, monospace',
+            padding: '24px',
+            overflow: 'auto',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            position: 'relative'
+          }}>
+            {/* Paper texture overlay effect could go here */}
+            <div style={{ borderBottom: '2px dashed #000', paddingBottom: '12px', marginBottom: '12px', textAlign: 'center' }}>
+              *** OFFICIAL LOG ***<br />
+              {new Date().toLocaleString().toUpperCase()}
+            </div>
+
+            {manifest.map(email => (
+              <div key={email} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '4px 0',
+                borderBottom: '1px solid #eee'
+              }}>
+                <span>{email}</span>
+                <span
+                  style={{ cursor: 'pointer', fontWeight: 'bold', color: '#cc0000' }}
+                  onClick={() => onRemoveManual(email)}
+                  title="Strike out"
+                >
+                  [X]
+                </span>
+              </div>
+            ))}
+
+            {manifest.length === 0 && (
+              <div style={{ textAlign: 'center', marginTop: '40px', fontStyle: 'italic' }}>
+                // AWAITING INPUT //
+              </div>
+            )}
           </div>
-
-          {manifest.map(email => (
-            <div key={email} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '4px 0',
-              borderBottom: '1px solid #eee'
-            }}>
-              <span>{email}</span>
-              <span
-                style={{ cursor: 'pointer', fontWeight: 'bold', color: '#cc0000' }}
-                onClick={() => onRemoveManual(email)}
-                title="Strike out"
-              >
-                [X]
-              </span>
-            </div>
-          ))}
-
-          {manifest.length === 0 && (
-            <div style={{ textAlign: 'center', marginTop: '40px', fontStyle: 'italic' }}>
-              // AWAITING INPUT //
-            </div>
-          )}
-        </div>
+        ) : (
+          <div style={{ flex: 1, background: '#fff', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+            <webview
+              src={teamsUrl}
+              style={{ width: '100%', height: '100%' }}
+              // @ts-ignore - webview tag not strictly typed in React without extra types
+              allowpopups="true"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

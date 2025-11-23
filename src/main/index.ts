@@ -19,7 +19,8 @@ async function createWindow() {
       preload: process.env.MAIN_WINDOW_PRELOAD,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false // needed for some preload things sometimes, but false is safer usually. keeping false unless needed.
+      sandbox: false, // needed for some preload things sometimes, but false is safer usually. keeping false unless needed.
+      webviewTag: true
     }
   });
 
