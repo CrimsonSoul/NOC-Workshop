@@ -11,27 +11,26 @@ let authCallback: ((username: string, password: string) => void) | null = null;
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    backgroundColor: '#0b0d12', // Obsidian
-    titleBarStyle: 'hiddenInset', // polished look on mac
+    width: 960,
+    height: 1080,
+    minWidth: 800,
+    minHeight: 600,
+    backgroundColor: '#0b0d12',
+    titleBarStyle: 'hiddenInset',
     webPreferences: {
-      preload: process.env.MAIN_WINDOW_PRELOAD,
+      preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false, // needed for some preload things sometimes, but false is safer usually. keeping false unless needed.
-      webviewTag: true
+      sandbox: false
     }
   });
 
-  if (process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    await mainWindow.loadURL(process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  if (process.env.ELECTRON_RENDERER_URL) {
+    await mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    const indexHtml = join(process.env.MAIN_WINDOW_DIST || '', 'index.html');
-    await mainWindow.loadFile(indexHtml);
+    await mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 
-  // Initialize FileManager
   fileManager = new FileManager(mainWindow);
 
   mainWindow.on('closed', () => {
@@ -45,6 +44,10 @@ function setupIpc() {
     await shell.openPath(path);
   });
 
+  ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, url: string) => {
+    await shell.openExternal(url);
+  });
+
   ipcMain.on(IPC_CHANNELS.AUTH_SUBMIT, (_event, { username, password }) => {
     if (authCallback) {
       authCallback(username, password);
@@ -53,9 +56,6 @@ function setupIpc() {
   });
 
   ipcMain.on(IPC_CHANNELS.AUTH_CANCEL, () => {
-    // If canceled, we might just call with empty or fail it?
-    // Usually cancelling the prompt means just let it fail or do nothing.
-    // We'll reset the callback.
     authCallback = null;
   });
 }

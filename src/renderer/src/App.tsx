@@ -6,44 +6,45 @@ import { RadarTab } from './tabs/RadarTab';
 import { AuthModal } from './components/AuthModal';
 import { AppData, Contact, GroupMap, AuthRequest } from '@shared/ipc';
 
-// -- Header Components --
 const RotatingCode = () => {
-  const [code, setCode] = useState('000000');
+  const [currentCode, setCurrentCode] = useState('000000');
+  const [prevCode, setPrevCode] = useState('------');
+  const [progressKey, setProgressKey] = useState(0);
+
+  const generateCode = () => {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    return (array[0] % 1000000).toString().padStart(6, '0');
+  };
 
   useEffect(() => {
+    setCurrentCode(generateCode());
     const interval = setInterval(() => {
-      // Logic: crypto.getRandomValues
-      const array = new Uint32Array(1);
-      window.crypto.getRandomValues(array);
-      const newCode = (array[0] % 1000000).toString().padStart(6, '0');
-      setCode(newCode);
-    }, 2000); // Rotate every 2s
-
+      setPrevCode(currentCode);
+      setCurrentCode(generateCode());
+      setProgressKey(k => k + 1);
+    }, 300000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentCode]);
 
   return (
-    <div style={{
-      fontFamily: 'var(--font-mono)',
-      fontSize: '24px',
-      color: 'var(--accent-primary)',
-      background: '#111',
-      padding: '4px 12px',
-      border: '1px solid #333',
-      letterSpacing: '0.1em',
-      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      height: '40px'
-    }}>
-      {code.split('').map((char, i) => (
-        <span key={i} style={{ display: 'inline-block', width: '1ch', textAlign: 'center' }}>{char}</span>
-      ))}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ width: '100px', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
+        <div key={progressKey} style={{ height: '100%', background: 'var(--accent-primary)', width: '0%', animation: 'progress 300s linear' }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: '1' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
+          PREV: {prevCode}
+        </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '24px', color: 'var(--accent-primary)', letterSpacing: '0.1em', textShadow: '0 0 10px rgba(255, 215, 0, 0.3)' }}>
+          {currentCode}
+        </div>
+      </div>
     </div>
   );
 };
 
-const OfflineClock = () => {
+const WorldClock = () => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -51,179 +52,114 @@ const OfflineClock = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const formatTime = (tz: string) => {
+    return time.toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
   return (
-    <div style={{ textAlign: 'right', lineHeight: '1.2' }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '20px', color: 'var(--text-primary)' }}>
-        {time.toLocaleTimeString([], { hour12: false })}
+    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '12px', textAlign: 'right' }}>
+        {[
+          { label: 'PT', tz: 'America/Los_Angeles' },
+          { label: 'MT', tz: 'America/Denver' },
+          { label: 'ET', tz: 'America/New_York' }
+        ].map(({ label, tz }) => (
+          <div key={label}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', color: 'var(--text-secondary)' }}>{formatTime(tz)}</div>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.7 }}>{label}</div>
+          </div>
+        ))}
       </div>
-      <div style={{ fontFamily: 'var(--font-serif)', fontSize: '12px', color: 'var(--text-secondary)' }}>
-        {time.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+      <div style={{ textAlign: 'right', paddingLeft: '16px', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '24px', color: 'var(--text-primary)', lineHeight: 1 }}>{formatTime('America/Chicago')}</div>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '12px', color: 'var(--accent-primary)', marginTop: '4px' }}>CENTRAL</div>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+          {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </div>
       </div>
     </div>
   );
 };
 
-// -- Main App --
 export default function App() {
   const [activeTab, setActiveTab] = useState<'Assembler' | 'Directory' | 'Radar'>('Assembler');
   const [data, setData] = useState<AppData>({ groups: {}, contacts: [], lastUpdated: 0 });
   const [authRequest, setAuthRequest] = useState<AuthRequest | null>(null);
-
-  // Global State for "The Set" (Assembler)
-  // We lift this up so Directory can add to it.
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
 
   useEffect(() => {
-    // Subscribe to Data
     window.api.subscribeToData((newData) => {
-      console.log('Renderer received data:', newData);
       setData(newData);
     });
-
-    // Subscribe to Auth
     window.api.onAuthRequested((req) => {
       setAuthRequest(req);
     });
   }, []);
 
   const handleAddToAssembler = (contact: Contact) => {
-    if (!manualAdds.includes(contact.email)) {
-      setManualAdds(prev => [...prev, contact.email]);
-    }
+    setManualRemoves(prev => prev.filter(e => e !== contact.email));
+    setManualAdds(prev => prev.includes(contact.email) ? prev : [...prev, contact.email]);
+  };
+
+  const handleUndoRemove = () => {
+    setManualRemoves(prev => {
+      const newRemoves = [...prev];
+      newRemoves.pop();
+      return newRemoves;
+    });
+  };
+
+  const handleReset = () => {
+    setSelectedGroups([]);
+    setManualAdds([]);
+    setManualRemoves([]);
   };
 
   return (
     <div className="app-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header style={{
-        height: '80px',
-        background: 'var(--bg-app)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 32px',
-        position: 'relative'
-      }}>
-        {/* Left: Branding */}
+      <header style={{ height: '80px', background: 'var(--bg-app)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'relative', zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '24px',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em'
-          }}>
-            OPERATOR’S<br />ATELIER
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            NOC<br />WORKSHOP
           </div>
         </div>
-
-        {/* Center: Rotating Code */}
         <RotatingCode />
-
-        {/* Right: Clock */}
-        <OfflineClock />
-
-        {/* Progress Bar (Visual only) */}
-        <div className="progress-line" style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          height: '2px',
-          background: 'var(--accent-primary)',
-          width: '100%',
-          animation: 'progress 10s linear infinite'
-        }} />
+        <WorldClock />
       </header>
 
-      {/* Tabs / Mode Selector */}
-      <div style={{
-        padding: '24px 32px 0',
-        display: 'flex',
-        gap: '4px',
-        borderBottom: '1px solid rgba(255,255,255,0.05)'
-      }}>
+      <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px' }}>
         {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '12px 24px',
-              background: activeTab === tab ? 'var(--bg-panel)' : 'transparent',
-              border: activeTab === tab ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
-              borderBottom: 'none',
-              borderRadius: '4px 4px 0 0',
-              color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)',
-              fontFamily: 'var(--font-serif)',
-              fontSize: '16px',
-              position: 'relative',
-              top: '1px',
-              transition: 'all 0.2s ease'
-            }}
-          >
+          <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 24px', background: activeTab === tab ? 'var(--bg-panel)' : 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.05)', borderLeft: tab === 'Assembler' ? '1px solid rgba(255,255,255,0.05)' : 'none', color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: activeTab === tab ? 600 : 400, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
             {tab}
+            {activeTab === tab && <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '2px', background: 'var(--accent-primary)', boxShadow: '0 -2px 8px rgba(255, 215, 0, 0.5)' }} />}
           </button>
         ))}
       </div>
 
-      {/* Main Content Area */}
-      <main style={{ flex: 1, overflow: 'hidden', padding: '24px 32px', position: 'relative' }}>
+      <main style={{ flex: 1, overflow: 'hidden', padding: '24px', position: 'relative' }}>
         {activeTab === 'Assembler' && (
-          <AssemblerTab
-            groups={data.groups}
-            selectedGroups={selectedGroups}
-            manualAdds={manualAdds}
-            manualRemoves={manualRemoves}
-            onToggleGroup={(g, active) => {
-              if (active) setSelectedGroups(p => [...p, g]);
-              else setSelectedGroups(p => p.filter(x => x !== g));
-            }}
+          <AssemblerTab groups={data.groups} selectedGroups={selectedGroups} manualAdds={manualAdds} manualRemoves={manualRemoves}
+            onToggleGroup={(g, active) => { if (active) setSelectedGroups(p => [...p, g]); else setSelectedGroups(p => p.filter(x => x !== g)); }}
             onAddManual={(email) => setManualAdds(p => [...p, email])}
             onRemoveManual={(email) => setManualRemoves(p => [...p, email])}
-            onResetManual={() => {
-              setManualRemoves([]);
-              setManualAdds([]); // Maybe? Prompt says "clears on Reset"
-            }}
+            onUndoRemove={handleUndoRemove}
+            onResetManual={handleReset}
           />
         )}
-
-        {activeTab === 'Directory' && (
-          <DirectoryTab
-            contacts={data.contacts}
-            onAddToAssembler={handleAddToAssembler}
-          />
-        )}
-
-        {activeTab === 'Radar' && (
-          <RadarTab />
-        )}
+        {activeTab === 'Directory' && <DirectoryTab contacts={data.contacts} onAddToAssembler={handleAddToAssembler} />}
+        {activeTab === 'Radar' && <RadarTab />}
       </main>
 
-      {/* Auth Modal Overlay */}
       {authRequest && (
-        <AuthModal
-          request={authRequest}
-          onClose={() => {
-            window.api.cancelAuth();
-            setAuthRequest(null);
-          }}
-          onSubmit={(u, p) => {
-            window.api.submitAuth(u, p);
-            setAuthRequest(null);
-          }}
+        <AuthModal request={authRequest}
+          onClose={() => { window.api.cancelAuth(); setAuthRequest(null); }}
+          onSubmit={(u, p) => { window.api.submitAuth(u, p); setAuthRequest(null); }}
         />
       )}
 
-      <style>{`
-        @keyframes progress {
-          0% { width: 0%; opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { width: 100%; opacity: 0; }
-        }
-      `}</style>
+      <style>{`@keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }`}</style>
     </div>
   );
 }

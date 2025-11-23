@@ -3,9 +3,9 @@ import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest } from '@s
 
 const api: BridgeAPI = {
   openPath: (path) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_PATH, path),
+  openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),
 
   subscribeToData: (callback) => {
-    // Remove existing to prevent duplicates on hot reload or re-mount
     ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_UPDATED);
     ipcRenderer.on(IPC_CHANNELS.DATA_UPDATED, (_event, data: AppData) => {
       callback(data);

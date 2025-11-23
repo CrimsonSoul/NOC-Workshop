@@ -13,9 +13,9 @@ This repository is initialized with Vite + React + TypeScript and Electron using
 - `src/shared`: Shared IPC contracts used across processes.
 
 The renderer includes placeholder UI for the three primary tabs and messaging about the IPC bridge to guide further implementation.
-# Operators Atelier
+# NOC Workshop
 
-Operators Atelier is a desktop application that pairs a Vite-powered UI with an Electron shell to help operators monitor and act on streaming tabular data with high precision.
+NOC Workshop is a desktop application that pairs a Vite-powered UI with an Electron shell to help operators monitor and act on streaming tabular data with high precision.
 
 ## Project goals
 - Deliver a responsive, reliable desktop experience that feels like precision instrumentation.

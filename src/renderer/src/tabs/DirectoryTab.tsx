@@ -11,6 +11,7 @@ type Props = {
 
 export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) => {
   const [search, setSearch] = useState('');
+  const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
 
   const filtered = contacts.filter(c =>
     !search || c._searchString.includes(search.toLowerCase())
@@ -18,12 +19,18 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
 
   const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const contact = filtered[index];
-    const [added, setAdded] = useState(false);
+    const added = recentlyAdded.has(contact.email);
 
     const handleAdd = () => {
       onAddToAssembler(contact);
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+      setRecentlyAdded(prev => new Set(prev).add(contact.email));
+      setTimeout(() => {
+        setRecentlyAdded(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(contact.email);
+          return newSet;
+        });
+      }, 2000);
     };
 
     return (
@@ -47,9 +54,16 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
         <TactileButton
           variant={added ? 'primary' : 'secondary'}
           onClick={handleAdd}
-          style={{ padding: '4px 12px', fontSize: '11px' }}
+          style={{
+            padding: '4px 12px',
+            fontSize: '11px',
+            background: added ? 'var(--accent-primary)' : undefined,
+            color: added ? '#000' : undefined,
+            boxShadow: added ? '0 0 10px rgba(255, 215, 0, 0.5)' : undefined,
+            transition: 'all 0.2s ease'
+          }}
         >
-          {added ? 'ADDED' : 'ADD +'}
+          {added ? '✓  ADDED' : 'ADD +'}
         </TactileButton>
       </div>
     );

@@ -1,11 +1,10 @@
 import chokidar from 'chokidar';
-import * as XLSX from 'xlsx';
+import xlsx from 'xlsx';
 import { join, dirname } from 'path';
 import { app, BrowserWindow } from 'electron';
 import { IPC_CHANNELS, type AppData, type Contact, type GroupMap } from '@shared/ipc';
 import fs from 'fs';
 
-// Constants
 const GROUP_FILE = 'groups.xlsx';
 const CONTACT_FILE = 'contacts.xlsx';
 const DEBOUNCE_MS = 100;
@@ -19,16 +18,20 @@ export class FileManager {
   constructor(window: BrowserWindow) {
     this.mainWindow = window;
 
-    // Determine root directory (Project root in Dev, Exe dir in Prod)
     if (!app.isPackaged) {
-      this.rootDir = process.cwd();
+      const appPath = app.getAppPath();
+      if (appPath.includes('dist')) {
+        this.rootDir = join(appPath, '..', '..');
+      } else {
+        this.rootDir = appPath;
+      }
     } else {
       this.rootDir = dirname(app.getPath('exe'));
     }
 
     console.log(`[FileManager] Initialized. Watching root: ${this.rootDir}`);
     this.startWatching();
-    this.readAndEmit(); // Initial read
+    this.readAndEmit();
   }
 
   private startWatching() {
@@ -76,7 +79,6 @@ export class FileManager {
       }
     } catch (error) {
       console.error('[FileManager] Error reading files:', error);
-      // We could emit an error state here if needed
     }
   }
 
@@ -84,38 +86,25 @@ export class FileManager {
     const path = join(this.rootDir, GROUP_FILE);
     if (!fs.existsSync(path)) return {};
 
-    const workbook = XLSX.readFile(path);
+    const workbook = xlsx.readFile(path);
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
 
-    // Parse as array of arrays
-    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+    const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
     if (!data || data.length === 0) return {};
-
-    // Logic: Column 0 is Group Name, 1-N are emails?
-    // Wait, prompt said: "Iterates columns. Row 0 = Group Name. Rows 1-N = Emails."
-    // So we need to transpose or iterate by col index.
 
     const groups: GroupMap = {};
     const maxCols = data[0].length;
-
     for (let col = 0; col < maxCols; col++) {
       const groupName = data[0][col];
       if (!groupName) continue;
-
       const emails: string[] = [];
       for (let row = 1; row < data.length; row++) {
-        const cell = data[row][col];
-        if (cell && typeof cell === 'string' && cell.includes('@')) {
-          emails.push(cell.trim());
-        }
+        const email = data[row][col];
+        if (email) emails.push(String(email).trim());
       }
-
-      if (emails.length > 0) {
-        groups[groupName as string] = emails;
-      }
+      groups[String(groupName).trim()] = emails;
     }
-
     return groups;
   }
 
@@ -123,39 +112,41 @@ export class FileManager {
     const path = join(this.rootDir, CONTACT_FILE);
     if (!fs.existsSync(path)) return [];
 
-    const workbook = XLSX.readFile(path);
+    const workbook = xlsx.readFile(path);
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
 
-    const data = XLSX.utils.sheet_to_json(worksheet) as any[]; // Array of objects
-
-    return data.map(row => {
-      // Fuzzy Logic for keys
-      const getVal = (possibleKeys: string[]) => {
-        for (const k of possibleKeys) {
-          // Case insensitive key match
-          const foundKey = Object.keys(row).find(rk => rk.toLowerCase() === k.toLowerCase());
-          if (foundKey) return row[foundKey];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+    return data.map((row: any) => {
+      // Case-insensitive field lookup
+      const getField = (fieldNames: string[]) => {
+        for (const fieldName of fieldNames) {
+          const key = Object.keys(row).find(k => k.toLowerCase() === fieldName.toLowerCase());
+          if (key && row[key]) return String(row[key]).trim();
         }
         return '';
       };
 
-      const name = getVal(['name', 'full name', 'person']);
-      const email = getVal(['email', 'e-mail', 'mail', 'smtp']);
-      const phone = getVal(['phone', 'phone number', 'tel', 'mobile']);
-      const department = getVal(['department', 'dept', 'role']);
-
-      // Normalization
-      const normalizedPhone = String(phone).replace(/[^0-9+]/g, '');
+      const name = getField(['name', 'Name', 'full name', 'Full Name']);
+      const email = getField(['email', 'Email', 'e-mail', 'E-mail']);
+      const phone = getField(['phone', 'Phone', 'Phone Number', 'phone number']);
+      const department = getField(['department', 'Department', 'dept', 'Dept']);
 
       return {
-        name: String(name || 'Unknown'),
-        email: String(email || ''),
-        phone: normalizedPhone,
-        department: String(department || ''),
-        _searchString: `${name} ${email} ${normalizedPhone} ${department}`.toLowerCase(),
+        name,
+        email,
+        phone,
+        department,
+        _searchString: `${name} ${email} ${phone} ${department}`.toLowerCase(),
         raw: row
       };
-    }).filter(c => c.email || c.name !== 'Unknown');
+    });
+  }
+
+  public destroy() {
+    if (this.watcher) {
+      this.watcher.close();
+      this.watcher = null;
+    }
   }
 }
