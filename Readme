@@ -1,1 +1,17 @@
-New.
+Operators Atelier
+=================
+
+This repository is initialized with Vite + React + TypeScript and Electron using `electron-vite`.
+
+## Getting started
+1. Install dependencies with `npm install`.
+2. Run the app in development with `npm run dev`.
+3. Create production builds with `npm run build` or preview with `npm run preview`.
+
+## Structure
+- `src/main`: Electron main process (window creation, IPC, chokidar wiring).
+- `src/preload`: Context bridge exposing typed IPC helpers to the renderer.
+- `src/renderer`: React renderer powered by Vite with stub tabs (Assembler, Directory, Radar).
+- `src/shared`: Shared IPC contracts used across processes.
+
+The renderer includes placeholder UI for the three primary tabs and messaging about the IPC bridge to guide further implementation.
