@@ -88,19 +88,20 @@ export default function App() {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
-  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
-  const [justSynced, setJustSynced] = useState(false);
-  const glowTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isReloading, setIsReloading] = useState(false);
+
+  const handleOpenGroupsFile = () => {
+    window.api?.openGroupsFile();
+  };
+
+  const handleOpenContactsFile = () => {
+    window.api?.openContactsFile();
+  };
 
   useEffect(() => {
     window.api.subscribeToData((newData) => {
       setData(newData);
-      if (glowTimeout.current) {
-        clearTimeout(glowTimeout.current);
-      }
-      setLastUpdated(newData.lastUpdated ?? Date.now());
-      setJustSynced(true);
-      glowTimeout.current = setTimeout(() => setJustSynced(false), 2000);
+      setIsReloading(false);
     });
     window.api.onAuthRequested((req) => {
       setAuthRequest(req);
@@ -137,6 +138,17 @@ export default function App() {
     setManualRemoves([]);
   };
 
+  const handleRefresh = async () => {
+    if (!window.api) return;
+    try {
+      setIsReloading(true);
+      await window.api.reloadData();
+    } catch (error) {
+      console.error('Failed to refresh data', error);
+      setIsReloading(false);
+    }
+  };
+
   return (
     <div className="app-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ height: '80px', background: 'var(--bg-app)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'relative', zIndex: 10 }}>
@@ -145,41 +157,51 @@ export default function App() {
             NOC<br />WORKSHOP
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-            <RotatingCode />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-serif)', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <div
+        <RotatingCode />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <TactileButton
+            onClick={handleRefresh}
+            variant="secondary"
+            active={isReloading}
+            disabled={isReloading}
+            style={{ minWidth: '140px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
+          >
+            {isReloading && (
+              <span
                 style={{
-                  padding: '6px 10px',
-                  borderRadius: '999px',
-                  background: justSynced ? 'rgba(255, 215, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                  color: justSynced ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  boxShadow: justSynced ? '0 0 12px rgba(255, 215, 0, 0.35)' : 'none',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  transition: 'all 0.3s ease',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderTopColor: 'var(--accent-primary)',
+                  animation: 'spin 1s linear infinite'
                 }}
-              >
-                {justSynced ? 'Synced just now' : 'Data steady'}
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.8 }}>
-                {formatLastUpdated()}
-              </div>
-            </div>
-          </div>
+              />
+            )}
+            {isReloading ? 'Refreshing...' : 'Refresh data'}
+          </TactileButton>
           <WorldClock />
         </div>
       </header>
 
-      <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px' }}>
-        {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 24px', background: activeTab === tab ? 'var(--bg-panel)' : 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.05)', borderLeft: tab === 'Assembler' ? '1px solid rgba(255,255,255,0.05)' : 'none', color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: activeTab === tab ? 600 : 400, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
-            {tab}
-            {activeTab === tab && <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '2px', background: 'var(--accent-primary)', boxShadow: '0 -2px 8px rgba(255, 215, 0, 0.5)' }} />}
-          </button>
-        ))}
+      <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+        <div style={{ display: 'flex' }}>
+          {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 24px', background: activeTab === tab ? 'var(--bg-panel)' : 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.05)', borderLeft: tab === 'Assembler' ? '1px solid rgba(255,255,255,0.05)' : 'none', color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: activeTab === tab ? 600 : 400, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
+              {tab}
+              {activeTab === tab && <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '2px', background: 'var(--accent-primary)', boxShadow: '0 -2px 8px rgba(255, 215, 0, 0.5)' }} />}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <TactileButton variant="secondary" onClick={handleOpenGroupsFile} style={{ padding: '10px 14px', fontSize: '12px' }}>
+            Open groups.xlsx
+          </TactileButton>
+          <TactileButton variant="secondary" onClick={handleOpenContactsFile} style={{ padding: '10px 14px', fontSize: '12px' }}>
+            Open contacts.xlsx
+          </TactileButton>
+        </div>
       </div>
 
       <main style={{ flex: 1, overflow: 'hidden', padding: '24px', position: 'relative' }}>
@@ -203,7 +225,10 @@ export default function App() {
         />
       )}
 
-      <style>{`@keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }`}</style>
+      <style>{`
+        @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import chokidar from 'chokidar';
 import xlsx from 'xlsx';
-import { join, dirname } from 'path';
-import { app, BrowserWindow } from 'electron';
+import { join } from 'path';
+import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS, type AppData, type Contact, type GroupMap } from '@shared/ipc';
 import fs from 'fs';
 
@@ -15,19 +15,9 @@ export class FileManager {
   private mainWindow: BrowserWindow;
   private debounceTimer: NodeJS.Timeout | null = null;
 
-  constructor(window: BrowserWindow) {
+  constructor(window: BrowserWindow, rootDir: string) {
     this.mainWindow = window;
-
-    if (!app.isPackaged) {
-      const appPath = app.getAppPath();
-      if (appPath.includes('dist')) {
-        this.rootDir = join(appPath, '..', '..');
-      } else {
-        this.rootDir = appPath;
-      }
-    } else {
-      this.rootDir = dirname(app.getPath('exe'));
-    }
+    this.rootDir = rootDir;
 
     console.log(`[FileManager] Initialized. Watching root: ${this.rootDir}`);
     this.startWatching();
@@ -61,7 +51,7 @@ export class FileManager {
     }, DEBOUNCE_MS);
   }
 
-  private readAndEmit() {
+  public readAndEmit() {
     console.log('[FileManager] Reading data files...');
     try {
       const groups = this.parseGroups();

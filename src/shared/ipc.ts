@@ -22,7 +22,10 @@ export type AuthRequest = {
 export type BridgeAPI = {
     openPath: (path: string) => Promise<void>;
     openExternal: (url: string) => Promise<void>;
+    openGroupsFile: () => Promise<void>;
+    openContactsFile: () => Promise<void>;
     subscribeToData: (callback: (data: AppData) => void) => void;
+    reloadData: () => Promise<void>;
     onAuthRequested: (callback: (request: AuthRequest) => void) => void;
     submitAuth: (username: string, password: string) => void;
     cancelAuth: () => void;
@@ -31,7 +34,10 @@ export type BridgeAPI = {
 export const IPC_CHANNELS = {
     OPEN_PATH: 'fs:openPath',
     OPEN_EXTERNAL: 'shell:openExternal',
+    OPEN_GROUPS_FILE: 'fs:openGroupsFile',
+    OPEN_CONTACTS_FILE: 'fs:openContactsFile',
     DATA_UPDATED: 'data:updated',
+    DATA_RELOAD: 'data:reload',
     AUTH_REQUESTED: 'auth:requested',
     AUTH_SUBMIT: 'auth:submit',
     AUTH_CANCEL: 'auth:cancel'
