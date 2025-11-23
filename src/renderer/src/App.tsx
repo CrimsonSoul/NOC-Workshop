@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TactileButton } from './components/TactileButton';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
@@ -106,7 +106,18 @@ export default function App() {
     window.api.onAuthRequested((req) => {
       setAuthRequest(req);
     });
+    return () => {
+      if (glowTimeout.current) {
+        clearTimeout(glowTimeout.current);
+      }
+    };
   }, []);
+
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return 'Awaiting sync';
+    const date = new Date(lastUpdated);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
 
   const handleAddToAssembler = (contact: Contact) => {
     setManualRemoves(prev => prev.filter(e => e !== contact.email));
