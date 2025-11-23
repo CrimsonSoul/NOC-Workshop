@@ -1,12 +1,17 @@
 name: Windows Build
 
 on:
-  push:
+  workflow_dispatch:
+  pull_request:
     branches: [ main ]
+    types: [ closed ]
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -16,14 +21,40 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build Windows App
+      - name: Build Windows app
         run: npm run build:win
 
-      - name: Upload Artifact
+      - name: Locate app directory
+        id: app_dir
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dirs=(dist_electron/*/)
+          if (( ${#dirs[@]} != 1 )); then
+            echo "Expected 1 app directory in dist_electron, found ${#dirs[@]}" >&2
+            exit 1
+          fi
+          dir="${dirs[0]%/}"
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+      - name: Create portable zip
+        id: portable_zip
+        shell: pwsh
+        run: |
+          $dir = "${{ steps.app_dir.outputs.dir }}"
+          if (-not (Test-Path $dir)) { throw "App directory not found: $dir" }
+          $zipPath = "$dir-portable.zip"
+          if (Test-Path $zipPath) { Remove-Item $zipPath }
+          Compress-Archive -Path "$dir\*" -DestinationPath $zipPath -Force
+          "zip=$zipPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
-          path: dist_electron/*.exe
+          name: windows-portable
+          path: ${{ steps.portable_zip.outputs.zip }}
+          compression-level: 0
