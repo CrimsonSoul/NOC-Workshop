@@ -1,20 +1,25 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'path';
-import { readdir } from 'fs/promises';
-import chokidar from 'chokidar';
-import { IPC_CHANNELS, type DirectoryChange } from '@shared/ipc';
+import { FileManager } from './FileManager';
+import { IPC_CHANNELS } from '../shared/ipc';
 
 let mainWindow: BrowserWindow | null = null;
-let watcher: chokidar.FSWatcher | null = null;
+let fileManager: FileManager | null = null;
+
+// Auth State
+let authCallback: ((username: string, password: string) => void) | null = null;
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1400,
+    height: 900,
+    backgroundColor: '#0b0d12', // Obsidian
+    titleBarStyle: 'hiddenInset', // polished look on mac
     webPreferences: {
       preload: process.env.MAIN_WINDOW_PRELOAD,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      sandbox: false // needed for some preload things sometimes, but false is safer usually. keeping false unless needed.
     }
   });
 
@@ -25,8 +30,12 @@ async function createWindow() {
     await mainWindow.loadFile(indexHtml);
   }
 
+  // Initialize FileManager
+  fileManager = new FileManager(mainWindow);
+
   mainWindow.on('closed', () => {
     mainWindow = null;
+    fileManager = null;
   });
 }
 
@@ -35,27 +44,35 @@ function setupIpc() {
     await shell.openPath(path);
   });
 
-  ipcMain.handle(IPC_CHANNELS.WATCH_DIRECTORY, async (event, path: string) => {
-    if (watcher) {
-      await watcher.close();
-      watcher = null;
+  ipcMain.on(IPC_CHANNELS.AUTH_SUBMIT, (_event, { username, password }) => {
+    if (authCallback) {
+      authCallback(username, password);
+      authCallback = null;
     }
-
-    watcher = chokidar.watch(path, { ignoreInitial: true });
-    watcher.on('all', (change, changedPath) => {
-      const allowedEvents: DirectoryChange['event'][] = ['add', 'change', 'unlink'];
-      if (!allowedEvents.includes(change as DirectoryChange['event'])) return;
-
-      const payload: DirectoryChange = { event: change as DirectoryChange['event'], path: changedPath };
-      event.sender.send(IPC_CHANNELS.DIRECTORY_CHANGED, payload);
-    });
   });
 
-  ipcMain.handle(IPC_CHANNELS.LIST_FILES, async (_event, path: string) => {
-    const entries = await readdir(path);
-    return entries;
+  ipcMain.on(IPC_CHANNELS.AUTH_CANCEL, () => {
+    // If canceled, we might just call with empty or fail it?
+    // Usually cancelling the prompt means just let it fail or do nothing.
+    // We'll reset the callback.
+    authCallback = null;
   });
 }
+
+// Auth Interception
+app.on('login', (event, _webContents, _request, authInfo, callback) => {
+  event.preventDefault(); // Stop default browser popup
+
+  // Store callback to use later
+  authCallback = callback;
+
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(IPC_CHANNELS.AUTH_REQUESTED, {
+      host: authInfo.host,
+      isProxy: authInfo.isProxy
+    });
+  }
+});
 
 app.whenReady().then(async () => {
   setupIpc();
@@ -69,10 +86,6 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  if (watcher) {
-    watcher.close();
-    watcher = null;
-  }
   if (process.platform !== 'darwin') {
     app.quit();
   }

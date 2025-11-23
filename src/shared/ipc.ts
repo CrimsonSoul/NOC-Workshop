@@ -1,18 +1,38 @@
-export type BridgeAPI = {
-  openPath: (path: string) => Promise<void>;
-  watchDirectory: (path: string) => Promise<void>;
-  listFiles: (path: string) => Promise<string[]>;
-  onDirectoryChanged: (callback: (payload: DirectoryChange) => void) => void;
+export type GroupMap = Record<string, string[]>;
+export type Contact = {
+  name: string;
+  email: string;
+  phone: string;
+  department: string;
+  _searchString: string;
+  raw: Record<string, any>;
 };
 
-export type DirectoryChange = {
-  event: 'add' | 'change' | 'unlink';
-  path: string;
+export type AppData = {
+  groups: GroupMap;
+  contacts: Contact[];
+  lastUpdated: number;
+};
+
+export type AuthRequest = {
+  host: string;
+  isProxy: boolean;
+};
+
+export type BridgeAPI = {
+  openPath: (path: string) => Promise<void>;
+  // File System / Data
+  subscribeToData: (callback: (data: AppData) => void) => void;
+  // Auth
+  onAuthRequested: (callback: (request: AuthRequest) => void) => void;
+  submitAuth: (username: string, password: string) => void;
+  cancelAuth: () => void;
 };
 
 export const IPC_CHANNELS = {
   OPEN_PATH: 'fs:openPath',
-  WATCH_DIRECTORY: 'fs:watchDirectory',
-  LIST_FILES: 'fs:listFiles',
-  DIRECTORY_CHANGED: 'fs:directoryChanged'
+  DATA_UPDATED: 'data:updated',
+  AUTH_REQUESTED: 'auth:requested',
+  AUTH_SUBMIT: 'auth:submit',
+  AUTH_CANCEL: 'auth:cancel'
 } as const;

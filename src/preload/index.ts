@@ -1,15 +1,30 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC_CHANNELS, type BridgeAPI, type DirectoryChange } from '@shared/ipc';
+import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest } from '@shared/ipc';
 
 const api: BridgeAPI = {
   openPath: (path) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_PATH, path),
-  watchDirectory: (path) => ipcRenderer.invoke(IPC_CHANNELS.WATCH_DIRECTORY, path),
-  listFiles: (path) => ipcRenderer.invoke(IPC_CHANNELS.LIST_FILES, path),
-  onDirectoryChanged: (callback) => {
-    ipcRenderer.removeAllListeners(IPC_CHANNELS.DIRECTORY_CHANGED);
-    ipcRenderer.on(IPC_CHANNELS.DIRECTORY_CHANGED, (_event, payload: DirectoryChange) => {
-      callback(payload);
+
+  subscribeToData: (callback) => {
+    // Remove existing to prevent duplicates on hot reload or re-mount
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_UPDATED);
+    ipcRenderer.on(IPC_CHANNELS.DATA_UPDATED, (_event, data: AppData) => {
+      callback(data);
     });
+  },
+
+  onAuthRequested: (callback) => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.AUTH_REQUESTED);
+    ipcRenderer.on(IPC_CHANNELS.AUTH_REQUESTED, (_event, request: AuthRequest) => {
+      callback(request);
+    });
+  },
+
+  submitAuth: (username, password) => {
+    ipcRenderer.send(IPC_CHANNELS.AUTH_SUBMIT, { username, password });
+  },
+
+  cancelAuth: () => {
+    ipcRenderer.send(IPC_CHANNELS.AUTH_CANCEL);
   }
 };
 
