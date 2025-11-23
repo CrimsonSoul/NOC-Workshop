@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { FileManager } from './FileManager';
 import { IPC_CHANNELS } from '../shared/ipc';
 
@@ -9,7 +9,19 @@ let fileManager: FileManager | null = null;
 // Auth State
 let authCallback: ((username: string, password: string) => void) | null = null;
 
-async function createWindow() {
+function getDataRoot() {
+  if (!app.isPackaged) {
+    const appPath = app.getAppPath();
+    if (appPath.includes('dist')) {
+      return join(appPath, '..', '..');
+    }
+    return appPath;
+  }
+
+  return dirname(app.getPath('exe'));
+}
+
+async function createWindow(dataRoot: string) {
   mainWindow = new BrowserWindow({
     width: 960,
     height: 1080,
@@ -36,7 +48,7 @@ async function createWindow() {
     await mainWindow.loadFile(indexHtml);
   }
 
-  fileManager = new FileManager(mainWindow);
+  fileManager = new FileManager(mainWindow, dataRoot);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -44,13 +56,23 @@ async function createWindow() {
   });
 }
 
-function setupIpc() {
+function setupIpc(dataRoot: string) {
   ipcMain.handle(IPC_CHANNELS.OPEN_PATH, async (_event, path: string) => {
     await shell.openPath(path);
   });
 
   ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, url: string) => {
     await shell.openExternal(url);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.OPEN_GROUPS_FILE, async () => {
+    const path = join(dataRoot, 'groups.xlsx');
+    await shell.openPath(path);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.OPEN_CONTACTS_FILE, async () => {
+    const path = join(dataRoot, 'contacts.xlsx');
+    await shell.openPath(path);
   });
 
   ipcMain.on(IPC_CHANNELS.AUTH_SUBMIT, (_event, { username, password }) => {
@@ -80,16 +102,17 @@ app.on('login', (event, _webContents, _request, authInfo, callback) => {
   }
 });
 
-app.whenReady().then(async () => {
-  setupIpc();
-  await createWindow();
+  app.whenReady().then(async () => {
+    const dataRoot = getDataRoot();
+    setupIpc(dataRoot);
+    await createWindow(dataRoot);
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      void createWindow();
-    }
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        void createWindow(dataRoot);
+      }
+    });
   });
-});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

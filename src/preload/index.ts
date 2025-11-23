@@ -4,6 +4,8 @@ import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest } from '@s
 const api: BridgeAPI = {
   openPath: (path) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_PATH, path),
   openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),
+  openGroupsFile: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_GROUPS_FILE),
+  openContactsFile: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_CONTACTS_FILE),
 
   subscribeToData: (callback) => {
     ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_UPDATED);

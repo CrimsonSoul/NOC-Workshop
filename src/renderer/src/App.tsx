@@ -89,6 +89,14 @@ export default function App() {
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
 
+  const handleOpenGroupsFile = () => {
+    window.api?.openGroupsFile();
+  };
+
+  const handleOpenContactsFile = () => {
+    window.api?.openContactsFile();
+  };
+
   useEffect(() => {
     window.api.subscribeToData((newData) => {
       setData(newData);
@@ -129,13 +137,24 @@ export default function App() {
         <WorldClock />
       </header>
 
-      <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px' }}>
-        {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 24px', background: activeTab === tab ? 'var(--bg-panel)' : 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.05)', borderLeft: tab === 'Assembler' ? '1px solid rgba(255,255,255,0.05)' : 'none', color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: activeTab === tab ? 600 : 400, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
-            {tab}
-            {activeTab === tab && <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '2px', background: 'var(--accent-primary)', boxShadow: '0 -2px 8px rgba(255, 215, 0, 0.5)' }} />}
-          </button>
-        ))}
+      <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+        <div style={{ display: 'flex' }}>
+          {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 24px', background: activeTab === tab ? 'var(--bg-panel)' : 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.05)', borderLeft: tab === 'Assembler' ? '1px solid rgba(255,255,255,0.05)' : 'none', color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: activeTab === tab ? 600 : 400, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
+              {tab}
+              {activeTab === tab && <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '2px', background: 'var(--accent-primary)', boxShadow: '0 -2px 8px rgba(255, 215, 0, 0.5)' }} />}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <TactileButton variant="secondary" onClick={handleOpenGroupsFile} style={{ padding: '10px 14px', fontSize: '12px' }}>
+            Open groups.xlsx
+          </TactileButton>
+          <TactileButton variant="secondary" onClick={handleOpenContactsFile} style={{ padding: '10px 14px', fontSize: '12px' }}>
+            Open contacts.xlsx
+          </TactileButton>
+        </div>
       </div>
 
       <main style={{ flex: 1, overflow: 'hidden', padding: '24px', position: 'relative' }}>
