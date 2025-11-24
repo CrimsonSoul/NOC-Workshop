@@ -11,7 +11,10 @@
     "build": "electron-vite build",
     "build:win": "npm run build && electron-builder --dir --win --config electron-builder.yml",
     "preview": "electron-vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "preview:renderer": "npm run build:renderer && vite preview --config vite.renderer.config.ts --host --port 4173",
+    "test": "playwright test"
   },
   "dependencies": {
     "@types/react-virtualized-auto-sizer": "^1.0.4",
@@ -30,6 +33,7 @@
     "electron": "^32.1.2",
     "electron-builder": "^26.0.12",
     "electron-vite": "^2.3.0",
+    "@playwright/test": "^1.48.2",
     "typescript": "^5.5.4",
     "vite": "^5.3.5"
   }
