@@ -45,5 +45,6 @@ See [`docs/architecture.md`](docs/architecture.md) for environment details, IPC 
 - Unit-test parsing, IPC handlers, and UI state reducers.
 - Integration-test end-to-end flows with Electron + Vite builds to catch packaging regressions.
 - Prefer deterministic fixtures for streaming data; cover both happy-path and malformed inputs.
+- End-to-end UI smoke tests use Playwright. Install the test runner and browser binaries with `npm install` followed by `npx playwright install chromium`, then run `npm test` to start a preview server, exercise the renderer shell, and capture baseline screenshots for review.
 
 For deeper implementation guidance, review `docs/architecture.md`.
