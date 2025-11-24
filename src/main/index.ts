@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { FileManager } from './FileManager';
 import { IPC_CHANNELS } from '../shared/ipc';
 
@@ -13,13 +13,16 @@ function getDataRoot() {
   if (!app.isPackaged) {
     const appPath = app.getAppPath();
     if (appPath.includes('dist')) {
-      return join(appPath, '..', '..');
+      return join(appPath, '..', '..', 'resources');
     }
-    return appPath;
+    return join(appPath, 'resources');
   }
 
-  return dirname(app.getPath('exe'));
+  return join(process.resourcesPath, 'resources');
 }
+
+const groupsFilePath = (root: string) => join(root, 'groups.xlsx');
+const contactsFilePath = (root: string) => join(root, 'contacts.xlsx');
 
 async function createWindow(dataRoot: string) {
   mainWindow = new BrowserWindow({
@@ -59,6 +62,14 @@ async function createWindow(dataRoot: string) {
 function setupIpc(dataRoot: string) {
   ipcMain.handle(IPC_CHANNELS.OPEN_PATH, async (_event, path: string) => {
     await shell.openPath(path);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.OPEN_GROUPS_FILE, async () => {
+    await shell.openPath(groupsFilePath(dataRoot));
+  });
+
+  ipcMain.handle(IPC_CHANNELS.OPEN_CONTACTS_FILE, async () => {
+    await shell.openPath(contactsFilePath(dataRoot));
   });
 
   ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, url: string) => {
