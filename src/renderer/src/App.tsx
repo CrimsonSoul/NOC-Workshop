@@ -196,10 +196,10 @@ export default function App() {
 
         <div style={{ display: 'flex', gap: '8px' }}>
           <TactileButton variant="secondary" onClick={handleOpenGroupsFile} style={{ padding: '10px 14px', fontSize: '12px' }}>
-            Open groups.xlsx
+            Open groups file
           </TactileButton>
           <TactileButton variant="secondary" onClick={handleOpenContactsFile} style={{ padding: '10px 14px', fontSize: '12px' }}>
-            Open contacts.xlsx
+            Open contacts file
           </TactileButton>
         </div>
       </div>

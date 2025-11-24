@@ -8,3 +8,7 @@ pnpm-debug.log*
 dist
 tmp
 temp
+
+# Generated data files
+*.xlsx
+resources/*.xlsx

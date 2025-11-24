@@ -72,7 +72,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
             })}
             {Object.keys(groups).length === 0 && (
               <div style={{ padding: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                No groups loaded. Check groups.xlsx.
+                No groups loaded. Check groups.csv (or an .xlsx alternative).
               </div>
             )}
           </div>
