@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'path';
+import fs from 'fs';
 import { FileManager } from './FileManager';
 import { IPC_CHANNELS } from '../shared/ipc';
 
@@ -21,8 +22,20 @@ function getDataRoot() {
   return join(process.resourcesPath, 'resources');
 }
 
-const groupsFilePath = (root: string) => join(root, 'groups.xlsx');
-const contactsFilePath = (root: string) => join(root, 'contacts.xlsx');
+const GROUP_FILES = ['groups.csv', 'groups.xlsx'];
+const CONTACT_FILES = ['contacts.csv', 'contacts.xlsx'];
+
+const resolveDataFile = (root: string, candidates: string[]) => {
+  for (const file of candidates) {
+    const fullPath = join(root, file);
+    if (fs.existsSync(fullPath)) return fullPath;
+  }
+
+  return join(root, candidates[0]);
+};
+
+const groupsFilePath = (root: string) => resolveDataFile(root, GROUP_FILES);
+const contactsFilePath = (root: string) => resolveDataFile(root, CONTACT_FILES);
 
 async function createWindow(dataRoot: string) {
   mainWindow = new BrowserWindow({

@@ -5,8 +5,8 @@ import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS, type AppData, type Contact, type GroupMap } from '@shared/ipc';
 import fs from 'fs';
 
-const GROUP_FILE = 'groups.xlsx';
-const CONTACT_FILE = 'contacts.xlsx';
+const GROUP_FILES = ['groups.csv', 'groups.xlsx'];
+const CONTACT_FILES = ['contacts.csv', 'contacts.xlsx'];
 const DEBOUNCE_MS = 100;
 
 export class FileManager {
@@ -25,10 +25,7 @@ export class FileManager {
   }
 
   private startWatching() {
-    const pathsToWatch = [
-      join(this.rootDir, GROUP_FILE),
-      join(this.rootDir, CONTACT_FILE)
-    ];
+    const pathsToWatch = [...GROUP_FILES, ...CONTACT_FILES].map(file => join(this.rootDir, file));
 
     this.watcher = chokidar.watch(pathsToWatch, {
       ignoreInitial: true,
@@ -42,6 +39,14 @@ export class FileManager {
       console.log(`[FileManager] File event: ${event} on ${path}`);
       this.debouncedRead();
     });
+  }
+
+  private resolveExistingFile(fileNames: string[]): string | null {
+    for (const fileName of fileNames) {
+      const path = join(this.rootDir, fileName);
+      if (fs.existsSync(path)) return path;
+    }
+    return null;
   }
 
   private debouncedRead() {
@@ -73,8 +78,8 @@ export class FileManager {
   }
 
   private parseGroups(): GroupMap {
-    const path = join(this.rootDir, GROUP_FILE);
-    if (!fs.existsSync(path)) return {};
+    const path = this.resolveExistingFile(GROUP_FILES);
+    if (!path) return {};
 
     const workbook = xlsx.readFile(path);
     const firstSheetName = workbook.SheetNames[0];
@@ -99,8 +104,8 @@ export class FileManager {
   }
 
   private parseContacts(): Contact[] {
-    const path = join(this.rootDir, CONTACT_FILE);
-    if (!fs.existsSync(path)) return [];
+    const path = this.resolveExistingFile(CONTACT_FILES);
+    if (!path) return [];
 
     const workbook = xlsx.readFile(path);
     const firstSheetName = workbook.SheetNames[0];

@@ -1,4 +1,6 @@
 import * as XLSX from 'xlsx';
+import fs from 'fs';
+import { join } from 'path';
 
 type Contact = {
   name: string;
@@ -9,8 +11,9 @@ type Contact = {
 
 const CONTACT_COUNT = 100;
 const GROUP_COUNT = 10;
-const MIN_GROUP_SIZE = 1;
+const MIN_GROUP_SIZE = 2;
 const MAX_GROUP_SIZE = 20;
+const OUTPUT_DIRS = ['.', 'resources'];
 
 const firstNames = [
   'Avery', 'Jordan', 'Taylor', 'Morgan', 'Dakota', 'Skyler', 'Riley', 'Sawyer', 'Elliot', 'Parker',
@@ -104,8 +107,13 @@ const writeContacts = (contacts: Contact[]) => {
   const workbook = XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts');
-  XLSX.writeFile(workbook, 'contacts.xlsx');
-  console.log('Contacts generated.');
+
+  OUTPUT_DIRS.forEach(dir => {
+    fs.mkdirSync(dir, { recursive: true });
+    const outputPath = join(dir, 'contacts.csv');
+    XLSX.writeFile(workbook, outputPath, { bookType: 'csv' });
+    console.log(`Contacts CSV written to ${outputPath}`);
+  });
 };
 
 const writeGroups = (groupMatrix: string[][]) => {
@@ -114,8 +122,13 @@ const writeGroups = (groupMatrix: string[][]) => {
   const workbook = XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Groups');
-  XLSX.writeFile(workbook, 'groups.xlsx');
-  console.log('Groups generated.');
+
+  OUTPUT_DIRS.forEach(dir => {
+    fs.mkdirSync(dir, { recursive: true });
+    const outputPath = join(dir, 'groups.csv');
+    XLSX.writeFile(workbook, outputPath, { bookType: 'csv' });
+    console.log(`Groups CSV written to ${outputPath}`);
+  });
 };
 
 const main = () => {
