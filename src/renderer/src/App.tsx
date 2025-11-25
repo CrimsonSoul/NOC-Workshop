@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TactileButton } from './components/TactileButton';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
@@ -89,6 +89,33 @@ export default function App() {
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
   const [isReloading, setIsReloading] = useState(false);
+  const reloadStartRef = useRef<number | null>(null);
+  const reloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isReloadingRef = useRef(isReloading);
+
+  useEffect(() => {
+    isReloadingRef.current = isReloading;
+  }, [isReloading]);
+
+  const settleReloadIndicator = useCallback(() => {
+    if (!reloadStartRef.current) {
+      setIsReloading(false);
+      return;
+    }
+
+    const elapsed = performance.now() - reloadStartRef.current;
+    const delay = Math.max(900 - elapsed, 0);
+
+    if (reloadTimeoutRef.current) {
+      clearTimeout(reloadTimeoutRef.current);
+    }
+
+    reloadTimeoutRef.current = setTimeout(() => {
+      setIsReloading(false);
+      reloadStartRef.current = null;
+      reloadTimeoutRef.current = null;
+    }, delay);
+  }, []);
 
   const handleOpenGroupsFile = () => {
     window.api?.openGroupsFile();
@@ -101,7 +128,9 @@ export default function App() {
   useEffect(() => {
     window.api.subscribeToData((newData) => {
       setData(newData);
-      setIsReloading(false);
+      if (isReloadingRef.current) {
+        settleReloadIndicator();
+      }
     });
     window.api.onAuthRequested((req) => {
       setAuthRequest(req);
@@ -110,8 +139,11 @@ export default function App() {
       if (glowTimeout.current) {
         clearTimeout(glowTimeout.current);
       }
+      if (reloadTimeoutRef.current) {
+        clearTimeout(reloadTimeoutRef.current);
+      }
     };
-  }, []);
+  }, [settleReloadIndicator]);
 
   const formatLastUpdated = () => {
     if (!lastUpdated) return 'Awaiting sync';
@@ -141,8 +173,10 @@ export default function App() {
   const handleRefresh = async () => {
     if (!window.api) return;
     try {
+      reloadStartRef.current = performance.now();
       setIsReloading(true);
       await window.api.reloadData();
+      settleReloadIndicator();
     } catch (error) {
       console.error('Failed to refresh data', error);
       setIsReloading(false);
@@ -162,11 +196,14 @@ export default function App() {
       </header>
 
       <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-        <div style={{ display: 'flex' }}>
+        <div className="tab-strip">
           {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '16px 24px', background: activeTab === tab ? 'var(--bg-panel)' : 'transparent', border: 'none', borderRight: '1px solid rgba(255,255,255,0.05)', borderLeft: tab === 'Assembler' ? '1px solid rgba(255,255,255,0.05)' : 'none', color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: activeTab === tab ? 600 : 400, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s ease', position: 'relative' }}>
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`tab-button ${activeTab === tab ? 'is-active' : ''}`}
+            >
               {tab}
-              {activeTab === tab && <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '2px', background: 'var(--accent-primary)', boxShadow: '0 -2px 8px rgba(255, 215, 0, 0.5)' }} />}
             </button>
           ))}
         </div>
@@ -194,21 +231,10 @@ export default function App() {
             active={isReloading}
             disabled={isReloading}
             className={`refresh-button ${isReloading ? 'is-reloading' : ''}`}
-            style={{ padding: '10px 14px', fontSize: '12px', minWidth: '140px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
+            style={{ padding: '10px 14px', fontSize: '12px' }}
           >
             {isReloading && (
-              <span
-                style={{
-                  width: '14px',
-                  height: '14px',
-                  borderRadius: '50%',
-                  border: '2px solid rgba(255,255,255,0.2)',
-                  borderTopColor: 'var(--accent-primary)',
-                  boxShadow: '0 0 0 1px rgba(255,215,0,0.08)',
-                  animation: 'spin 0.85s linear infinite, pulse 2s ease-in-out infinite',
-                  display: 'inline-block'
-                }}
-              />
+              <span className="button-spinner" aria-hidden />
             )}
             {isReloading ? 'Refreshing...' : 'Refresh data'}
           </TactileButton>
@@ -236,74 +262,6 @@ export default function App() {
         />
       )}
 
-      <style>{`
-        @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.65; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
-        @keyframes sweep {
-          0% { transform: translateX(-120%); opacity: 0; }
-          10% { opacity: 0.35; }
-          60% { opacity: 0.15; }
-          100% { transform: translateX(140%); opacity: 0; }
-        }
-
-        .file-button {
-          position: relative;
-          overflow: hidden;
-          isolation: isolate;
-        }
-
-        .file-button::after {
-          content: '';
-          position: absolute;
-          inset: 1px;
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 1px;
-          transform: translateY(6px);
-          opacity: 0;
-          transition: transform 160ms ease, opacity 160ms ease, border-color 160ms ease;
-          pointer-events: none;
-        }
-
-        .file-button:hover::after,
-        .file-button:focus-visible::after {
-          transform: translateY(0);
-          opacity: 1;
-          border-color: rgba(255,215,0,0.25);
-        }
-
-        .file-button:focus-visible {
-          outline: 1px solid rgba(255,215,0,0.4);
-          outline-offset: 2px;
-        }
-
-        .refresh-button {
-          position: relative;
-          overflow: hidden;
-          isolation: isolate;
-        }
-
-        .refresh-button::after {
-          content: '';
-          position: absolute;
-          inset: -2px;
-          background: linear-gradient(120deg, transparent 35%, rgba(255,215,0,0.15) 50%, transparent 65%);
-          opacity: 0;
-          transform: translateX(-120%);
-          transition: opacity 180ms ease;
-          pointer-events: none;
-        }
-
-        .refresh-button:hover::after {
-          opacity: 1;
-          animation: sweep 1.3s linear infinite;
-        }
-
-        .refresh-button.is-reloading::after {
-          opacity: 1;
-          animation: sweep 1s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }
