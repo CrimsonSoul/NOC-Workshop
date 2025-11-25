@@ -71,6 +71,219 @@ button {
   background: none;
 }
 
+.tactile-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  border: 1px solid var(--btn-border, transparent);
+  background: var(--btn-bg, var(--bg-panel));
+  color: var(--btn-color, var(--text-primary));
+  box-shadow: var(--btn-shadow, 0 1px 0 rgba(0, 0, 0, 0.4));
+  transition: transform 150ms ease, box-shadow 180ms ease, border-color 150ms ease, background-color 150ms ease, color 150ms ease, filter 200ms ease;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.tactile-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.14), transparent 45%);
+  opacity: 0;
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.tactile-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--btn-shadow-hover, 0 2px 6px rgba(0, 0, 0, 0.35));
+  border-color: var(--btn-border-hover, rgba(255, 215, 0, 0.35));
+}
+
+.tactile-button:hover:not(:disabled)::after,
+.tactile-button:focus-visible::after {
+  opacity: 0.6;
+  transform: translateY(-2px);
+}
+
+.tactile-button:focus-visible {
+  outline: 1px solid rgba(255, 215, 0, 0.4);
+  outline-offset: 2px;
+}
+
+.tactile-button:active:not(:disabled),
+.tactile-button.is-active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: var(--btn-shadow-active, inset 0 1px 3px rgba(0, 0, 0, 0.4));
+  filter: brightness(1.02);
+}
+
+.tactile-button.is-disabled,
+.tactile-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+  transform: none;
+}
+
+.tactile-button--primary {
+  --btn-bg: var(--accent-primary);
+  --btn-color: var(--bg-app);
+  --btn-border: rgba(0, 0, 0, 0.35);
+  --btn-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+  --btn-shadow-active: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  --btn-shadow-hover: 0 4px 10px rgba(212, 175, 55, 0.35);
+  --btn-border-hover: rgba(255, 215, 0, 0.6);
+}
+
+.tactile-button--secondary {
+  --btn-bg: var(--bg-panel);
+  --btn-color: var(--text-secondary);
+  --btn-border: rgba(255, 255, 255, 0.12);
+  --btn-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  --btn-shadow-active: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+  --btn-shadow-hover: 0 3px 8px rgba(0, 0, 0, 0.35);
+  --btn-border-hover: rgba(255, 255, 255, 0.25);
+}
+
+.tactile-button--secondary.is-active,
+.tactile-button--secondary:active {
+  --btn-color: var(--accent-primary);
+  --btn-border-hover: var(--accent-primary);
+}
+
+.tactile-button--danger {
+  --btn-bg: var(--color-danger);
+  --btn-color: #fff;
+  --btn-border: rgba(0, 0, 0, 0.35);
+  --btn-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
+  --btn-shadow-active: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+  --btn-shadow-hover: 0 3px 10px rgba(207, 56, 56, 0.35);
+  --btn-border-hover: rgba(255, 255, 255, 0.3);
+}
+
+.tab-strip {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.tab-button {
+  position: relative;
+  padding: 16px 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-inline: 1px solid rgba(255, 255, 255, 0.05);
+  transition: color 150ms ease, background-color 160ms ease, transform 140ms ease;
+}
+
+.tab-button:first-of-type {
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab-button:last-of-type {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab-button:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.02);
+  transform: translateY(-1px);
+}
+
+.tab-button.is-active {
+  color: var(--accent-primary);
+  background: var(--bg-panel);
+  font-weight: 600;
+}
+
+.tab-button.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent-primary);
+  box-shadow: 0 -2px 8px rgba(255, 215, 0, 0.4);
+}
+
+.button-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--accent-primary);
+  box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.08);
+  animation: rotate 1.2s linear infinite, pulse 2.4s ease-in-out infinite;
+}
+
+.refresh-button {
+  min-width: 140px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.refresh-button::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(120deg, transparent 35%, rgba(255, 215, 0, 0.15) 50%, transparent 65%);
+  opacity: 0;
+  transform: translateX(-120%);
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.refresh-button:hover::after {
+  opacity: 1;
+  animation: sweep 1.4s linear infinite;
+}
+
+.refresh-button.is-reloading::after {
+  opacity: 1;
+  animation: sweep 1s linear infinite;
+}
+
+.file-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.file-button::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1px;
+  transform: translateY(6px);
+  opacity: 0;
+  transition: transform 160ms ease, opacity 160ms ease, border-color 160ms ease;
+  pointer-events: none;
+}
+
+.file-button:hover::after,
+.file-button:focus-visible::after {
+  transform: translateY(0);
+  opacity: 1;
+  border-color: rgba(255, 215, 0, 0.25);
+}
+
 input, textarea {
   font-family: var(--font-mono);
   background: var(--bg-panel);
@@ -98,4 +311,26 @@ input:focus, textarea:focus {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-primary);
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes sweep {
+  0% { transform: translateX(-120%); opacity: 0; }
+  10% { opacity: 0.35; }
+  60% { opacity: 0.15; }
+  100% { transform: translateX(140%); opacity: 0; }
 }
