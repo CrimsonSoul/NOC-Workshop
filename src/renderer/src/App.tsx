@@ -126,12 +126,26 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!window.api) return;
+
     window.api.subscribeToData((newData) => {
       setData(newData);
       if (isReloadingRef.current) {
         settleReloadIndicator();
       }
     });
+
+    window.api.onReloadStart(() => {
+      reloadStartRef.current = performance.now();
+      setIsReloading(true);
+    });
+
+    window.api.onReloadComplete(() => {
+      if (isReloadingRef.current) {
+        settleReloadIndicator();
+      }
+    });
+
     window.api.onAuthRequested((req) => {
       setAuthRequest(req);
     });
@@ -173,13 +187,11 @@ export default function App() {
   const handleRefresh = async () => {
     if (!window.api) return;
     try {
-      reloadStartRef.current = performance.now();
-      setIsReloading(true);
       await window.api.reloadData();
-      settleReloadIndicator();
     } catch (error) {
       console.error('Failed to refresh data', error);
       setIsReloading(false);
+      reloadStartRef.current = null;
     }
   };
 
