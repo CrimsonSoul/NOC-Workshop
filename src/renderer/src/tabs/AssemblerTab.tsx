@@ -43,7 +43,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', height: '100%', alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', height: '100%', alignItems: 'start', minHeight: 0 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <Panel title="Groups">
           <div style={{ padding: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -90,7 +90,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
         </Panel>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', minHeight: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', color: 'var(--text-primary)' }}>{`Log (${log.length})`}</div>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -109,6 +109,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
           padding: '24px',
           overflow: 'auto',
           border: '1px solid rgba(255,255,255,0.1)',
+          minHeight: 0,
           position: 'relative'
         }}>
           <div style={{
