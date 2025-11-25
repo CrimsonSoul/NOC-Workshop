@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "build:win": "npm run build && electron-builder --dir --win --config electron-builder.yml",
+    "build:win": "npm run build && electron-builder --win --config electron-builder.yml",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit",
     "build:renderer": "vite build --config vite.renderer.config.ts",

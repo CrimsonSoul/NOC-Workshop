@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import fs from 'fs';
 import { FileManager } from './FileManager';
 import { IPC_CHANNELS } from '../shared/ipc';
@@ -17,6 +17,13 @@ function getDataRoot() {
       return join(appPath, '..', '..', 'resources');
     }
     return join(appPath, 'resources');
+  }
+
+  const executableDir = process.env.PORTABLE_EXECUTABLE_DIR || dirname(process.execPath);
+  const portableDataPath = join(executableDir, 'data');
+
+  if (fs.existsSync(portableDataPath)) {
+    return portableDataPath;
   }
 
   return join(process.resourcesPath, 'resources');

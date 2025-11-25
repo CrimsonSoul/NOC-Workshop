@@ -14,5 +14,13 @@ directories:
   buildResources: resources
 win:
   target:
-    - target: dir
+    - target: portable
       arch: x64
+  artifactName: OperatorsAtelier-${version}.exe
+
+extraFiles:
+  - from: resources
+    to: data
+    filter:
+      - "*.csv"
+      - "*.xlsx"
