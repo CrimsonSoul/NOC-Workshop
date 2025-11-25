@@ -210,7 +210,7 @@ export default function App() {
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <TactileButton
-            className="file-button"
+            className="toolbar-button"
             variant="secondary"
             onClick={handleOpenGroupsFile}
             style={{ padding: '10px 14px', fontSize: '12px' }}
@@ -218,7 +218,7 @@ export default function App() {
             Open groups file
           </TactileButton>
           <TactileButton
-            className="file-button"
+            className="toolbar-button"
             variant="secondary"
             onClick={handleOpenContactsFile}
             style={{ padding: '10px 14px', fontSize: '12px' }}
@@ -230,7 +230,7 @@ export default function App() {
             variant="secondary"
             active={isReloading}
             disabled={isReloading}
-            className={`refresh-button ${isReloading ? 'is-reloading' : ''}`}
+            className={`toolbar-button refresh-button ${isReloading ? 'is-reloading' : ''}`}
             style={{ padding: '10px 14px', fontSize: '12px' }}
           >
             {isReloading && (
