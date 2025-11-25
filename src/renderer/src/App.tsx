@@ -4,45 +4,7 @@ import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
 import { RadarTab } from './tabs/RadarTab';
 import { AuthModal } from './components/AuthModal';
-import { AppData, Contact, GroupMap, AuthRequest } from '@shared/ipc';
-
-const RotatingCode = () => {
-  const [currentCode, setCurrentCode] = useState('000000');
-  const [prevCode, setPrevCode] = useState('------');
-  const [progressKey, setProgressKey] = useState(0);
-
-  const generateCode = () => {
-    const array = new Uint32Array(1);
-    window.crypto.getRandomValues(array);
-    return (array[0] % 1000000).toString().padStart(6, '0');
-  };
-
-  useEffect(() => {
-    setCurrentCode(generateCode());
-    const interval = setInterval(() => {
-      setPrevCode(currentCode);
-      setCurrentCode(generateCode());
-      setProgressKey(k => k + 1);
-    }, 300000);
-    return () => clearInterval(interval);
-  }, [currentCode]);
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <div style={{ width: '100px', height: '4px', background: '#333', borderRadius: '2px', overflow: 'hidden' }}>
-        <div key={progressKey} style={{ height: '100%', background: 'var(--accent-primary)', width: '0%', animation: 'progress 300s linear' }} />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: '1' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-          PREV: {prevCode}
-        </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '24px', color: 'var(--accent-primary)', letterSpacing: '0.1em', textShadow: '0 0 10px rgba(255, 215, 0, 0.3)' }}>
-          {currentCode}
-        </div>
-      </div>
-    </div>
-  );
-};
+import { AppData, Contact, AuthRequest } from '@shared/ipc';
 
 const WorldClock = () => {
   const [time, setTime] = useState(new Date());
@@ -191,7 +153,6 @@ export default function App() {
             NOC<br />WORKSHOP
           </div>
         </div>
-        <RotatingCode />
         <WorldClock />
       </header>
 
