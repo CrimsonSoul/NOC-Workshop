@@ -56,8 +56,21 @@ export class FileManager {
     }, DEBOUNCE_MS);
   }
 
+  private emitReloadStarted() {
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send(IPC_CHANNELS.DATA_RELOAD_STARTED);
+    }
+  }
+
+  private emitReloadCompleted(success: boolean) {
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send(IPC_CHANNELS.DATA_RELOAD_COMPLETED, success);
+    }
+  }
+
   public readAndEmit() {
     console.log('[FileManager] Reading data files...');
+    this.emitReloadStarted();
     try {
       const groups = this.parseGroups();
       const contacts = this.parseContacts();
@@ -72,8 +85,10 @@ export class FileManager {
         this.mainWindow.webContents.send(IPC_CHANNELS.DATA_UPDATED, payload);
         console.log('[FileManager] Data emitted to renderer.');
       }
+      this.emitReloadCompleted(true);
     } catch (error) {
       console.error('[FileManager] Error reading files:', error);
+      this.emitReloadCompleted(false);
     }
   }
 

@@ -14,6 +14,20 @@ const api: BridgeAPI = {
     });
   },
 
+  onReloadStart: (callback) => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_RELOAD_STARTED);
+    ipcRenderer.on(IPC_CHANNELS.DATA_RELOAD_STARTED, () => {
+      callback();
+    });
+  },
+
+  onReloadComplete: (callback) => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_RELOAD_COMPLETED);
+    ipcRenderer.on(IPC_CHANNELS.DATA_RELOAD_COMPLETED, (_event, success: boolean) => {
+      callback(success);
+    });
+  },
+
   reloadData: () => ipcRenderer.invoke(IPC_CHANNELS.DATA_RELOAD),
 
   onAuthRequested: (callback) => {

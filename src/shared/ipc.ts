@@ -25,6 +25,8 @@ export type BridgeAPI = {
     openGroupsFile: () => Promise<void>;
     openContactsFile: () => Promise<void>;
     subscribeToData: (callback: (data: AppData) => void) => void;
+    onReloadStart: (callback: () => void) => void;
+    onReloadComplete: (callback: (success: boolean) => void) => void;
     reloadData: () => Promise<void>;
     onAuthRequested: (callback: (request: AuthRequest) => void) => void;
     submitAuth: (username: string, password: string) => void;
@@ -38,6 +40,8 @@ export const IPC_CHANNELS = {
     OPEN_CONTACTS_FILE: 'fs:openContactsFile',
     DATA_UPDATED: 'data:updated',
     DATA_RELOAD: 'data:reload',
+    DATA_RELOAD_STARTED: 'data:reload-started',
+    DATA_RELOAD_COMPLETED: 'data:reload-completed',
     AUTH_REQUESTED: 'auth:requested',
     AUTH_SUBMIT: 'auth:submit',
     AUTH_CANCEL: 'auth:cancel'
