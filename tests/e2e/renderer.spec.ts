@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const primaryHeader = 'NOC\nWORKSHOP';
+const primaryHeader = 'NOCWORKSHOP';
 
 test.describe('renderer shell', () => {
   test('renders layout and captures baseline screenshot', async ({ page }) => {

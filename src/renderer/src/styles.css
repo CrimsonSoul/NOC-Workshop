@@ -52,6 +52,7 @@ body {
   background-color: var(--bg-app);
   color: var(--text-primary);
   font-family: var(--font-mono); /* Default to mono for data-heavy feel */
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
   height: 100vh;
   overflow: hidden;
@@ -79,7 +80,7 @@ button {
   gap: 8px;
   padding: 10px 16px;
   border-radius: var(--border-radius-sm);
-  font-size: 12px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -104,27 +105,27 @@ button {
 }
 
 .tactile-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--btn-shadow-hover, 0 2px 6px rgba(0, 0, 0, 0.35));
-  border-color: var(--btn-border-hover, rgba(255, 215, 0, 0.35));
+  transform: translateY(-2px);
+  box-shadow: var(--btn-shadow-hover, 0 4px 8px rgba(0, 0, 0, 0.45));
+  border-color: var(--btn-border-hover, rgba(255, 215, 0, 0.45));
 }
 
 .tactile-button:hover:not(:disabled)::after,
 .tactile-button:focus-visible::after {
-  opacity: 0.6;
+  opacity: 0.7;
   transform: translateY(-2px);
 }
 
 .tactile-button:focus-visible {
-  outline: 1px solid rgba(255, 215, 0, 0.4);
+  outline: 2px solid rgba(255, 215, 0, 0.5);
   outline-offset: 2px;
 }
 
 .tactile-button:active:not(:disabled),
 .tactile-button.is-active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: var(--btn-shadow-active, inset 0 1px 3px rgba(0, 0, 0, 0.4));
-  filter: brightness(1.02);
+  transform: translateY(1px) scale(0.98);
+  box-shadow: var(--btn-shadow-active, inset 0 2px 4px rgba(0, 0, 0, 0.5));
+  filter: brightness(1.05);
 }
 
 .tactile-button.is-disabled,
@@ -184,7 +185,7 @@ button {
   border: none;
   color: var(--text-secondary);
   font-family: var(--font-serif);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -209,18 +210,10 @@ button {
 .tab-button.is-active {
   color: var(--accent-primary);
   background: var(--bg-panel);
-  font-weight: 600;
-}
-
-.tab-button.is-active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: var(--accent-primary);
-  box-shadow: 0 -2px 8px rgba(255, 215, 0, 0.4);
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--accent-primary), 0 1px 10px rgba(0, 0, 0, 0.3);
+  border-bottom: 2px solid var(--accent-primary);
+  transform: translateY(-1px);
 }
 
 .button-spinner {
@@ -252,12 +245,12 @@ button {
 
 .refresh-button:hover::after {
   opacity: 1;
-  animation: sweep 1.4s linear infinite;
+  animation: pulse 1.4s linear infinite;
 }
 
 .refresh-button.is-reloading::after {
   opacity: 1;
-  animation: sweep 1s linear infinite;
+  animation: pulse 1s linear infinite;
 }
 
 .toolbar-button {
@@ -297,7 +290,7 @@ input, textarea {
   background: var(--bg-panel);
   border: var(--border-subtle);
   color: var(--text-primary);
-  padding: var(--space-sm);
+  padding: var(--space-md);
   outline: none;
 }
 
