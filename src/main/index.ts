@@ -12,11 +12,7 @@ let authCallback: ((username: string, password: string) => void) | null = null;
 
 function getDataRoot() {
   if (!app.isPackaged) {
-    const appPath = app.getAppPath();
-    if (appPath.includes('dist')) {
-      return join(appPath, '..', '..', 'resources');
-    }
-    return join(appPath, 'resources');
+    return join(process.cwd(), 'data');
   }
 
   const executableDir = process.env.PORTABLE_EXECUTABLE_DIR || dirname(process.execPath);
@@ -26,11 +22,11 @@ function getDataRoot() {
     return portableDataPath;
   }
 
-  return join(process.resourcesPath, 'resources');
+  return join(process.resourcesPath, 'data');
 }
 
-const GROUP_FILES = ['groups.csv', 'groups.xlsx'];
-const CONTACT_FILES = ['contacts.csv', 'contacts.xlsx'];
+const GROUP_FILES = ['groups.csv'];
+const CONTACT_FILES = ['contacts.csv'];
 
 const resolveDataFile = (root: string, candidates: string[]) => {
   for (const file of candidates) {
