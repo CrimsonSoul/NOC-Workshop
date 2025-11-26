@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EVB>
+  <General>
+    <InputFile>release/win-unpacked/noc workshop.exe</InputFile>
+    <OutputFile>release/packed/noc workshop.exe</OutputFile>
+    <Files>
+      <Enabled>true</Enabled>
+      <DeleteExtractedOnExit>true</DeleteExtractedOnExit>
+      <CompressFiles>true</CompressFiles>
+    </Files>
+    <Registry>
+      <Enabled>false</Enabled>
+    </Registry>
+    <Folders>
+      <Enabled>true</Enabled>
+      <Folder>
+        <Name>%DEFAULT FOLDER%</Name>
+        <Files>
+          __FILE_LIST__
+        </Files>
+      </Folder>
+    </Folders>
+    <EVBVersion>10.0.0.0</EVBVersion>
+  </General>
+</EVB>
