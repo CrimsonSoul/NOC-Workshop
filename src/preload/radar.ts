@@ -11,24 +11,67 @@ type SelectorMap = {
 
 const SELECTORS: SelectorMap = {
   // Multiple fallbacks to accommodate small markup shifts on the radar page
-  ready: '#xcenter-ready, [data-xcenter-counter="ready"], .xcenter-ready .value, .ready .counter-value',
-  holding: '#xcenter-holding, [data-xcenter-counter="holding"], .xcenter-holding .value, .holding .counter-value',
-  inProgress: '#xcenter-inprogress, [data-xcenter-counter="inprogress"], .xcenter-active .value, .active .counter-value',
-  waiting: '#xcenter-waiting, [data-xcenter-counter="waiting"], .xcenter-queue .value, .queue .counter-value',
+  ready:
+    '#xcenter-ready, [data-xcenter-counter="ready"], .xcenter-ready .value, .ready .counter-value, [data-counter="ready"], [data-counter-ready]',
+  holding:
+    '#xcenter-holding, [data-xcenter-counter="holding"], .xcenter-holding .value, .holding .counter-value, [data-counter="holding"], [data-counter-holding]',
+  inProgress:
+    '#xcenter-inprogress, [data-xcenter-counter="inprogress"], .xcenter-active .value, .active .counter-value, [data-counter="inprogress"], [data-counter-inprogress]',
+  waiting:
+    '#xcenter-waiting, [data-xcenter-counter="waiting"], .xcenter-queue .value, .queue .counter-value, [data-counter="waiting"], [data-counter-waiting]',
   status: '#xcenter-status, [data-xcenter-status], .xcenter-status, .status-banner'
 };
 
 let lastPayload: string | null = null;
 
+const numberPattern = /-?\d+(?:\.\d+)?/;
+
+const parseNumericValue = (value?: string | null): number | undefined => {
+  if (!value) return undefined;
+
+  const match = value.match(numberPattern);
+  if (!match) return undefined;
+
+  const parsed = Number(match[0]);
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 const parseNumber = (selector: string): number | undefined => {
   const element = document.querySelector(selector);
   if (!element) return undefined;
 
-  const match = element.textContent?.match(/-?\d+(?:\.\d+)?/);
-  if (!match) return undefined;
+  const candidates = ['data-count', 'data-value', 'data-total', 'data-number', 'aria-label', 'title'];
 
-  const value = Number(match[0]);
-  return Number.isNaN(value) ? undefined : value;
+  for (const attr of candidates) {
+    const parsed = parseNumericValue(element.getAttribute(attr));
+    if (parsed !== undefined) return parsed;
+  }
+
+  for (const attr of Array.from(element.attributes)) {
+    const parsed = parseNumericValue(attr.value);
+    if (parsed !== undefined) return parsed;
+  }
+
+  const directText = parseNumericValue(element.textContent?.trim());
+  if (directText !== undefined) return directText;
+
+  const descendants = element.querySelectorAll('[data-count], [data-value], [data-total], [data-number], [aria-label], [title], span');
+  for (const descendant of Array.from(descendants)) {
+    for (const attr of candidates) {
+      const parsed = parseNumericValue(descendant.getAttribute(attr));
+      if (parsed !== undefined) return parsed;
+    }
+
+    for (const attr of Array.from(descendant.attributes)) {
+      const parsed = parseNumericValue(attr.value);
+      if (parsed !== undefined) return parsed;
+    }
+
+    const descendantText = parseNumericValue(descendant.textContent?.trim());
+    if (descendantText !== undefined) return descendantText;
+  }
+
+  return undefined;
 };
 
 const readStatus = (selector: string): string | undefined => {
