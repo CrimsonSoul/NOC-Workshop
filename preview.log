@@ -8,3 +8,6 @@ npm warn Unknown project config "playwright_skip_browser_download". This will st
 
 > noc-workshop@0.1.0 build:renderer
 > vite build --config vite.renderer.config.ts
+
+vite v5.4.21 building for production...
+transforming...
