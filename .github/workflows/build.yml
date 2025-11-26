@@ -47,7 +47,7 @@ jobs:
         run: winget install --id=Enigma.VirtualBox -e --accept-package-agreements --accept-source-agreements
 
       - name: Run Enigma Virtual Box packer
-        run: '"C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe" .github/enigma/enigma-project.evb'
+        run: '& "C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe" .github/enigma/enigma-project.evb'
 
       - name: Organize files for packaging
         shell: pwsh
