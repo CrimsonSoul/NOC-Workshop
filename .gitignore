@@ -3,11 +3,25 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# IDE files
 .idea
+.vscode
 .DS_Store
+
+# Build artifacts and temporary files
 dist
+dist-electron
+release
 tmp
 temp
+*.log
+.npm/
+
+# Test results and coverage
+test-results/
+coverage/
+playwright-report/
 
 # Generated data files
 *.xlsx

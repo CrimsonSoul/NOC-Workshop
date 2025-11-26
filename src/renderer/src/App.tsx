@@ -3,7 +3,6 @@ import { TactileButton } from './components/TactileButton';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
 import { RadarTab } from './tabs/RadarTab';
-import { AuthModal } from './components/AuthModal';
 import { AppData, Contact, AuthRequest } from '@shared/ipc';
 
 const WorldClock = () => {
@@ -46,7 +45,6 @@ const WorldClock = () => {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'Assembler' | 'Directory' | 'Radar'>('Assembler');
   const [data, setData] = useState<AppData>({ groups: {}, contacts: [], lastUpdated: 0 });
-  const [authRequest, setAuthRequest] = useState<AuthRequest | null>(null);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
@@ -108,9 +106,6 @@ export default function App() {
       }
     });
 
-    window.api.onAuthRequested((req) => {
-      setAuthRequest(req);
-    });
     return () => {
       if (glowTimeout.current) {
         clearTimeout(glowTimeout.current);
@@ -227,14 +222,6 @@ export default function App() {
         {activeTab === 'Directory' && <DirectoryTab contacts={data.contacts} onAddToAssembler={handleAddToAssembler} />}
         {activeTab === 'Radar' && <RadarTab />}
       </main>
-
-      {authRequest && (
-        <AuthModal request={authRequest}
-          onClose={() => { window.api.cancelAuth(); setAuthRequest(null); }}
-          onSubmit={(u, p) => { window.api.submitAuth(u, p); setAuthRequest(null); }}
-        />
-      )}
-
     </div>
   );
 }
