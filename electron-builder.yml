@@ -1,5 +1,5 @@
 appId: com.operators.atelier
-productName: OperatorsAtelier
+productName: "noc workshop"
 asar: true
 files:
   - dist/**
@@ -7,22 +7,16 @@ files:
   - node_modules/**
   - resources/**
   - "!node_modules/fsevents/**"
-extraResources:
-  - from: resources
-    to: resources
 directories:
   output: release
   buildResources: resources
 npmRebuild: false
+extraFiles:
+  - from: data
+    to: data
 win:
   target:
     - target: portable
       arch: x64
-  artifactName: OperatorsAtelier-${version}.exe
-
-extraFiles:
-  - from: resources
-    to: data
-    filter:
-      - "*.csv"
-      - "*.xlsx"
+  artifactName: "noc workshop-${version}.exe"
+  icon: build/icon.png

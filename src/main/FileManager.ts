@@ -1,13 +1,20 @@
 import chokidar from 'chokidar';
-import xlsx from 'xlsx';
 import { join } from 'path';
 import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS, type AppData, type Contact, type GroupMap } from '@shared/ipc';
 import fs from 'fs';
+import { parse } from 'csv-parse/sync';
 
-const GROUP_FILES = ['groups.csv', 'groups.xlsx'];
-const CONTACT_FILES = ['contacts.csv', 'contacts.xlsx'];
+const GROUP_FILES = ['groups.csv'];
+const CONTACT_FILES = ['contacts.csv'];
 const DEBOUNCE_MS = 100;
+
+function parseCsv(contents: string): any[][] {
+  return parse(contents, {
+    trim: true,
+    skip_empty_lines: true
+  });
+}
 
 export class FileManager {
   private watcher: chokidar.FSWatcher | null = null;
@@ -96,11 +103,9 @@ export class FileManager {
     const path = this.resolveExistingFile(GROUP_FILES);
     if (!path) return {};
 
-    const workbook = xlsx.readFile(path);
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
+    const contents = fs.readFileSync(path, 'utf-8');
+    const data = parseCsv(contents);
 
-    const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
     if (!data || data.length === 0) return {};
 
     const groups: GroupMap = {};
@@ -122,25 +127,31 @@ export class FileManager {
     const path = this.resolveExistingFile(CONTACT_FILES);
     if (!path) return [];
 
-    const workbook = xlsx.readFile(path);
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
+    const contents = fs.readFileSync(path, 'utf-8');
+    const data = parseCsv(contents);
 
-    const data = xlsx.utils.sheet_to_json(worksheet);
-    return data.map((row: any) => {
-      // Case-insensitive field lookup
+    if (data.length < 2) return [];
+
+    const header = data[0].map(h => h.toLowerCase());
+    const rows = data.slice(1);
+
+    return rows.map(rowValues => {
+      const row: { [key: string]: string } = {};
+      header.forEach((h, i) => {
+        row[h] = rowValues[i];
+      });
+
       const getField = (fieldNames: string[]) => {
         for (const fieldName of fieldNames) {
-          const key = Object.keys(row).find(k => k.toLowerCase() === fieldName.toLowerCase());
-          if (key && row[key]) return String(row[key]).trim();
+          if (row[fieldName.toLowerCase()]) return row[fieldName.toLowerCase()].trim();
         }
         return '';
       };
 
-      const name = getField(['name', 'Name', 'full name', 'Full Name']);
-      const email = getField(['email', 'Email', 'e-mail', 'E-mail']);
-      const phone = getField(['phone', 'Phone', 'Phone Number', 'phone number']);
-      const department = getField(['department', 'Department', 'dept', 'Dept']);
+      const name = getField(['name', 'full name']);
+      const email = getField(['email', 'e-mail']);
+      const phone = getField(['phone', 'phone number']);
+      const department = getField(['department', 'dept']);
 
       return {
         name,
