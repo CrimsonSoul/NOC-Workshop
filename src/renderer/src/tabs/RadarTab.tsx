@@ -81,10 +81,9 @@ export const RadarTab: React.FC = () => {
   };
 
   const metrics = [
-    { label: 'Ready', value: telemetry?.counters.ready },
-    { label: 'On Hold', value: telemetry?.counters.holding },
-    { label: 'In Progress', value: telemetry?.counters.inProgress },
-    { label: 'Waiting', value: telemetry?.counters.waiting }
+    { label: 'OK', value: telemetry?.counters.ok },
+    { label: 'Pending', value: telemetry?.counters.pending },
+    { label: 'Internal Error', value: telemetry?.counters.internalError }
   ];
 
   const statusColor = getStatusColor(telemetry);
