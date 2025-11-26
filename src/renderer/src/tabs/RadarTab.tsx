@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { WebviewTag } from 'electron';
-import type { RadarSnapshot } from '@shared/ipc';
+import type { RadarSnapshot, RadarStatusVariant } from '@shared/ipc';
 import { Panel, TactileButton } from '../components';
 
 const formatTimestamp = (timestamp?: number) => {
@@ -10,6 +10,49 @@ const formatTimestamp = (timestamp?: number) => {
     minute: '2-digit',
     second: '2-digit'
   });
+};
+
+const STATUS_VARIANT_COLORS: Record<RadarStatusVariant | 'default', string> = {
+  success: '#00ff99',
+  warning: '#f5c542',
+  danger: '#ff6b6b',
+  info: '#2dd4ff',
+  default: '#00ff99'
+};
+
+const withAlpha = (color: string, alpha: number) => {
+  if (color.startsWith('rgba(')) {
+    return color.replace(/rgba\((.+?),\s*[\d.]+\)/i, `rgba($1, ${alpha})`);
+  }
+
+  if (color.startsWith('rgb(')) {
+    return color.replace(/^rgb\((.+)\)$/i, `rgba($1, ${alpha})`);
+  }
+
+  if (/^#([0-9a-f]{3}){1,2}$/i.test(color)) {
+    const normalized = color.replace('#', '');
+    const expandHex = normalized.length === 3
+      ? normalized.split('').map(char => char + char).join('')
+      : normalized;
+
+    const r = parseInt(expandHex.slice(0, 2), 16);
+    const g = parseInt(expandHex.slice(2, 4), 16);
+    const b = parseInt(expandHex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  return color;
+};
+
+const getStatusColor = (telemetry: RadarSnapshot | null) => {
+  if (!telemetry) return STATUS_VARIANT_COLORS.default;
+
+  if (telemetry.statusColor) return telemetry.statusColor;
+  if (telemetry.statusVariant && STATUS_VARIANT_COLORS[telemetry.statusVariant]) {
+    return STATUS_VARIANT_COLORS[telemetry.statusVariant];
+  }
+
+  return STATUS_VARIANT_COLORS.default;
 };
 
 export const RadarTab: React.FC = () => {
@@ -43,6 +86,10 @@ export const RadarTab: React.FC = () => {
     { label: 'In Progress', value: telemetry?.counters.inProgress },
     { label: 'Waiting', value: telemetry?.counters.waiting }
   ];
+
+  const statusColor = getStatusColor(telemetry);
+  const statusBackground = `linear-gradient(90deg, ${withAlpha(statusColor, 0.15)}, ${withAlpha(statusColor, 0.05)})`;
+  const statusBorder = `1px solid ${withAlpha(statusColor, 0.2)}`;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -90,13 +137,25 @@ export const RadarTab: React.FC = () => {
               gap: '12px',
               padding: '12px',
               borderRadius: '8px',
-              background: 'linear-gradient(90deg, rgba(0,255,153,0.15), rgba(0,255,153,0.05))',
-              border: '1px solid rgba(0,255,153,0.2)'
+              background: statusBackground,
+              border: statusBorder
             }}>
-              <div>
-                <div style={{ fontFamily: 'var(--font-serif)', fontSize: '14px', color: 'var(--text-secondary)' }}>Status</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--text-primary)' }}>
-                  {telemetry?.statusText || 'Awaiting telemetry...'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                <div
+                  style={{
+                    width: '14px',
+                    height: '14px',
+                    borderRadius: '999px',
+                    background: statusColor,
+                    boxShadow: `0 0 12px ${withAlpha(statusColor, 0.7)}`,
+                    border: `1px solid ${withAlpha(statusColor, 0.4)}`
+                  }}
+                />
+                <div>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '14px', color: 'var(--text-secondary)' }}>Status</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                    {telemetry?.statusText || 'Awaiting telemetry...'}
+                  </div>
                 </div>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-secondary)' }}>

@@ -26,9 +26,13 @@ export type RadarCounters = {
     waiting?: number;
 };
 
+export type RadarStatusVariant = 'success' | 'warning' | 'danger' | 'info';
+
 export type RadarSnapshot = {
     counters: RadarCounters;
     statusText?: string;
+    statusColor?: string;
+    statusVariant?: RadarStatusVariant;
     lastUpdated: number;
 };
 

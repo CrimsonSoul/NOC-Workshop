@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import { IPC_CHANNELS, type RadarCounters, type RadarSnapshot } from '@shared/ipc';
+import { IPC_CHANNELS, type RadarCounters, type RadarSnapshot, type RadarStatusVariant } from '@shared/ipc';
 
 type SelectorMap = {
   ready: string;
@@ -74,12 +74,41 @@ const parseNumber = (selector: string): number | undefined => {
   return undefined;
 };
 
-const readStatus = (selector: string): string | undefined => {
-  const element = document.querySelector(selector);
-  if (!element) return undefined;
+const readStatusElement = (selector: string): HTMLElement | null => {
+  return document.querySelector(selector);
+};
 
-  const text = element.textContent?.trim();
-  return text || undefined;
+const parseStatusVariant = (element: HTMLElement): RadarStatusVariant | undefined => {
+  const hint = `${element.className} ${element.getAttribute('data-status') ?? ''}`.toLowerCase();
+
+  if (/success|green|ready|available/.test(hint)) return 'success';
+  if (/warning|caution|amber|yellow/.test(hint)) return 'warning';
+  if (/danger|error|alert|red|critical/.test(hint)) return 'danger';
+  if (/info|blue|neutral|normal/.test(hint)) return 'info';
+
+  return undefined;
+};
+
+const parseStatusColor = (element: HTMLElement): string | undefined => {
+  const inlineColor = element.style.backgroundColor;
+  const computedColor = getComputedStyle(element).backgroundColor;
+  const color = inlineColor || computedColor;
+
+  if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return undefined;
+  return color;
+};
+
+const readStatus = (
+  selector: string
+): { text?: string; statusVariant?: RadarStatusVariant; statusColor?: string } => {
+  const element = readStatusElement(selector);
+  if (!element) return {};
+
+  const text = element.textContent?.trim() || undefined;
+  const statusVariant = parseStatusVariant(element);
+  const statusColor = parseStatusColor(element);
+
+  return { text, statusVariant, statusColor };
 };
 
 const buildSnapshot = (): RadarSnapshot | null => {
@@ -90,7 +119,7 @@ const buildSnapshot = (): RadarSnapshot | null => {
     waiting: parseNumber(SELECTORS.waiting)
   };
 
-  const statusText = readStatus(SELECTORS.status);
+  const { text: statusText, statusColor, statusVariant } = readStatus(SELECTORS.status);
   const hasCounters = Object.values(counters).some((value) => value !== undefined);
 
   if (!hasCounters && !statusText) {
@@ -100,6 +129,8 @@ const buildSnapshot = (): RadarSnapshot | null => {
   return {
     counters,
     statusText,
+    statusColor,
+    statusVariant,
     lastUpdated: Date.now()
   };
 };
