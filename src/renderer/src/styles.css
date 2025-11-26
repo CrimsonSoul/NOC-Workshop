@@ -330,3 +330,29 @@ input:focus, textarea:focus {
   60% { opacity: 0.15; }
   100% { transform: translateX(140%); opacity: 0; }
 }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.blinking-colon {
+  animation: blink 1.2s step-end infinite;
+  position: relative;
+  top: -1px;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(212, 175, 55, 0.3), inset 0 0 3px rgba(212, 175, 55, 0.2);
+    border-color: rgba(212, 175, 55, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 69, 0, 0.5), inset 0 0 6px rgba(255, 69, 0, 0.3);
+    border-color: rgba(255, 69, 0, 0.6);
+  }
+}
+
+.is-active.pulse-glow-effect {
+  animation: pulse-glow 1.8s ease-in-out infinite;
+}
