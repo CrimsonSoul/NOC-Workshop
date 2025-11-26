@@ -44,7 +44,7 @@ jobs:
         run: npx electron-builder --config electron-builder.yml --win dir
 
       - name: Install Enigma Virtual Box
-        run: winget install --id=Enigma.VirtualBox -e
+        run: winget install --id=Enigma.VirtualBox -e --accept-package-agreements
 
       - name: Run Enigma Virtual Box packer
         run: '"C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe" .github/enigma/enigma-project.evb'
