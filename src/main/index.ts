@@ -56,7 +56,8 @@ async function createWindow(dataRoot: string) {
       preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      webviewTag: true
     }
   });
 
@@ -109,6 +110,12 @@ function setupIpc(dataRoot: string) {
 
   ipcMain.on(IPC_CHANNELS.AUTH_CANCEL, () => {
     authCallback = null;
+  });
+
+  ipcMain.on(IPC_CHANNELS.RADAR_DATA, (_event, payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(IPC_CHANNELS.RADAR_DATA, payload);
+    }
   });
 }
 

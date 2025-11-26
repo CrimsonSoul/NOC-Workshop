@@ -33,7 +33,8 @@ export default defineConfig({
       outDir: 'dist/preload',
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/preload/index.ts')
+          index: resolve(__dirname, 'src/preload/index.ts'),
+          radar: resolve(__dirname, 'src/preload/radar.ts')
         }
       }
     }

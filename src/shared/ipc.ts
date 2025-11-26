@@ -19,6 +19,20 @@ export type AuthRequest = {
     isProxy: boolean;
 };
 
+export type RadarCounters = {
+    ready?: number;
+    holding?: number;
+    inProgress?: number;
+    waiting?: number;
+};
+
+export type RadarSnapshot = {
+    counters: RadarCounters;
+    statusText?: string;
+    statusColor?: string;
+    lastUpdated: number;
+};
+
 export type BridgeAPI = {
     openPath: (path: string) => Promise<void>;
     openExternal: (url: string) => Promise<void>;
@@ -31,6 +45,8 @@ export type BridgeAPI = {
     onAuthRequested: (callback: (request: AuthRequest) => void) => void;
     submitAuth: (username: string, password: string) => void;
     cancelAuth: () => void;
+    subscribeToRadar: (callback: (data: RadarSnapshot) => void) => void;
+    radarPreloadPath: string;
 };
 
 export const IPC_CHANNELS = {
@@ -44,5 +60,6 @@ export const IPC_CHANNELS = {
     DATA_RELOAD_COMPLETED: 'data:reload-completed',
     AUTH_REQUESTED: 'auth:requested',
     AUTH_SUBMIT: 'auth:submit',
-    AUTH_CANCEL: 'auth:cancel'
+    AUTH_CANCEL: 'auth:cancel',
+    RADAR_DATA: 'radar:data'
 } as const;

@@ -1,5 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest } from '@shared/ipc';
+import { fileURLToPath } from 'node:url';
+import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest, type RadarSnapshot } from '@shared/ipc';
+
+const radarPreloadPath = fileURLToPath(new URL('./radar.mjs', import.meta.url));
 
 const api: BridgeAPI = {
   openPath: (path) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_PATH, path),
@@ -43,7 +46,16 @@ const api: BridgeAPI = {
 
   cancelAuth: () => {
     ipcRenderer.send(IPC_CHANNELS.AUTH_CANCEL);
-  }
+  },
+
+  subscribeToRadar: (callback) => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.RADAR_DATA);
+    ipcRenderer.on(IPC_CHANNELS.RADAR_DATA, (_event, data: RadarSnapshot) => {
+      callback(data);
+    });
+  },
+
+  radarPreloadPath
 };
 
 contextBridge.exposeInMainWorld('api', api);
