@@ -50,24 +50,14 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
             {Object.keys(groups).map(g => {
               const isSelected = selectedGroups.includes(g);
               return (
-                <div
+                <TactileButton
                   key={g}
                   onClick={() => onToggleGroup(g, !isSelected)}
-                  style={{
-                    background: isSelected ? 'var(--accent-primary)' : 'var(--bg-app)',
-                    border: `1px solid ${isSelected ? 'var(--accent-primary)' : 'rgba(255,255,255,0.2)'}`,
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: isSelected ? '#000' : 'var(--accent-primary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: isSelected ? 600 : 400,
-                    boxShadow: isSelected ? '0 0 8px rgba(255, 215, 0, 0.3)' : 'none'
-                  }}
+                  variant={isSelected ? 'primary' : 'secondary'}
+                  active={isSelected}
                 >
                   {g}
-                </div>
+                </TactileButton>
               );
             })}
             {Object.keys(groups).length === 0 && (
@@ -103,22 +93,22 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
 
         <div style={{
           flex: 1,
-          background: 'rgba(0,0,0,0.3)',
+          background: 'var(--bg-panel)',
           color: 'var(--text-primary)',
           fontFamily: 'var(--font-mono)',
-          padding: '24px',
+          padding: 'var(--space-lg)',
           overflow: 'auto',
-          border: '1px solid rgba(255,255,255,0.1)',
+          border: 'var(--border-subtle)',
           minHeight: 0,
           position: 'relative'
         }}>
           <div style={{
-            borderBottom: '1px solid rgba(255,215,0,0.2)',
-            paddingBottom: '12px',
-            marginBottom: '16px',
+            borderBottom: '1px solid var(--border-accent)',
+            paddingBottom: 'var(--space-md)',
+            marginBottom: 'var(--space-lg)',
             textAlign: 'center',
             color: 'var(--accent-primary)',
-            fontSize: '11px',
+            fontSize: '14px',
             letterSpacing: '0.05em',
             fontFamily: 'var(--font-serif)'
           }}>

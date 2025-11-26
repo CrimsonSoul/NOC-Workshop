@@ -36,32 +36,26 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
     return (
       <div style={{
         ...style,
-        padding: '0 16px',
+        padding: '0 var(--space-md)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
-        background: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'
+        borderBottom: 'var(--border-subtle)',
+        background: index % 2 === 0 ? 'var(--color-charcoal-hover)' : 'transparent'
       }}>
         <div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: '16px' }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: '18px' }}>
             {contact.name}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-secondary)' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', color: 'var(--text-secondary)' }}>
             {contact.department} • {contact.email}
           </div>
         </div>
         <TactileButton
           variant={added ? 'primary' : 'secondary'}
           onClick={handleAdd}
-          style={{
-            padding: '4px 12px',
-            fontSize: '11px',
-            background: added ? 'var(--accent-primary)' : undefined,
-            color: added ? '#000' : undefined,
-            boxShadow: added ? '0 0 10px rgba(255, 215, 0, 0.5)' : undefined,
-            transition: 'all 0.2s ease'
-          }}
+          active={added}
+          style={{ padding: '6px 14px', fontSize: '12px' }}
         >
           {added ? '✓  ADDED' : 'ADD +'}
         </TactileButton>
@@ -71,22 +65,13 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ marginBottom: '16px' }}>
-        <input
-          style={{
-            width: '100%',
-            background: 'transparent',
-            border: 'none',
-            borderBottom: '2px solid var(--text-secondary)',
-            fontSize: '32px',
-            fontFamily: 'var(--font-serif)',
-            color: 'var(--text-primary)',
-            padding: '12px 0'
-          }}
+      <div style={{ marginBottom: 'var(--space-lg)' }}>
+        <Input
           placeholder="Search the directory..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
+          style={{ fontSize: '24px', fontFamily: 'var(--font-serif)', padding: 'var(--space-md) 0' }}
         />
       </div>
 
