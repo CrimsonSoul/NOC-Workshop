@@ -1,0 +1,4 @@
+npm warn Unknown project config "playwright_skip_browser_download". This will stop working in the next major version of npm.
+
+> noc-workshop@0.1.0 dev
+> electron-vite dev

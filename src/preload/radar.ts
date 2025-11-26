@@ -10,117 +10,29 @@ type SelectorMap = {
 };
 
 const SELECTORS: SelectorMap = {
-  // Multiple fallbacks to accommodate the XCenter Counts panel markup (attribute matches are case-insensitive)
-  ok:
-    '#xcenter-ok, [data-xcenter-counter="ok" i], [data-counter="ok" i], [data-counter-ok], .xcenter-ok .value, .ok .counter-value, [data-testid="xcenter-count-ok"], [data-xcenter-count="ok" i]',
-  pending:
-    '#xcenter-pending, [data-xcenter-counter="pending" i], [data-counter="pending" i], [data-counter-pending], .xcenter-pending .value, .pending .counter-value, [data-testid="xcenter-count-pending"], [data-xcenter-count="pending" i]',
-  internalError:
-    '#xcenter-internal-error, #xcenter-internalError, [data-xcenter-counter="internal-error" i], [data-xcenter-counter="internalError" i], [data-counter="internalError" i], [data-counter-internal-error], [data-counter-internalError], .xcenter-internal-error .value, .internal-error .counter-value, [data-testid="xcenter-count-internal-error"], [data-xcenter-count="internal-error" i]',
+  ok: 'td.left.ok + td.right',
+  pending: 'td.left.pending + td.right',
+  internalError: 'td.left.internal.error + td.right',
   countsPanel:
     '#xcenter-counts, [data-xcenter-counts], [data-testid="xcenter-counts"], [aria-label*="XCenter Counts" i], [data-panel="xcenter" i], [data-panel-type="xcenter" i], .xcenter-counts, .counts-panel',
-  status: '#xcenter-status, [data-xcenter-status], .xcenter-status, .status-banner'
+  status: 'td.status-bar'
 };
 
 let lastPayload: string | null = null;
 
-const numberPattern = /-?\d+(?:\.\d+)?/;
-
-const parseNumericValue = (value?: string | null): number | undefined => {
-  if (!value) return undefined;
-
-  const match = value.match(numberPattern);
-  if (!match) return undefined;
-
-  const parsed = Number(match[0]);
-  return Number.isNaN(parsed) ? undefined : parsed;
-};
-
-const parseNumberFromElement = (element: Element): number | undefined => {
-  const candidates = ['data-count', 'data-value', 'data-total', 'data-number', 'aria-label', 'title'];
-
-  for (const attr of candidates) {
-    const parsed = parseNumericValue(element.getAttribute(attr));
-    if (parsed !== undefined) return parsed;
-  }
-
-  for (const attr of Array.from(element.attributes)) {
-    const parsed = parseNumericValue(attr.value);
-    if (parsed !== undefined) return parsed;
-  }
-
-  const directText = parseNumericValue(element.textContent?.trim());
-  if (directText !== undefined) return directText;
-
-  const descendants = element.querySelectorAll('[data-count], [data-value], [data-total], [data-number], [aria-label], [title], span');
-  for (const descendant of Array.from(descendants)) {
-    for (const attr of candidates) {
-      const parsed = parseNumericValue(descendant.getAttribute(attr));
-      if (parsed !== undefined) return parsed;
-    }
-
-    for (const attr of Array.from(descendant.attributes)) {
-      const parsed = parseNumericValue(attr.value);
-      if (parsed !== undefined) return parsed;
-    }
-
-    const descendantText = parseNumericValue(descendant.textContent?.trim());
-    if (descendantText !== undefined) return descendantText;
-  }
-
-  return undefined;
-};
-
-const parseNumber = (selector: string): number | undefined => {
+const parseCounter = (selector: string): number | undefined => {
   const element = document.querySelector(selector);
   if (!element) return undefined;
 
-  return parseNumberFromElement(element);
+  const text = element.textContent?.trim();
+  if (!text) return undefined;
+
+  const parsed = Number(text);
+  return Number.isNaN(parsed) ? undefined : parsed;
 };
 
 const readStatusElement = (selector: string): HTMLElement | null => {
   return document.querySelector(selector);
-};
-
-const parseCounterFromPanel = (labelPattern: RegExp): number | undefined => {
-  const panels = document.querySelectorAll(SELECTORS.countsPanel);
-
-  for (const panel of Array.from(panels)) {
-    const labelCandidates = panel.querySelectorAll('*');
-
-    for (const label of Array.from(labelCandidates)) {
-      const text = label.textContent?.trim();
-      if (!text || !labelPattern.test(text)) continue;
-
-      const labelValue = parseNumericValue(text);
-      if (labelValue !== undefined) return labelValue;
-
-      const directValue = parseNumberFromElement(label);
-      if (directValue !== undefined) return directValue;
-
-      const parent = label.parentElement;
-      if (!parent) continue;
-
-      const siblings = Array.from(parent.children).filter((child) => child !== label);
-
-      for (const sibling of siblings) {
-        const parsed = parseNumberFromElement(sibling);
-        if (parsed !== undefined) return parsed;
-      }
-
-      const parentValue = parseNumberFromElement(parent);
-      if (parentValue !== undefined) return parentValue;
-    }
-  }
-
-  return undefined;
-};
-
-const parseCounter = (selector: string, labelPattern: RegExp): number | undefined => {
-  const parsed = parseNumber(selector);
-  if (parsed !== undefined) return parsed;
-
-  return parseCounterFromPanel(labelPattern);
 };
 
 const parseStatusVariant = (element: HTMLElement): RadarStatusVariant | undefined => {
@@ -158,9 +70,9 @@ const readStatus = (
 
 const buildSnapshot = (): RadarSnapshot | null => {
   const counters: RadarCounters = {
-    ok: parseCounter(SELECTORS.ok, /\bok\b/i),
-    pending: parseCounter(SELECTORS.pending, /\bpending\b/i),
-    internalError: parseCounter(SELECTORS.internalError, /internal\s*error/i)
+    ok: parseCounter(SELECTORS.ok),
+    pending: parseCounter(SELECTORS.pending),
+    internalError: parseCounter(SELECTORS.internalError)
   };
 
   const { text: statusText, statusColor, statusVariant } = readStatus(SELECTORS.status);
