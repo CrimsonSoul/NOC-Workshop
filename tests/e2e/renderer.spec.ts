@@ -7,7 +7,7 @@ test.describe('renderer shell', () => {
     await page.goto('/');
 
     await expect(page.getByText(primaryHeader)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Refresh data' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Refresh' })).toBeVisible();
 
     const screenshotPath = test.info().outputPath('renderer-home.png');
     await page.screenshot({ path: screenshotPath, fullPage: true });
