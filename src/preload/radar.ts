@@ -2,23 +2,22 @@ import { ipcRenderer } from 'electron';
 import { IPC_CHANNELS, type RadarCounters, type RadarSnapshot, type RadarStatusVariant } from '@shared/ipc';
 
 type SelectorMap = {
-  ready: string;
-  holding: string;
-  inProgress: string;
-  waiting: string;
+  ok: string;
+  pending: string;
+  internalError: string;
+  countsPanel: string;
   status: string;
 };
 
 const SELECTORS: SelectorMap = {
-  // Multiple fallbacks to accommodate small markup shifts on the radar page
-  ready:
-    '#xcenter-ready, [data-xcenter-counter="ready"], .xcenter-ready .value, .ready .counter-value, [data-counter="ready"], [data-counter-ready]',
-  holding:
-    '#xcenter-holding, [data-xcenter-counter="holding"], .xcenter-holding .value, .holding .counter-value, [data-counter="holding"], [data-counter-holding]',
-  inProgress:
-    '#xcenter-inprogress, [data-xcenter-counter="inprogress"], .xcenter-active .value, .active .counter-value, [data-counter="inprogress"], [data-counter-inprogress]',
-  waiting:
-    '#xcenter-waiting, [data-xcenter-counter="waiting"], .xcenter-queue .value, .queue .counter-value, [data-counter="waiting"], [data-counter-waiting]',
+  // Multiple fallbacks to accommodate the XCenter Counts panel markup
+  ok:
+    '#xcenter-ok, [data-xcenter-counter="ok"], [data-counter="ok"], [data-counter-ok], .xcenter-ok .value, .ok .counter-value, [data-testid="xcenter-count-ok"], [data-xcenter-count="ok"]',
+  pending:
+    '#xcenter-pending, [data-xcenter-counter="pending"], [data-counter="pending"], [data-counter-pending], .xcenter-pending .value, .pending .counter-value, [data-testid="xcenter-count-pending"], [data-xcenter-count="pending"]',
+  internalError:
+    '#xcenter-internal-error, #xcenter-internalError, [data-xcenter-counter="internal-error"], [data-xcenter-counter="internalError"], [data-counter="internalError"], [data-counter-internal-error], [data-counter-internalError], .xcenter-internal-error .value, .internal-error .counter-value, [data-testid="xcenter-count-internal-error"], [data-xcenter-count="internal-error"]',
+  countsPanel: '#xcenter-counts, [data-xcenter-counts], [data-testid="xcenter-counts"], [aria-label*="XCenter Counts" i], .xcenter-counts, .counts-panel',
   status: '#xcenter-status, [data-xcenter-status], .xcenter-status, .status-banner'
 };
 
@@ -36,10 +35,7 @@ const parseNumericValue = (value?: string | null): number | undefined => {
   return Number.isNaN(parsed) ? undefined : parsed;
 };
 
-const parseNumber = (selector: string): number | undefined => {
-  const element = document.querySelector(selector);
-  if (!element) return undefined;
-
+const parseNumberFromElement = (element: Element): number | undefined => {
   const candidates = ['data-count', 'data-value', 'data-total', 'data-number', 'aria-label', 'title'];
 
   for (const attr of candidates) {
@@ -74,8 +70,56 @@ const parseNumber = (selector: string): number | undefined => {
   return undefined;
 };
 
+const parseNumber = (selector: string): number | undefined => {
+  const element = document.querySelector(selector);
+  if (!element) return undefined;
+
+  return parseNumberFromElement(element);
+};
+
 const readStatusElement = (selector: string): HTMLElement | null => {
   return document.querySelector(selector);
+};
+
+const parseCounterFromPanel = (labelPattern: RegExp): number | undefined => {
+  const panels = document.querySelectorAll(SELECTORS.countsPanel);
+
+  for (const panel of Array.from(panels)) {
+    const labelCandidates = panel.querySelectorAll('*');
+
+    for (const label of Array.from(labelCandidates)) {
+      const text = label.textContent?.trim();
+      if (!text || !labelPattern.test(text)) continue;
+
+      const labelValue = parseNumericValue(text);
+      if (labelValue !== undefined) return labelValue;
+
+      const directValue = parseNumberFromElement(label);
+      if (directValue !== undefined) return directValue;
+
+      const parent = label.parentElement;
+      if (!parent) continue;
+
+      const siblings = Array.from(parent.children).filter((child) => child !== label);
+
+      for (const sibling of siblings) {
+        const parsed = parseNumberFromElement(sibling);
+        if (parsed !== undefined) return parsed;
+      }
+
+      const parentValue = parseNumberFromElement(parent);
+      if (parentValue !== undefined) return parentValue;
+    }
+  }
+
+  return undefined;
+};
+
+const parseCounter = (selector: string, labelPattern: RegExp): number | undefined => {
+  const parsed = parseNumber(selector);
+  if (parsed !== undefined) return parsed;
+
+  return parseCounterFromPanel(labelPattern);
 };
 
 const parseStatusVariant = (element: HTMLElement): RadarStatusVariant | undefined => {
@@ -113,10 +157,9 @@ const readStatus = (
 
 const buildSnapshot = (): RadarSnapshot | null => {
   const counters: RadarCounters = {
-    ready: parseNumber(SELECTORS.ready),
-    holding: parseNumber(SELECTORS.holding),
-    inProgress: parseNumber(SELECTORS.inProgress),
-    waiting: parseNumber(SELECTORS.waiting)
+    ok: parseCounter(SELECTORS.ok, /\bok\b/i),
+    pending: parseCounter(SELECTORS.pending, /\bpending\b/i),
+    internalError: parseCounter(SELECTORS.internalError, /internal\s*error/i)
   };
 
   const { text: statusText, statusColor, statusVariant } = readStatus(SELECTORS.status);

@@ -20,10 +20,9 @@ export type AuthRequest = {
 };
 
 export type RadarCounters = {
-    ready?: number;
-    holding?: number;
-    inProgress?: number;
-    waiting?: number;
+    ok?: number;
+    pending?: number;
+    internalError?: number;
 };
 
 export type RadarStatusVariant = 'success' | 'warning' | 'danger' | 'info';
