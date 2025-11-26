@@ -43,8 +43,12 @@ jobs:
       - name: Prepare Windows unpacked build
         run: npx electron-builder --config electron-builder.yml --win dir
 
-      - name: Upload unpacked artifact
+      - name: Rename output directory
+        shell: powershell
+        run: Move-Item -Path release/win-unpacked -Destination release/'noc workshop'
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: operators-atelier-windows-unpacked
-          path: release/win-unpacked/**
+          name: noc-workshop-windows
+          path: release/'noc workshop'
