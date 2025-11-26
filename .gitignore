@@ -26,3 +26,6 @@ playwright-report/
 # Generated data files
 *.xlsx
 resources/*.xlsx
+
+# Enigma Virtual Box
+.github/enigma/enigma-project.evb

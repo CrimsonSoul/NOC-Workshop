@@ -212,7 +212,7 @@ export default function App() {
             {isReloading && (
               <span className="button-spinner" aria-hidden />
             )}
-            {isReloading ? 'Syncing...' : 'Refresh'}
+            {isReloading ? 'Syncing...' : 'Refresh data'}
           </TactileButton>
         </div>
       </div>
