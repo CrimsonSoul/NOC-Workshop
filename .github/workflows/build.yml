@@ -72,10 +72,25 @@ jobs:
           (Get-Content -Raw -Path $templatePath) -replace '__FILE_LIST__', $fileListXml | Set-Content -Path $outputPath
           echo "Generated enigma-project.evb with file list."
 
+      - name: Verify Enigma Project File
+        shell: powershell
+        run: |
+          $filePath = ".github/enigma/enigma-project.evb"
+          if (Test-Path $filePath) {
+            echo "Enigma project file found at $filePath"
+            echo "--- File Content ---"
+            Get-Content $filePath
+            echo "--- End File Content ---"
+          } else {
+            echo "Error: Enigma project file not found at $filePath"
+            exit 1
+          }
+
       - name: Run Enigma Virtual Box packer
         shell: pwsh
         run: |
-          & "C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe" ".github/enigma/enigma-project.evb"
+          $projectPath = Join-Path $env:GITHUB_WORKSPACE ".github/enigma/enigma-project.evb"
+          & "C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe" "$projectPath"
 
       - name: Organize files for packaging
         shell: pwsh
