@@ -89,8 +89,11 @@ jobs:
       - name: Run Enigma Virtual Box packer
         shell: pwsh
         run: |
+          $exePath = "C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe"
           $projectPath = Join-Path $env:GITHUB_WORKSPACE ".github/enigma/enigma-project.evb"
-          & "C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe" "$projectPath"
+          $command = "& `"$exePath`" `"$projectPath`""
+          echo "Running command: $command"
+          Invoke-Expression $command
 
       - name: Organize files for packaging
         shell: pwsh
