@@ -11,12 +11,12 @@ directories:
   output: release
   buildResources: resources
 npmRebuild: false
-extraFiles:
+extraResources:
   - from: data
     to: data
 win:
   target:
     - target: portable
       arch: x64
-  artifactName: "noc workshop-${version}.exe"
+  artifactName: "noc workshop.exe"
   icon: build/icon.png
