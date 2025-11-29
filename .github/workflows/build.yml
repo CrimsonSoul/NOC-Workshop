@@ -27,80 +27,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Build project
         run: npm run build
 
-      - name: Clean release output
-        shell: powershell
-        run: |
-          if (Test-Path 'release') {
-            Remove-Item -Recurse -Force 'release'
-          }
-
-      - name: Prepare Windows unpacked build
-        run: npx electron-builder --config electron-builder.yml --win dir
-
-      - name: Install Enigma Virtual Box
-        run: winget install --id=Enigma.VirtualBox -e --accept-package-agreements --accept-source-agreements
-
-      - name: Generate Enigma Project File
-        shell: powershell
-        run: |
-          $unpackedDir = "release/win-unpacked"
-          $templatePath = ".github/enigma/enigma-template.evb"
-          $outputPath = ".github/enigma/enigma-project.evb"
-          $mainExeName = "noc workshop.exe"
-
-          $items = Get-ChildItem -Path $unpackedDir -Recurse
-          $fileListXml = ""
-
-          foreach ($item in $items) {
-              if ($item.Name -eq $mainExeName) {
-                  continue
-              }
-              $relativePath = $item.FullName.Substring($unpackedDir.Length + 1).Replace('\', '/')
-              if ($item.PSIsContainer) {
-                  $fileListXml += "<EmptyFolder><Name>%DEFAULT FOLDER%/$relativePath</Name></EmptyFolder>"
-              } else {
-                  $fileListXml += "<File><Type>3</Type><Name>%DEFAULT FOLDER%/$relativePath</Name><Action>0</Action><WorkingDir>1</WorkingDir></File>"
-              }
-          }
-
-          (Get-Content -Raw -Path $templatePath) -replace '__FILE_LIST__', $fileListXml | Set-Content -Path $outputPath
-          echo "Generated enigma-project.evb with file list."
-
-      - name: Verify Enigma Project File
-        shell: powershell
-        run: |
-          $filePath = ".github/enigma/enigma-project.evb"
-          if (Test-Path $filePath) {
-            echo "Enigma project file found at $filePath"
-            echo "--- File Content ---"
-            Get-Content $filePath
-            echo "--- End File Content ---"
-          } else {
-            echo "Error: Enigma project file not found at $filePath"
-            exit 1
-          }
-
-      - name: Run Enigma Virtual Box packer
-        working-directory: ./.github/enigma
-        run: '& "C:\Program Files (x86)\Enigma Virtual Box\enigmavbconsole.exe" enigma-project.evb'
-
-      - name: Organize files for packaging
-        shell: pwsh
-        run: |
-          $packedDir = "release/packed"
-          $dataDir = "release/win-unpacked/data"
-          if (Test-Path $dataDir) {
-            Copy-Item -Path $dataDir -Destination $packedDir -Recurse
-          }
+      - name: Build Windows Portable
+        run: npx electron-builder --win --config electron-builder.yml
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: noc-workshop-windows
-          path: release/packed/
+          path: release/*.exe
