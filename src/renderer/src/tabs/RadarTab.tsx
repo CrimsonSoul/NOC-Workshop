@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import type { WebviewTag } from 'electron';
-import { TactileButton } from '../components';
+import { TactileButton } from '../components/TactileButton';
 
 export const RadarTab: React.FC = () => {
   const [url, setUrl] = useState('https://cw-intra-web/CWDashboard/Home/Radar');
@@ -11,45 +11,35 @@ export const RadarTab: React.FC = () => {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ flex: 1, minHeight: 0 }}>
-        <div style={{
-          background: '#000',
-          borderRadius: '8px',
-          boxShadow: 'inset 0 0 20px #000',
-          padding: '2px',
-          position: 'relative',
-          overflow: 'hidden',
-          height: '100%'
-        }}>
-          {/* Screen Glare / Vignette */}
-          <div style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            boxShadow: 'inset 0 0 100px rgba(0,0,0,0.8)',
-            pointerEvents: 'none',
-            zIndex: 10,
-            borderRadius: '6px'
-          }} />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="glass-panel" style={{ flex: 1, minHeight: 0, padding: '4px', overflow: 'hidden', position: 'relative' }}>
 
-          <webview
-            ref={webviewRef}
-            src={url}
-            allowpopups
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              borderRadius: '6px',
-              filter: 'contrast(1.1) saturate(0.9)'
-            }}
-          />
-        </div>
+        {/* Loading/Empty State Placeholder if needed, but webview covers it */}
+
+        <webview
+          ref={webviewRef}
+          src={url}
+          allowpopups="true"
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            borderRadius: 'var(--radius-sm)',
+            background: '#fff' // Webviews usually need a base bg
+          }}
+        />
+
+        {/* Overlay for glass effect on edges if desired, but might block interaction.
+            Keeping it clean for now.
+        */}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-        <TactileButton variant="primary" onClick={handleRefresh}>
-          Refresh Radar
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+          SOURCE: INTRANET/RADAR
+        </div>
+        <TactileButton variant="secondary" onClick={handleRefresh}>
+          Force Refresh
         </TactileButton>
       </div>
     </div>

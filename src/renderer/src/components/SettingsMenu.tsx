@@ -43,8 +43,7 @@ export const SettingsMenu = ({
       <TactileButton
         onClick={() => setIsOpen(!isOpen)}
         variant="secondary"
-        className={`toolbar-button ${isOpen ? 'is-active' : ''}`}
-        style={{ padding: '10px 14px', fontSize: '12px' }}
+        active={isOpen}
       >
         Settings
       </TactileButton>
@@ -54,20 +53,21 @@ export const SettingsMenu = ({
           position: 'absolute',
           top: 'calc(100% + 8px)',
           right: 0,
-          width: '240px',
-          background: '#1a1d24',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '4px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+          width: '200px',
+          background: '#0b0d12',
+          border: '1px solid var(--color-border)',
+          borderRadius: '8px',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
           zIndex: 100,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          backdropFilter: 'blur(20px)'
         }}>
-          <div style={{ padding: '8px 0' }}>
+          <div style={{ padding: '4px' }}>
             <div style={{
-              padding: '8px 16px 4px',
+              padding: '8px 12px 4px',
               fontSize: '10px',
-              fontFamily: 'var(--font-serif)',
-              color: 'var(--text-secondary)',
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em'
             }}>
@@ -79,17 +79,23 @@ export const SettingsMenu = ({
               style={{
                 width: '100%',
                 textAlign: 'left',
-                padding: '8px 16px',
+                padding: '8px 12px',
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-secondary)',
                 fontSize: '13px',
+                borderRadius: '4px',
                 cursor: 'pointer',
-                transition: 'background 0.2s'
+                transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-glass-hover)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
             >
               Open File
             </button>
@@ -99,28 +105,34 @@ export const SettingsMenu = ({
               style={{
                 width: '100%',
                 textAlign: 'left',
-                padding: '8px 16px',
+                padding: '8px 12px',
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-secondary)',
                 fontSize: '13px',
+                borderRadius: '4px',
                 cursor: 'pointer',
-                transition: 'background 0.2s'
+                transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-glass-hover)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
             >
               Import File...
             </button>
 
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }} />
+            <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 8px' }} />
 
             <div style={{
-              padding: '4px 16px 4px',
+              padding: '4px 12px 4px',
               fontSize: '10px',
-              fontFamily: 'var(--font-serif)',
-              color: 'var(--text-secondary)',
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em'
             }}>
@@ -132,17 +144,23 @@ export const SettingsMenu = ({
               style={{
                 width: '100%',
                 textAlign: 'left',
-                padding: '8px 16px',
+                padding: '8px 12px',
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-secondary)',
                 fontSize: '13px',
+                borderRadius: '4px',
                 cursor: 'pointer',
-                transition: 'background 0.2s'
+                transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-glass-hover)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
             >
               Open File
             </button>
@@ -152,17 +170,23 @@ export const SettingsMenu = ({
               style={{
                 width: '100%',
                 textAlign: 'left',
-                padding: '8px 16px',
+                padding: '8px 12px',
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
+                color: 'var(--text-secondary)',
                 fontSize: '13px',
+                borderRadius: '4px',
                 cursor: 'pointer',
-                transition: 'background 0.2s'
+                transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-glass-hover)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
             >
               Import File...
             </button>

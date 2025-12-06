@@ -28,7 +28,9 @@ export const TactileButton: React.FC<Props> = ({
       className={classes}
       {...props}
     >
-      {children}
+      <span style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {children}
+      </span>
     </button>
   );
 };

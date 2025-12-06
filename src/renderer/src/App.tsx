@@ -4,9 +4,9 @@ import { SettingsMenu } from './components/SettingsMenu';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
 import { RadarTab } from './tabs/RadarTab';
-import { AppData, Contact, AuthRequest } from '@shared/ipc';
+import { AppData, Contact } from '@shared/ipc';
 
-const WorldClock = () => {
+const MinimalClock = () => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -15,37 +15,29 @@ const WorldClock = () => {
   }, []);
 
   const formatTime = (tz: string) => {
-    const timeString = time.toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true });
-    const [h, m] = timeString.split(':');
-    return (
-      <>
-        {h}
-        <span className="blinking-colon">:</span>
-        {m}
-      </>
-    );
+    return time.toLocaleTimeString('en-US', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
   return (
-    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-      <div style={{ display: 'flex', gap: '12px', textAlign: 'right' }}>
-        {[
-          { label: 'PT', tz: 'America/Los_Angeles' },
-          { label: 'MT', tz: 'America/Denver' },
-          { label: 'ET', tz: 'America/New_York' }
-        ].map(({ label, tz }) => (
-          <div key={label}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', color: 'var(--text-secondary)' }}>{formatTime(tz)}</div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '10px', color: 'var(--text-secondary)', opacity: 0.7 }}>{label}</div>
-          </div>
-        ))}
+    <div style={{ display: 'flex', gap: '24px', alignItems: 'center', fontSize: '12px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+        <span style={{ color: 'var(--text-primary)' }}>{formatTime('America/New_York')}</span>
+        <span style={{ fontSize: '10px' }}>NYC</span>
       </div>
-      <div style={{ textAlign: 'right', paddingLeft: '16px', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '24px', color: 'var(--text-primary)', lineHeight: 1 }}>{formatTime('America/Chicago')}</div>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '12px', color: 'var(--accent-primary)', marginTop: '4px' }}>CENTRAL</div>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-          {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </div>
+      <div style={{ width: '1px', height: '24px', background: 'var(--color-border)' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+        <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{formatTime('America/Chicago')}</span>
+        <span style={{ color: 'var(--accent-primary)', fontSize: '10px' }}>CHI</span>
+      </div>
+      <div style={{ width: '1px', height: '24px', background: 'var(--color-border)' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+        <span style={{ color: 'var(--text-primary)' }}>{formatTime('America/Los_Angeles')}</span>
+        <span style={{ fontSize: '10px' }}>LAX</span>
       </div>
     </div>
   );
@@ -86,21 +78,10 @@ export default function App() {
     }, delay);
   }, []);
 
-  const handleOpenGroupsFile = () => {
-    window.api?.openGroupsFile();
-  };
-
-  const handleOpenContactsFile = () => {
-    window.api?.openContactsFile();
-  };
-
-  const handleImportGroups = async () => {
-    await window.api?.importGroupsFile();
-  };
-
-  const handleImportContacts = async () => {
-    await window.api?.importContactsFile();
-  };
+  const handleOpenGroupsFile = () => window.api?.openGroupsFile();
+  const handleOpenContactsFile = () => window.api?.openContactsFile();
+  const handleImportGroups = async () => await window.api?.importGroupsFile();
+  const handleImportContacts = async () => await window.api?.importContactsFile();
 
   useEffect(() => {
     if (!window.api) return;
@@ -124,20 +105,9 @@ export default function App() {
     });
 
     return () => {
-      if (glowTimeout.current) {
-        clearTimeout(glowTimeout.current);
-      }
-      if (reloadTimeoutRef.current) {
-        clearTimeout(reloadTimeoutRef.current);
-      }
+      if (reloadTimeoutRef.current) clearTimeout(reloadTimeoutRef.current);
     };
   }, [settleReloadIndicator]);
-
-  const formatLastUpdated = () => {
-    if (!lastUpdated) return 'Awaiting sync';
-    const date = new Date(lastUpdated);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
 
   const handleAddToAssembler = (contact: Contact) => {
     setManualRemoves(prev => prev.filter(e => e !== contact.email));
@@ -170,64 +140,86 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ height: '80px', background: 'var(--bg-app)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', position: 'relative', zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            NOC<br />WORKSHOP
+    <div className="app-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'radial-gradient(circle at 50% -20%, #1a202c 0%, var(--color-obsidian) 50%)' }}>
+
+      {/* Modern Header */}
+      <header style={{
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 24px',
+        borderBottom: '1px solid var(--color-border)',
+        backdropFilter: 'blur(10px)',
+        background: 'rgba(5, 5, 5, 0.4)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-primary)' }}>
+            NOC WORKSHOP
+          </div>
+
+          <div className="tab-strip">
+            {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`tab-button ${activeTab === tab ? 'is-active' : ''}`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
         </div>
-        <WorldClock />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <MinimalClock />
+          <div style={{ width: '1px', height: '16px', background: 'var(--color-border)' }} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <TactileButton
+              onClick={handleRefresh}
+              variant="secondary"
+              active={isReloading}
+              disabled={isReloading}
+              className={isReloading ? 'pulse-glow-effect' : ''}
+              style={{ minWidth: '100px' }}
+            >
+              {isReloading && <span className="button-spinner" />}
+              {isReloading ? 'Syncing' : 'Sync Data'}
+            </TactileButton>
+            <SettingsMenu
+              onOpenGroups={handleOpenGroupsFile}
+              onOpenContacts={handleOpenContactsFile}
+              onImportGroups={handleImportGroups}
+              onImportContacts={handleImportContacts}
+            />
+          </div>
+        </div>
       </header>
 
-      <div style={{ background: '#1a1d24', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', padding: '0 24px', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-        <div className="tab-strip">
-          {(['Assembler', 'Directory', 'Radar'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`tab-button ${activeTab === tab ? 'is-active' : ''}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <SettingsMenu
-            onOpenGroups={handleOpenGroupsFile}
-            onOpenContacts={handleOpenContactsFile}
-            onImportGroups={handleImportGroups}
-            onImportContacts={handleImportContacts}
-          />
-          <TactileButton
-            onClick={handleRefresh}
-            variant="secondary"
-            active={isReloading}
-            disabled={isReloading}
-            className={`toolbar-button refresh-button ${isReloading ? 'pulse-glow-effect' : ''}`}
-            style={{ padding: '10px 14px', fontSize: '12px' }}
-          >
-            {isReloading && (
-              <span className="button-spinner" aria-hidden />
-            )}
-            {isReloading ? 'Syncing...' : 'Refresh data'}
-          </TactileButton>
-        </div>
-      </div>
-
+      {/* Main Content Area */}
       <main style={{ flex: 1, overflow: 'hidden', padding: '24px', position: 'relative' }}>
-        {activeTab === 'Assembler' && (
-          <AssemblerTab groups={data.groups} selectedGroups={selectedGroups} manualAdds={manualAdds} manualRemoves={manualRemoves}
-            onToggleGroup={(g, active) => { if (active) setSelectedGroups(p => [...p, g]); else setSelectedGroups(p => p.filter(x => x !== g)); }}
-            onAddManual={(email) => setManualAdds(p => [...p, email])}
-            onRemoveManual={(email) => setManualRemoves(p => [...p, email])}
-            onUndoRemove={handleUndoRemove}
-            onResetManual={handleReset}
-          />
-        )}
-        {activeTab === 'Directory' && <DirectoryTab contacts={data.contacts} onAddToAssembler={handleAddToAssembler} />}
-        {activeTab === 'Radar' && <RadarTab />}
+        <div className="animate-enter" style={{ height: '100%' }}>
+          {activeTab === 'Assembler' && (
+            <AssemblerTab
+              groups={data.groups}
+              selectedGroups={selectedGroups}
+              manualAdds={manualAdds}
+              manualRemoves={manualRemoves}
+              onToggleGroup={(g, active) => { if (active) setSelectedGroups(p => [...p, g]); else setSelectedGroups(p => p.filter(x => x !== g)); }}
+              onAddManual={(email) => setManualAdds(p => [...p, email])}
+              onRemoveManual={(email) => setManualRemoves(p => [...p, email])}
+              onUndoRemove={handleUndoRemove}
+              onResetManual={handleReset}
+            />
+          )}
+          {activeTab === 'Directory' && (
+            <DirectoryTab
+              contacts={data.contacts}
+              onAddToAssembler={handleAddToAssembler}
+            />
+          )}
+          {activeTab === 'Radar' && <RadarTab />}
+        </div>
       </main>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Panel, ToggleSwitch, TactileButton, Input } from '../components';
 import { GroupMap } from '@shared/ipc';
+import { TactileButton } from '../components/TactileButton';
 
 type Props = {
   groups: GroupMap;
@@ -43,128 +43,191 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', height: '100%', alignItems: 'start', minHeight: 0 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <Panel title="Groups">
-          <div style={{ padding: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '32px', height: '100%', alignItems: 'start', minHeight: 0 }}>
+
+      {/* Sidebar Controls */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+        {/* Groups Selection */}
+        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '14px', letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Groups</h3>
+            <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{Object.keys(groups).length} Loaded</span>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {Object.keys(groups).map(g => {
               const isSelected = selectedGroups.includes(g);
               return (
-                <TactileButton
+                <button
                   key={g}
                   onClick={() => onToggleGroup(g, !isSelected)}
-                  variant={isSelected ? 'primary' : 'secondary'}
-                  active={isSelected}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '13px',
+                    background: isSelected ? 'rgba(0, 242, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--color-border)'}`,
+                    color: isSelected ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => { if(!isSelected) e.currentTarget.style.borderColor = 'var(--text-secondary)' }}
+                  onMouseLeave={(e) => { if(!isSelected) e.currentTarget.style.borderColor = 'var(--color-border)' }}
                 >
                   {g}
-                </TactileButton>
+                </button>
               );
             })}
             {Object.keys(groups).length === 0 && (
-              <div style={{ padding: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
-                No groups loaded. Check groups.csv (or an .xlsx alternative).
+              <div style={{ color: 'var(--text-tertiary)', fontSize: '13px', fontStyle: 'italic' }}>
+                No groups found.
               </div>
             )}
           </div>
-        </Panel>
-        <Panel title="Ad-Hoc">
-          <div style={{ padding: '12px' }}>
-            <Input
-              label="Add Email"
-              placeholder="operator@agency.net"
+        </div>
+
+        {/* Manual Add */}
+        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <h3 style={{ fontSize: '14px', letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Quick Add</h3>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Enter email address..."
               value={adhocInput}
               onChange={(e) => setAdhocInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && adhocInput) { onAddManual(adhocInput); setAdhocInput(''); } }}
+              style={{
+                width: '100%',
+                background: 'rgba(0,0,0,0.3)',
+                border: '1px solid var(--color-border)',
+                padding: '12px',
+                paddingRight: '40px',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                fontFamily: 'var(--font-mono)'
+              }}
             />
+            <div
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--accent-primary)',
+                opacity: adhocInput ? 1 : 0.3,
+                pointerEvents: 'none'
+              }}
+            >
+              ↵
+            </div>
           </div>
-        </Panel>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', minHeight: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', color: 'var(--text-primary)' }}>{`Log (${log.length})`}</div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <TactileButton onClick={onResetManual} variant="secondary">Reset</TactileButton>
-            {manualRemoves.length > 0 && <TactileButton onClick={onUndoRemove} variant="secondary">Undo Remove</TactileButton>}
-            <TactileButton onClick={handleDraftBridge} variant="primary">Create Bridge</TactileButton>
-            <TactileButton onClick={handleCopy} active={copied}>{copied ? 'STAMPED' : 'Copy List'}</TactileButton>
+      {/* Main Log Area */}
+      <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+
+        {/* Toolbar */}
+        <div style={{
+          padding: '24px',
+          borderBottom: '1px solid var(--color-border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'rgba(0,0,0,0.2)'
+        }}>
+          <div>
+            <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)' }}>Assembler Log</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+              {log.length} RECIPIENTS SELECTED
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <TactileButton onClick={onResetManual} variant="secondary" style={{ fontSize: '12px' }}>Reset</TactileButton>
+            {manualRemoves.length > 0 && (
+              <TactileButton onClick={onUndoRemove} variant="secondary" style={{ fontSize: '12px' }}>Undo</TactileButton>
+            )}
+            <TactileButton onClick={handleCopy} variant="secondary" active={copied}>
+              {copied ? 'Copied' : 'Copy'}
+            </TactileButton>
+            <TactileButton onClick={handleDraftBridge} variant="primary">
+              Draft Bridge
+            </TactileButton>
           </div>
         </div>
 
+        {/* List */}
         <div style={{
           flex: 1,
-          background: 'var(--bg-panel)',
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-mono)',
-          padding: 'var(--space-lg)',
-          overflow: 'auto',
-          border: 'var(--border-subtle)',
-          minHeight: 0,
-          position: 'relative'
+          overflowY: 'auto',
+          padding: '0'
         }}>
-          <div style={{
-            borderBottom: '1px solid var(--border-accent)',
-            paddingBottom: 'var(--space-md)',
-            marginBottom: 'var(--space-lg)',
-            textAlign: 'center',
-            color: 'var(--accent-primary)',
-            fontSize: '14px',
-            letterSpacing: '0.05em',
-            fontFamily: 'var(--font-serif)'
-          }}>
-            OFFICIAL LOG
-            <div style={{ color: 'var(--text-secondary)', fontSize: '10px', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
-              {new Date().toLocaleString().toUpperCase()}
-            </div>
-          </div>
-          {log.map(({ email, source }) => (
-            <div key={email} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '8px 0',
-              borderBottom: '1px solid rgba(255,255,255,0.05)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>{email}</span>
-                {source === 'manual' && (
-                  <span style={{
-                    fontSize: '9px',
-                    border: '1px solid var(--accent-primary)',
-                    padding: '1px 4px',
-                    color: 'var(--accent-primary)'
-                  }}>
-                    ADHOC
-                  </span>
-                )}
-              </div>
-              <span
-                style={{
-                  cursor: 'pointer',
-                  color: 'var(--accent-primary)',
-                  fontSize: '12px',
-                  fontFamily: 'var(--font-mono)',
-                  opacity: 0.7,
-                  transition: 'opacity 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
-                onClick={() => onRemoveManual(email)}
-                title="Remove"
-              >
-                [×]
-              </span>
-            </div>
-          ))}
-          {log.length === 0 && (
+          {log.length === 0 ? (
             <div style={{
-              textAlign: 'center',
-              marginTop: '40px',
-              color: 'var(--text-secondary)',
-              fontSize: '12px',
-              fontStyle: 'italic'
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: '16px',
+              color: 'var(--text-tertiary)'
             }}>
-              No entries in log
+              <div style={{ fontSize: '48px', opacity: 0.2 }}>∅</div>
+              <div>No recipients selected</div>
             </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {log.map(({ email, source }) => (
+                  <tr key={email} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                    <td style={{ padding: '12px 24px', fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-primary)' }}>
+                      {email}
+                    </td>
+                    <td style={{ padding: '12px 24px', width: '100px', textAlign: 'right' }}>
+                      {source === 'manual' && (
+                        <span style={{
+                          fontSize: '10px',
+                          background: 'rgba(112, 0, 255, 0.2)',
+                          color: '#b380ff',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(112, 0, 255, 0.3)'
+                        }}>
+                          MANUAL
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px 24px', width: '40px' }}>
+                      <button
+                        onClick={() => onRemoveManual(email)}
+                        style={{
+                          color: 'var(--text-tertiary)',
+                          fontSize: '16px',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = 'var(--accent-danger)';
+                          e.currentTarget.style.background = 'rgba(255, 0, 85, 0.1)';
+                          e.currentTarget.style.borderRadius = '4px';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = 'var(--text-tertiary)';
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

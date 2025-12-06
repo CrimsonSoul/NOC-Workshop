@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Contact } from '@shared/ipc';
-import { TactileButton, Input } from '../components';
+import { TactileButton } from '../components/TactileButton';
 
 type Props = {
   contacts: Contact[];
@@ -36,52 +36,104 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
     return (
       <div style={{
         ...style,
-        padding: '0 var(--space-md)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: 'var(--border-subtle)',
-        background: index % 2 === 0 ? 'var(--color-charcoal-hover)' : 'transparent'
+        padding: '0 8px'
       }}>
-        <div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: '18px' }}>
-            {contact.name}
-          </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '14px', color: 'var(--text-secondary)' }}>
-            {contact.department} • {contact.email}
-          </div>
-        </div>
-        <TactileButton
-          variant={added ? 'primary' : 'secondary'}
-          onClick={handleAdd}
-          active={added}
-          style={{ padding: '6px 14px', fontSize: '12px' }}
+        <div
+          className="contact-card"
+          style={{
+            height: '62px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 24px',
+            background: 'var(--color-glass)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--color-glass-hover)';
+            e.currentTarget.style.borderColor = 'var(--text-tertiary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--color-glass)';
+            e.currentTarget.style.borderColor = 'var(--color-border)';
+          }}
         >
-          {added ? '✓  ADDED' : 'ADD +'}
-        </TactileButton>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+              <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+                {contact.name}
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                {contact.email}
+              </span>
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {contact.department || 'Unknown Dept'}
+            </div>
+          </div>
+
+          <TactileButton
+            variant={added ? 'primary' : 'secondary'}
+            onClick={handleAdd}
+            active={added}
+            style={{
+              padding: '6px 16px',
+              fontSize: '11px',
+              minWidth: '80px'
+            }}
+          >
+            {added ? 'ADDED' : 'ADD +'}
+          </TactileButton>
+        </div>
       </div>
     );
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ marginBottom: 'var(--space-lg)' }}>
-        <Input
-          placeholder="Search the directory..."
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '24px' }}>
+
+      {/* Search Header */}
+      <div style={{ position: 'relative' }}>
+        <input
+          placeholder="Filter directory..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
-          style={{ fontSize: '24px', fontFamily: 'var(--font-serif)', padding: 'var(--space-md) 0' }}
+          style={{
+            width: '100%',
+            fontSize: '16px',
+            padding: '16px 24px',
+            paddingLeft: '48px',
+            background: 'rgba(0,0,0,0.2)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-primary)',
+            outline: 'none',
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 400
+          }}
         />
+        <div style={{
+          position: 'absolute',
+          left: '20px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: 'var(--text-tertiary)'
+        }}>
+          🔍
+        </div>
       </div>
 
-      <div style={{ flex: 1 }}>
+      {/* Virtualized List */}
+      <div style={{ flex: 1, margin: '0 -8px' }}>
         <AutoSizer>
           {({ height, width }) => (
             <List
               height={height}
               itemCount={filtered.length}
-              itemSize={70}
+              itemSize={72} // Height + Gap
               width={width}
             >
               {Row}
@@ -89,8 +141,15 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
           )}
         </AutoSizer>
         {filtered.length === 0 && (
-          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            No personnel found matching that frequency.
+          <div style={{
+            height: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-secondary)',
+            fontStyle: 'italic'
+          }}>
+            No results found.
           </div>
         )}
       </div>
