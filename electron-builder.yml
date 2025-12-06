@@ -1,5 +1,5 @@
-appId: com.operators.atelier
-productName: "noc workshop"
+appId: com.operators.relay
+productName: "Relay"
 asar: true
 files:
   - dist/**
@@ -18,5 +18,5 @@ win:
   target:
     - target: portable
       arch: x64
-  artifactName: "noc workshop.exe"
+  artifactName: "Relay.exe"
   icon: build/icon.png

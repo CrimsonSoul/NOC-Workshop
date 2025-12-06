@@ -1,260 +1,102 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Palette - Futuristic Dark */
-  --color-obsidian: #0b0d12;
-  --color-void: #050505;
-  --color-glass: rgba(255, 255, 255, 0.03);
-  --color-glass-hover: rgba(255, 255, 255, 0.08);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-active: rgba(255, 255, 255, 0.2);
+  /* Colors - Relay Theme (Matte Dark / Attio Style) */
+  --color-bg-app: #141414;
+  --color-bg-sidebar: #181818;
+  --color-bg-card: #1C1C1C;
+  --color-bg-card-hover: #232323;
 
-  /* Accents - Neon */
-  --accent-primary: #00f2ff; /* Cyan Neon */
-  --accent-secondary: #7000ff; /* Electric Purple */
-  --accent-success: #00ff9d;
-  --accent-danger: #ff0055;
-  --accent-glow: rgba(0, 242, 255, 0.4);
+  /* Borders */
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+  --border-focus: 1px solid rgba(59, 130, 246, 0.5); /* Blue focus */
 
   /* Text */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.6);
-  --text-tertiary: rgba(255, 255, 255, 0.4);
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1A1;
+  --color-text-tertiary: #666666;
+
+  /* Accents */
+  --color-accent-blue: #3B82F6;
+  --color-accent-blue-dim: rgba(59, 130, 246, 0.1);
+  --color-accent-green: #10B981;
+  --color-accent-purple: #8B5CF6;
+  --color-accent-neon: #00F0FF; /* For specific data viz only */
 
   /* Typography */
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-mono: 'JetBrains Mono', monospace;
 
   /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  --sidebar-width: 240px; /* Standard width, but we might make it collapsible */
+  --sidebar-width-collapsed: 64px;
+  --header-height: 0px; /* No top header */
 
-  /* UI Properties */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --blur-panel: 24px;
-
-  /* Global Background */
-  --bg-app: var(--color-obsidian);
+  /* Animation */
+  --transition-fast: 0.15s ease;
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
   box-sizing: border-box;
-  user-select: none;
+  user-select: none; /* App-like feel */
 }
 
-body {
+body, html {
   margin: 0;
   padding: 0;
-  background-color: var(--bg-app);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 400;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  overflow: hidden; /* App container handles scroll */
   -webkit-font-smoothing: antialiased;
-  height: 100vh;
-  overflow: hidden;
-  letter-spacing: -0.01em;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 500;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: currentColor;
-}
-
-/* Glass Panel Utility */
-.glass-panel {
-  background: var(--color-glass);
-  backdrop-filter: blur(var(--blur-panel));
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-}
-
-/* Tactile Button (Refactored to Linear Glass) */
-.tactile-button {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--text-secondary);
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  overflow: hidden;
-}
-
-.tactile-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.5s ease;
-}
-
-.tactile-button:hover:not(:disabled) {
-  border-color: var(--text-tertiary);
-  color: var(--text-primary);
-  background: var(--color-glass-hover);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
-}
-
-.tactile-button:hover:not(:disabled)::before {
-  transform: translateX(100%);
-}
-
-.tactile-button:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.tactile-button.is-active {
-  background: rgba(0, 242, 255, 0.1);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  box-shadow: 0 0 16px var(--accent-glow);
-}
-
-.tactile-button--primary {
-  background: var(--text-primary);
-  color: var(--bg-app);
-  border-color: transparent;
-}
-
-.tactile-button--primary:hover:not(:disabled) {
-  background: #fff;
-  color: #000;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-}
-
-.tactile-button--danger {
-  color: var(--accent-danger);
-  border-color: rgba(255, 0, 85, 0.3);
-}
-
-.tactile-button--danger:hover:not(:disabled) {
-  border-color: var(--accent-danger);
-  background: rgba(255, 0, 85, 0.1);
-  color: var(--accent-danger);
-  box-shadow: 0 0 12px rgba(255, 0, 85, 0.2);
-}
-
-/* Tab Navigation (Modern Linear) */
-.tab-strip {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.tab-button {
-  padding: 8px 16px;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.tab-button:hover {
-  color: var(--text-primary);
-  background: var(--color-glass-hover);
-}
-
-.tab-button.is-active {
-  color: var(--bg-app);
-  background: var(--accent-primary);
-  font-weight: 600;
-  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Inputs */
-input, textarea {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  padding: 8px 12px;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  outline: none;
-  transition: all 0.2s ease;
+/* Utilities */
+.glass-panel {
+  background: var(--color-bg-card);
+  border: var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-input:focus, textarea:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 1px var(--accent-primary), 0 0 12px var(--accent-glow);
-  background: rgba(0, 242, 255, 0.05);
+.text-gradient {
+  background: linear-gradient(135deg, #FFFFFF 0%, #A1A1A1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Animations */
+.animate-fade-in {
+  animation: fadeIn var(--transition-smooth) forwards;
+  opacity: 0;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-enter {
-  animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-.button-spinner {
-  width: 12px;
-  height: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: rotate 1s linear infinite;
-}
-
-@keyframes rotate {
-  to { transform: rotate(360deg); }
-}
-
-.pulse-glow-effect {
-  animation: pulse-border 2s infinite;
-}
-
-@keyframes pulse-border {
-  0%, 100% { border-color: var(--color-border); box-shadow: none; }
-  50% { border-color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-glow); }
+/* Input Resets */
+input, button, select, textarea {
+  font-family: inherit;
+  outline: none;
 }
