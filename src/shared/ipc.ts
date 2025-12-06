@@ -40,6 +40,8 @@ export type BridgeAPI = {
     openExternal: (url: string) => Promise<void>;
     openGroupsFile: () => Promise<void>;
     openContactsFile: () => Promise<void>;
+    importGroupsFile: () => Promise<boolean>;
+    importContactsFile: () => Promise<boolean>;
     subscribeToData: (callback: (data: AppData) => void) => void;
     onReloadStart: (callback: () => void) => void;
     onReloadComplete: (callback: (success: boolean) => void) => void;
@@ -56,6 +58,8 @@ export const IPC_CHANNELS = {
     OPEN_EXTERNAL: 'shell:openExternal',
     OPEN_GROUPS_FILE: 'fs:openGroupsFile',
     OPEN_CONTACTS_FILE: 'fs:openContactsFile',
+    IMPORT_GROUPS_FILE: 'fs:importGroupsFile',
+    IMPORT_CONTACTS_FILE: 'fs:importContactsFile',
     DATA_UPDATED: 'data:updated',
     DATA_RELOAD: 'data:reload',
     DATA_RELOAD_STARTED: 'data:reload-started',

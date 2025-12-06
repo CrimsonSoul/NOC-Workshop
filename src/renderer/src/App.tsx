@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TactileButton } from './components/TactileButton';
+import { SettingsMenu } from './components/SettingsMenu';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
 import { RadarTab } from './tabs/RadarTab';
@@ -91,6 +92,14 @@ export default function App() {
 
   const handleOpenContactsFile = () => {
     window.api?.openContactsFile();
+  };
+
+  const handleImportGroups = async () => {
+    await window.api?.importGroupsFile();
+  };
+
+  const handleImportContacts = async () => {
+    await window.api?.importContactsFile();
   };
 
   useEffect(() => {
@@ -185,22 +194,12 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <TactileButton
-            className="toolbar-button"
-            variant="secondary"
-            onClick={handleOpenGroupsFile}
-            style={{ padding: '10px 14px', fontSize: '12px' }}
-          >
-            Groups
-          </TactileButton>
-          <TactileButton
-            className="toolbar-button"
-            variant="secondary"
-            onClick={handleOpenContactsFile}
-            style={{ padding: '10px 14px', fontSize: '12px' }}
-          >
-            Contacts
-          </TactileButton>
+          <SettingsMenu
+            onOpenGroups={handleOpenGroupsFile}
+            onOpenContacts={handleOpenContactsFile}
+            onImportGroups={handleImportGroups}
+            onImportContacts={handleImportContacts}
+          />
           <TactileButton
             onClick={handleRefresh}
             variant="secondary"

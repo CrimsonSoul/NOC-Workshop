@@ -9,6 +9,8 @@ const api: BridgeAPI = {
   openExternal: (url) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_EXTERNAL, url),
   openGroupsFile: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_GROUPS_FILE),
   openContactsFile: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_CONTACTS_FILE),
+  importGroupsFile: () => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_GROUPS_FILE),
+  importContactsFile: () => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_CONTACTS_FILE),
 
   subscribeToData: (callback) => {
     ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_UPDATED);

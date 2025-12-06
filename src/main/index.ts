@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import { dirname, join } from 'path';
 import fs from 'fs';
 import { FileManager } from './FileManager';
@@ -87,6 +87,57 @@ function setupIpc(dataRoot: string) {
 
   ipcMain.handle(IPC_CHANNELS.OPEN_CONTACTS_FILE, async () => {
     await shell.openPath(contactsFilePath(dataRoot));
+  });
+
+  const handleImport = async (targetFileName: string, title: string) => {
+    if (!mainWindow) return false;
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title,
+      filters: [{ name: 'CSV Files', extensions: ['csv'] }],
+      properties: ['openFile']
+    });
+
+    if (canceled || filePaths.length === 0) return false;
+
+    const sourcePath = filePaths[0];
+    const targetPath = join(dataRoot, targetFileName);
+
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      buttons: ['Cancel', 'Replace'],
+      defaultId: 0,
+      title: 'Confirm Replace',
+      message: `Are you sure you want to replace ${targetFileName}?`,
+      detail: 'This action cannot be undone.',
+      cancelId: 0
+    });
+
+    if (response === 1) {
+      try {
+        // Ensure data directory exists (it might not if using portable logic but folder deleted)
+        if (!fs.existsSync(dataRoot)) {
+          fs.mkdirSync(dataRoot, { recursive: true });
+        }
+
+        fs.copyFileSync(sourcePath, targetPath);
+        fileManager?.readAndEmit();
+        return true;
+      } catch (error) {
+        console.error(`Failed to import ${targetFileName}:`, error);
+        dialog.showErrorBox('Import Failed', `Could not replace file: ${error}`);
+        return false;
+      }
+    }
+    return false;
+  };
+
+  ipcMain.handle(IPC_CHANNELS.IMPORT_GROUPS_FILE, async () => {
+    return handleImport('groups.csv', 'Import Groups CSV');
+  });
+
+  ipcMain.handle(IPC_CHANNELS.IMPORT_CONTACTS_FILE, async () => {
+    return handleImport('contacts.csv', 'Import Contacts CSV');
   });
 
   ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, url: string) => {
