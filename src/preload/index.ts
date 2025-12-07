@@ -60,9 +60,7 @@ const api: BridgeAPI = {
   radarPreloadPath,
 
   logBridge: (groups) => ipcRenderer.send(IPC_CHANNELS.LOG_BRIDGE, groups),
-  getMetrics: () => ipcRenderer.invoke(IPC_CHANNELS.GET_METRICS),
-  loginMicrosoft: () => ipcRenderer.invoke('auth:microsoft:login'),
-  checkMicrosoftAuth: () => ipcRenderer.invoke('auth:microsoft:status')
+  getMetrics: () => ipcRenderer.invoke(IPC_CHANNELS.GET_METRICS)
 };
 
 contextBridge.exposeInMainWorld('api', api);

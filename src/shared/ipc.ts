@@ -4,7 +4,6 @@ export type Contact = {
     email: string;
     phone: string;
     title: string;
-    avatarUrl?: string;
     _searchString: string;
     raw: Record<string, any>;
 };
@@ -54,8 +53,6 @@ export type BridgeAPI = {
     radarPreloadPath: string;
     logBridge: (groups: string[]) => void;
     getMetrics: () => Promise<MetricsData>;
-    loginMicrosoft: () => Promise<boolean>;
-    checkMicrosoftAuth: () => Promise<boolean>;
 };
 
 export const IPC_CHANNELS = {

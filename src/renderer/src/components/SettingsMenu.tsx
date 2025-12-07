@@ -15,13 +15,7 @@ export const SettingsMenu = ({
   onImportContacts
 }: SettingsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAuth, setIsAuth] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Check initial auth status
-    window.api?.checkMicrosoftAuth?.().then(setIsAuth);
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -42,14 +36,6 @@ export const SettingsMenu = ({
   const handleAction = (action: () => void) => {
     action();
     setIsOpen(false);
-  };
-
-  const handleLogin = async () => {
-    const success = await window.api?.loginMicrosoft?.();
-    if (success) {
-      setIsAuth(true);
-      setIsOpen(false);
-    }
   };
 
   return (
@@ -204,49 +190,6 @@ export const SettingsMenu = ({
             >
               Import File...
             </button>
-
-            <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 8px' }} />
-
-            <div style={{
-              padding: '4px 12px 4px',
-              fontSize: '10px',
-              fontWeight: 600,
-              color: 'var(--text-tertiary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              Microsoft 365
-            </div>
-
-            <button
-               className="menu-item tactile-button"
-               onClick={handleLogin}
-               disabled={isAuth}
-               style={{
-                width: '100%',
-                textAlign: 'left',
-                padding: '8px 12px',
-                background: isAuth ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                border: 'none',
-                color: isAuth ? 'var(--color-accent-green)' : 'var(--text-secondary)',
-                fontSize: '13px',
-                borderRadius: '4px',
-                cursor: isAuth ? 'default' : 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-               }}
-            >
-              <svg width="14" height="14" viewBox="0 0 21 21" fill="none">
-                 <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
-                 <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
-                 <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
-                 <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
-              </svg>
-              {isAuth ? 'Connected' : 'Connect Work Account'}
-            </button>
-
           </div>
         </div>
       )}

@@ -1,8 +1,7 @@
-import { app, BrowserWindow, ipcMain, shell, dialog, protocol } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import { dirname, join } from 'path';
 import fs from 'fs';
 import { FileManager } from './FileManager';
-import { MicrosoftAuth } from './microsoft/MicrosoftAuth';
 import { BridgeLogger } from './BridgeLogger';
 import { IPC_CHANNELS } from '../shared/ipc';
 import { ensureDataFiles } from './dataUtils';
@@ -10,7 +9,6 @@ import { ensureDataFiles } from './dataUtils';
 let mainWindow: BrowserWindow | null = null;
 let fileManager: FileManager | null = null;
 let bridgeLogger: BridgeLogger | null = null;
-let microsoftAuth: MicrosoftAuth | null = null;
 
 // Auth State
 let authCallback: ((username: string, password: string) => void) | null = null;
@@ -60,8 +58,6 @@ async function createWindow(dataRoot: string) {
     }
   });
 
-  microsoftAuth = new MicrosoftAuth(mainWindow);
-
   if (process.env.ELECTRON_RENDERER_URL) {
     await mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
@@ -73,14 +69,13 @@ async function createWindow(dataRoot: string) {
     await mainWindow.loadFile(indexHtml);
   }
 
-  fileManager = new FileManager(mainWindow, dataRoot, microsoftAuth);
+  fileManager = new FileManager(mainWindow, dataRoot);
   bridgeLogger = new BridgeLogger(dataRoot);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
     fileManager = null;
     bridgeLogger = null;
-    microsoftAuth = null;
   });
 }
 
@@ -181,26 +176,6 @@ function setupIpc(dataRoot: string) {
   ipcMain.handle(IPC_CHANNELS.GET_METRICS, async () => {
     return bridgeLogger?.getMetrics();
   });
-
-  ipcMain.handle('auth:microsoft:login', async () => {
-    if (!microsoftAuth) return false;
-    try {
-      const token = await microsoftAuth.login();
-      if (token) {
-        // Trigger a sync after login
-        await fileManager?.readAndEmit();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Microsoft login failed', error);
-      return false;
-    }
-  });
-
-  ipcMain.handle('auth:microsoft:status', async () => {
-    return !!microsoftAuth?.getAccount();
-  });
 }
 
 // Auth Interception
@@ -219,27 +194,6 @@ app.on('login', (event, _webContents, _request, authInfo, callback) => {
 });
 
   app.whenReady().then(async () => {
-    // Register protocol
-    protocol.registerFileProtocol('relay-avatar', (request, callback) => {
-      const url = request.url.replace('relay-avatar://', '');
-      try {
-        // url is the email or hash. We need to find the file in data/avatars
-        // We need to access AvatarManager to resolve path, but it's inside FileManager.
-        // Quick hack: Re-implement hash logic here or expose it.
-        // Better: decode the path directly if the renderer sends the full path?
-        // Actually, renderer will send `relay-avatar://email@example.com`.
-        // We should map this to `data/avatars/<md5>.jpg`.
-        const crypto = require('crypto');
-        const hash = crypto.createHash('md5').update(url.toLowerCase().trim()).digest('hex');
-        const dataRoot = getDataRoot();
-        const avatarPath = join(dataRoot, 'avatars', `${hash}.jpg`);
-        callback({ path: avatarPath });
-      } catch (error) {
-        console.error('Failed to handle avatar protocol', error);
-        callback({ statusCode: 404 });
-      }
-    });
-
     const dataRoot = getDataRoot();
     setupIpc(dataRoot);
     await createWindow(dataRoot);
