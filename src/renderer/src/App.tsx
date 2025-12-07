@@ -172,6 +172,7 @@ export default function App() {
              <div className="animate-fade-in" style={{ height: '100%' }}>
               <DirectoryTab
                 contacts={data.contacts}
+                groups={data.groups}
                 onAddToAssembler={handleAddToAssembler}
               />
             </div>
