@@ -8,10 +8,10 @@ import { RadarTab } from './tabs/RadarTab';
 import { MetricsTab } from './tabs/MetricsTab';
 import { AppData, Contact } from '@shared/ipc';
 
-type Tab = 'Studio' | 'Network' | 'Vault' | 'Pulse';
+type Tab = 'Compose' | 'People' | 'Reports' | 'Live';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('Studio');
+  const [activeTab, setActiveTab] = useState<Tab>('Compose');
   const [data, setData] = useState<AppData>({ groups: {}, contacts: [], lastUpdated: 0 });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
@@ -129,35 +129,19 @@ export default function App() {
         }}>
            <div style={{ display: 'flex', flexDirection: 'column' }}>
              <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
-               Workspace / {activeTab}
+               Relay / {activeTab}
              </span>
              <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-               {activeTab === 'Studio' && 'Data Composition'}
-               {activeTab === 'Network' && 'Contact Directory'}
-               {activeTab === 'Vault' && 'Vault Metrics'}
-               {activeTab === 'Pulse' && 'Dispatcher Radar'}
+               {activeTab === 'Compose' && 'Data Composition'}
+               {activeTab === 'People' && 'Contact Directory'}
+               {activeTab === 'Reports' && 'Vault Metrics'}
+               {activeTab === 'Live' && 'Dispatcher Radar'}
              </span>
            </div>
 
            {/* Actions Area */}
            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
               <WorldClock />
-              <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)' }} />
-              <button
-                onClick={handleSync}
-                className="tactile-button"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  opacity: isReloading ? 0.7 : 1,
-                  cursor: isReloading ? 'wait' : 'pointer',
-                  borderColor: isReloading ? 'var(--color-accent-blue)' : 'var(--border-subtle)',
-                  color: isReloading ? 'var(--color-accent-blue)' : 'var(--color-text-primary)'
-                }}
-              >
-                {isReloading ? 'Syncing...' : 'Sync'}
-              </button>
            </div>
         </header>
 
@@ -168,7 +152,7 @@ export default function App() {
           overflowY: 'auto',
           overflowX: 'hidden'
         }}>
-          {activeTab === 'Studio' && (
+          {activeTab === 'Compose' && (
             <div className="animate-fade-in">
               <AssemblerTab
                 groups={data.groups}
@@ -183,7 +167,7 @@ export default function App() {
               />
             </div>
           )}
-          {activeTab === 'Network' && (
+          {activeTab === 'People' && (
              <div className="animate-fade-in" style={{ height: '100%' }}>
               <DirectoryTab
                 contacts={data.contacts}
@@ -191,12 +175,12 @@ export default function App() {
               />
             </div>
           )}
-          {activeTab === 'Vault' && (
+          {activeTab === 'Reports' && (
              <div className="animate-fade-in">
                <MetricsTab />
              </div>
           )}
-          {activeTab === 'Pulse' && (
+          {activeTab === 'Live' && (
             <div className="animate-fade-in" style={{ height: '100%' }}>
               <RadarTab />
             </div>
@@ -226,6 +210,26 @@ export default function App() {
           }}>
             <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Settings</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                onClick={handleSync}
+                className="tactile-button"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  justifyContent: 'center',
+                  borderColor: isReloading ? 'var(--color-accent-blue)' : 'var(--border-subtle)',
+                  color: isReloading ? 'var(--color-accent-blue)' : 'var(--color-text-primary)'
+                }}
+              >
+                {isReloading ? (
+                  <>
+                     <span style={{ width: '8px', height: '8px', border: '1px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                     Syncing...
+                  </>
+                ) : 'Sync Data'}
+              </button>
+              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
               <button className="tactile-button" onClick={handleOpenGroupsFile}>Open Groups CSV</button>
               <button className="tactile-button" onClick={handleOpenContactsFile}>Open Contacts CSV</button>
               <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />

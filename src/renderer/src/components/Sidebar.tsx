@@ -1,6 +1,6 @@
 import React from 'react';
 
-type Tab = 'Studio' | 'Network' | 'Vault' | 'Pulse';
+type Tab = 'Compose' | 'People' | 'Reports' | 'Live';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -89,28 +89,53 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
 
       <nav style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <SidebarItem
-          label="Studio"
-          isActive={activeTab === 'Studio'}
-          onClick={() => onTabChange('Studio')}
-          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>}
+          label="Compose"
+          isActive={activeTab === 'Compose'}
+          onClick={() => onTabChange('Compose')}
+          icon={
+            /* Pen/Edit Icon - Thin Stroke */
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+            </svg>
+          }
         />
         <SidebarItem
-          label="Network"
-          isActive={activeTab === 'Network'}
-          onClick={() => onTabChange('Network')}
-          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
+          label="People"
+          isActive={activeTab === 'People'}
+          onClick={() => onTabChange('People')}
+          icon={
+            /* Users Icon - Thin Stroke */
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          }
         />
         <SidebarItem
-          label="Vault"
-          isActive={activeTab === 'Vault'}
-          onClick={() => onTabChange('Vault')}
-          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
+          label="Reports"
+          isActive={activeTab === 'Reports'}
+          onClick={() => onTabChange('Reports')}
+          icon={
+            /* Chart/Analytics Icon - Thin Stroke */
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 20V10" />
+              <path d="M12 20V4" />
+              <path d="M6 20v-6" />
+            </svg>
+          }
         />
         <SidebarItem
-          label="Pulse"
-          isActive={activeTab === 'Pulse'}
-          onClick={() => onTabChange('Pulse')}
-          icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>}
+          label="Live"
+          isActive={activeTab === 'Live'}
+          onClick={() => onTabChange('Live')}
+          icon={
+             /* Pulse/Activity Icon - Thin Stroke */
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          }
         />
       </nav>
 
