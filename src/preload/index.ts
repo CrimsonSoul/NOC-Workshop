@@ -68,7 +68,11 @@ const api: BridgeAPI = {
   importContactsWithMapping: () => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_CONTACTS_WITH_MAPPING),
   changeDataFolder: () => ipcRenderer.invoke(IPC_CHANNELS.CHANGE_DATA_FOLDER),
   resetDataFolder: () => ipcRenderer.invoke(IPC_CHANNELS.RESET_DATA_FOLDER),
-  getDataPath: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DATA_PATH)
+  getDataPath: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DATA_PATH),
+  removeGroup: (groupName) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_GROUP, groupName),
+  windowMinimize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
+  windowMaximize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
+  windowClose: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE)
 };
 
 contextBridge.exposeInMainWorld('api', api);

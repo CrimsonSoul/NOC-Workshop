@@ -90,6 +90,8 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
 
+  const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+
   // Optimized contact lookup map
   const contactMap = useMemo(() => {
     const map = new Map<string, Contact>();
@@ -238,38 +240,90 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
               const isSelected = selectedGroups.includes(g);
               const color = getColorForString(g);
               return (
-                <button
+                <div
                   key={g}
-                  onClick={() => onToggleGroup(g, !isSelected)}
                   style={{
-                    padding: '6px 12px',
-                    borderRadius: '20px', // Chip style
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    background: isSelected ? color.fill : 'transparent',
-                    border: `1px solid ${isSelected ? color.fill : color.border}`,
-                    color: isSelected ? '#FFFFFF' : color.text,
-                    transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                    cursor: 'pointer',
-                    outline: 'none',
+                    position: 'relative',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
+                    alignItems: 'center'
                   }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                        e.currentTarget.style.background = color.bg;
-                    }
+                  onMouseEnter={e => {
+                    const btn = e.currentTarget.querySelector('.delete-btn');
+                    if (btn) (btn as HTMLElement).style.opacity = '1';
                   }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                        e.currentTarget.style.background = 'transparent';
-                    }
+                  onMouseLeave={e => {
+                    const btn = e.currentTarget.querySelector('.delete-btn');
+                    if (btn) (btn as HTMLElement).style.opacity = '0';
                   }}
                 >
-                  {isSelected && <span style={{ fontSize: '14px', lineHeight: 0 }}>✓</span>}
-                  {g}
-                </button>
+                  <button
+                    onClick={() => onToggleGroup(g, !isSelected)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '20px', // Chip style
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      background: isSelected ? color.fill : 'transparent',
+                      border: `1px solid ${isSelected ? color.fill : color.border}`,
+                      color: isSelected ? '#FFFFFF' : color.text,
+                      transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      paddingRight: isSelected ? '12px' : '24px' // Extra space for delete button on hover
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                          e.currentTarget.style.background = color.bg;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                          e.currentTarget.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    {isSelected && <span style={{ fontSize: '14px', lineHeight: 0 }}>✓</span>}
+                    {g}
+                  </button>
+                  {/* Delete Button - Overlay */}
+                  {!isSelected && (
+                     <button
+                        className="delete-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setGroupToDelete(g);
+                        }}
+                        style={{
+                            position: 'absolute',
+                            right: '4px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '50%',
+                            background: color.bg,
+                            border: 'none',
+                            color: color.text,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            opacity: 0,
+                            transition: 'opacity 0.2s, background 0.2s',
+                            fontSize: '12px',
+                            lineHeight: 1
+                        }}
+                        title="Delete Group"
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                        onMouseLeave={e => e.currentTarget.style.background = color.bg}
+                     >
+                         ×
+                     </button>
+                  )}
+                </div>
               );
             })}
             {Object.keys(groups).length === 0 && (
@@ -486,6 +540,47 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                   <button type="submit" className="tactile-button" style={{ background: 'var(--color-accent-blue)', borderColor: 'transparent', color: '#FFF' }}>Create</button>
               </div>
           </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!groupToDelete}
+        onClose={() => setGroupToDelete(null)}
+        title="Delete Group"
+        width="400px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
+                Are you sure you want to delete <span style={{ fontWeight: 600 }}>{groupToDelete}</span>?
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+                This will remove the group tag from all contacts. The contacts themselves will not be deleted.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button
+                    onClick={() => setGroupToDelete(null)}
+                    className="tactile-button"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={async () => {
+                        if (groupToDelete) {
+                            await window.api?.removeGroup(groupToDelete);
+                            // Deselect if selected
+                             if (selectedGroups.includes(groupToDelete)) {
+                                 onToggleGroup(groupToDelete, false);
+                             }
+                        }
+                        setGroupToDelete(null);
+                    }}
+                    className="tactile-button"
+                    style={{ background: '#EF4444', borderColor: 'transparent', color: '#FFF' }}
+                >
+                    Delete Group
+                </button>
+            </div>
+        </div>
       </Modal>
 
     </div>

@@ -67,7 +67,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
       alignItems: 'center',
       paddingTop: '16px',
       paddingBottom: '16px',
-      zIndex: 20
+      zIndex: 9002, // Above drag region
+      WebkitAppRegion: 'drag' as any
     }}>
       {/* Brand Icon */}
       <div style={{
@@ -82,12 +83,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         color: 'white',
         fontWeight: 'bold',
         fontSize: '20px',
-        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+        WebkitAppRegion: 'no-drag' as any
       }}>
         R
       </div>
 
-      <nav style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <nav style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', WebkitAppRegion: 'no-drag' as any }}>
         <SidebarItem
           label="Compose"
           isActive={activeTab === 'Compose'}
@@ -152,7 +154,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          WebkitAppRegion: 'no-drag' as any
         }}
         title="Settings"
       >

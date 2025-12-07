@@ -23,7 +23,7 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 9999,
+      zIndex: 20000,
       animation: 'fadeIn 0.2s ease-out'
     }} onClick={onClose}>
       <div

@@ -61,9 +61,17 @@ export type BridgeAPI = {
     changeDataFolder: () => Promise<boolean>;
     resetDataFolder: () => Promise<boolean>;
     getDataPath: () => Promise<string>;
+    removeGroup: (groupName: string) => Promise<boolean>;
+    windowMinimize: () => void;
+    windowMaximize: () => void;
+    windowClose: () => void;
 };
 
 export const IPC_CHANNELS = {
+    REMOVE_GROUP: 'data:removeGroup',
+    WINDOW_MINIMIZE: 'window:minimize',
+    WINDOW_MAXIMIZE: 'window:maximize',
+    WINDOW_CLOSE: 'window:close',
     CHANGE_DATA_FOLDER: 'config:changeDataFolder',
     RESET_DATA_FOLDER: 'config:resetDataFolder',
     GET_DATA_PATH: 'config:getDataPath',
