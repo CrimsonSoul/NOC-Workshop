@@ -36,6 +36,7 @@
   /* Animation */
   --transition-fast: 0.15s ease;
   --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 * {
@@ -77,6 +78,7 @@ body, html {
   border: var(--border-subtle);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  transition: background var(--transition-fast);
 }
 
 .text-gradient {
@@ -85,18 +87,72 @@ body, html {
   -webkit-text-fill-color: transparent;
 }
 
+.font-inter {
+  font-family: var(--font-family-base) !important;
+}
+
+/* Animation Utilities */
 .animate-fade-in {
   animation: fadeIn var(--transition-smooth) forwards;
   opacity: 0;
 }
 
+.animate-slide-up {
+  animation: slideUp var(--transition-smooth) forwards;
+  opacity: 0;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--transition-spring) forwards;
+  opacity: 0;
+  transform: scale(0.95);
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* Input Resets */
 input, button, select, textarea {
   font-family: inherit;
   outline: none;
+}
+
+/* Components */
+.tactile-button {
+  background: transparent;
+  border: var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tactile-button:hover {
+  background: var(--color-bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.tactile-button:active {
+  transform: translateY(0) scale(0.98);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hover-bg:hover {
+  background: rgba(255, 255, 255, 0.03);
 }

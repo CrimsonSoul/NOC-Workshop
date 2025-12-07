@@ -2,11 +2,13 @@ import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import { dirname, join } from 'path';
 import fs from 'fs';
 import { FileManager } from './FileManager';
+import { BridgeLogger } from './BridgeLogger';
 import { IPC_CHANNELS } from '../shared/ipc';
 import { ensureDataFiles } from './dataUtils';
 
 let mainWindow: BrowserWindow | null = null;
 let fileManager: FileManager | null = null;
+let bridgeLogger: BridgeLogger | null = null;
 
 // Auth State
 let authCallback: ((username: string, password: string) => void) | null = null;
@@ -68,10 +70,12 @@ async function createWindow(dataRoot: string) {
   }
 
   fileManager = new FileManager(mainWindow, dataRoot);
+  bridgeLogger = new BridgeLogger(dataRoot);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
     fileManager = null;
+    bridgeLogger = null;
   });
 }
 
@@ -163,6 +167,14 @@ function setupIpc(dataRoot: string) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(IPC_CHANNELS.RADAR_DATA, payload);
     }
+  });
+
+  ipcMain.on(IPC_CHANNELS.LOG_BRIDGE, (_event, groups: string[]) => {
+    bridgeLogger?.logBridge(groups);
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_METRICS, async () => {
+    return bridgeLogger?.getMetrics();
   });
 }
 

@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { fileURLToPath } from 'node:url';
-import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest, type RadarSnapshot } from '@shared/ipc';
+import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest, type RadarSnapshot, type MetricsData } from '@shared/ipc';
 
 const radarPreloadPath = fileURLToPath(new URL('./radar.mjs', import.meta.url));
 
@@ -57,7 +57,10 @@ const api: BridgeAPI = {
     });
   },
 
-  radarPreloadPath
+  radarPreloadPath,
+
+  logBridge: (groups) => ipcRenderer.send(IPC_CHANNELS.LOG_BRIDGE, groups),
+  getMetrics: () => ipcRenderer.invoke(IPC_CHANNELS.GET_METRICS)
 };
 
 contextBridge.exposeInMainWorld('api', api);

@@ -38,7 +38,8 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
     const dateStr = `${date.getMonth() + 1}/${date.getDate()} -`;
     const attendees = log.map(m => m.email).join(',');
     const url = `https://teams.microsoft.com/l/meeting/new?subject=${dateStr}&attendees=${attendees}`;
-    window.api.openExternal(url);
+    window.api?.openExternal(url);
+    window.api?.logBridge(selectedGroups); // Log event for metrics
   };
 
   return (
@@ -48,7 +49,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* Groups Selection */}
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px' }}>
+        <div className="glass-panel animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px', animationDelay: '0ms' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Groups</h3>
             <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>{Object.keys(groups).length}</span>
@@ -87,7 +88,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
         </div>
 
         {/* Manual Add - Zero Friction Input */}
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px' }}>
+        <div className="glass-panel animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px', animationDelay: '100ms' }}>
           <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Quick Add</h3>
           <div style={{ position: 'relative' }}>
             <input
@@ -105,7 +106,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
                 fontSize: '14px',
                 color: 'var(--color-text-primary)',
                 outline: 'none',
-                fontFamily: 'var(--font-family-mono)',
+                fontFamily: 'var(--font-family-base)',
                 transition: 'border-color 0.2s'
               }}
               onFocus={(e) => e.currentTarget.style.borderBottomColor = 'var(--color-accent-blue)'}
@@ -132,14 +133,15 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
       </div>
 
       {/* Main Log Area - Card */}
-      <div className="glass-panel" style={{
+      <div className="glass-panel animate-slide-up" style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
         borderRadius: '12px',
         background: 'var(--color-bg-card)',
-        border: 'var(--border-subtle)'
+        border: 'var(--border-subtle)',
+        animationDelay: '200ms'
       }}>
 
         {/* Toolbar */}
@@ -235,8 +237,8 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
                 {log.map(({ email, source }) => (
-                  <tr key={email} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} className="hover-bg">
-                    <td style={{ padding: '12px 24px', fontFamily: 'var(--font-family-mono)', fontSize: '13px', color: 'var(--color-text-primary)' }}>
+                  <tr key={email} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} className="hover-bg animate-fade-in">
+                    <td style={{ padding: '12px 24px', fontFamily: 'var(--font-family-base)', fontSize: '13px', color: 'var(--color-text-primary)' }}>
                       {email}
                     </td>
                     <td style={{ padding: '12px 24px', width: '100px', textAlign: 'right' }}>

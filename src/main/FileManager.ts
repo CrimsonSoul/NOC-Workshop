@@ -151,14 +151,14 @@ export class FileManager {
       const name = getField(['name', 'full name']);
       const email = getField(['email', 'e-mail']);
       const phone = getField(['phone', 'phone number']);
-      const department = getField(['department', 'dept']);
+      const title = getField(['title', 'role', 'position', 'department', 'dept']);
 
       return {
         name,
         email,
         phone,
-        department,
-        _searchString: `${name} ${email} ${phone} ${department}`.toLowerCase(),
+        title,
+        _searchString: `${name} ${email} ${phone} ${title}`.toLowerCase(),
         raw: row
       };
     });

@@ -3,7 +3,7 @@ export type Contact = {
     name: string;
     email: string;
     phone: string;
-    department: string;
+    title: string;
     _searchString: string;
     raw: Record<string, any>;
 };
@@ -51,6 +51,8 @@ export type BridgeAPI = {
     cancelAuth: () => void;
     subscribeToRadar: (callback: (data: RadarSnapshot) => void) => void;
     radarPreloadPath: string;
+    logBridge: (groups: string[]) => void;
+    getMetrics: () => Promise<MetricsData>;
 };
 
 export const IPC_CHANNELS = {
@@ -67,5 +69,20 @@ export const IPC_CHANNELS = {
     AUTH_REQUESTED: 'auth:requested',
     AUTH_SUBMIT: 'auth:submit',
     AUTH_CANCEL: 'auth:cancel',
-    RADAR_DATA: 'radar:data'
+    RADAR_DATA: 'radar:data',
+    LOG_BRIDGE: 'metrics:logBridge',
+    GET_METRICS: 'metrics:get'
 } as const;
+
+export type BridgeEvent = {
+  timestamp: number;
+  groups: string[];
+};
+
+export type MetricsData = {
+  bridgesLast7d: number;
+  bridgesLast30d: number;
+  bridgesLast6m: number;
+  bridgesLast1y: number;
+  topGroups: { name: string; count: number }[];
+};

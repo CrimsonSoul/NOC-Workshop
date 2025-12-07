@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { SettingsMenu } from './components/SettingsMenu';
+import { WorldClock } from './components/WorldClock';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
 import { RadarTab } from './tabs/RadarTab';
-import { BrainTab } from './tabs/BrainTab';
+import { MetricsTab } from './tabs/MetricsTab';
 import { AppData, Contact } from '@shared/ipc';
 
 type Tab = 'Studio' | 'Network' | 'Vault' | 'Pulse';
@@ -78,6 +79,11 @@ export default function App() {
     setManualRemoves([]);
   };
 
+  const handleSync = async () => {
+    if (isReloading) return;
+    await window.api?.reloadData();
+  };
+
   // Logic to show settings menu.
   // The Sidebar has a settings button. We can either show a modal or a popover.
   // The existing SettingsMenu is a button that opens a dropdown.
@@ -128,18 +134,30 @@ export default function App() {
              <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                {activeTab === 'Studio' && 'Data Composition'}
                {activeTab === 'Network' && 'Contact Directory'}
-               {activeTab === 'Vault' && 'Knowledge Base'}
-               {activeTab === 'Pulse' && 'Signal Monitor'}
+               {activeTab === 'Vault' && 'Vault Metrics'}
+               {activeTab === 'Pulse' && 'Dispatcher Radar'}
              </span>
            </div>
 
            {/* Actions Area */}
-           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              {isReloading && (
-                <span style={{ fontSize: '12px', color: 'var(--color-accent-blue)', fontWeight: 500 }}>
-                  Syncing...
-                </span>
-              )}
+           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <WorldClock />
+              <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)' }} />
+              <button
+                onClick={handleSync}
+                className="tactile-button"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  opacity: isReloading ? 0.7 : 1,
+                  cursor: isReloading ? 'wait' : 'pointer',
+                  borderColor: isReloading ? 'var(--color-accent-blue)' : 'var(--border-subtle)',
+                  color: isReloading ? 'var(--color-accent-blue)' : 'var(--color-text-primary)'
+                }}
+              >
+                {isReloading ? 'Syncing...' : 'Sync'}
+              </button>
            </div>
         </header>
 
@@ -175,7 +193,7 @@ export default function App() {
           )}
           {activeTab === 'Vault' && (
              <div className="animate-fade-in">
-               <BrainTab />
+               <MetricsTab />
              </div>
           )}
           {activeTab === 'Pulse' && (

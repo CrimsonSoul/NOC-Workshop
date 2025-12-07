@@ -87,20 +87,40 @@ const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
             {contact.name}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {contact.title || contact.department || 'No Title'}
+            {contact.title || 'No Title'}
           </div>
         </div>
 
-        {/* Email */}
+        {/* Contact Details */}
         <div style={{
           flex: 1,
           minWidth: 0,
-          fontSize: '13px',
-          fontFamily: 'var(--font-family-mono)',
-          color: 'var(--color-text-secondary)',
-          opacity: 0.8
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: '2px'
         }}>
-          {contact.email}
+          <div style={{
+            fontSize: '13px',
+            fontFamily: 'var(--font-family-mono)',
+            color: 'var(--color-text-secondary)',
+            opacity: 0.9,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {contact.email}
+          </div>
+          {contact.phone && (
+            <div style={{
+              fontSize: '11px',
+              fontFamily: 'var(--font-family-mono)',
+              color: 'var(--color-text-tertiary)',
+              opacity: 0.7
+            }}>
+              {contact.phone}
+            </div>
+          )}
         </div>
 
         {/* Action */}
