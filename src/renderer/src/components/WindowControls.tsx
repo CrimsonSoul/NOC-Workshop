@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 
 export const WindowControls = () => {
-  const [isMaximized, setIsMaximized] = useState(false); // We can't easily track this without more IPC, but for now just toggle intent is fine.
-  // Actually, for just the button click, we don't strictly need the state unless we want to change the icon (Restore vs Maximize).
-  // Standard practice is to toggle.
+  const [isMaximized, setIsMaximized] = useState(false);
 
   const handleMinimize = () => window.api?.windowMinimize();
   const handleMaximize = () => {
@@ -12,50 +10,57 @@ export const WindowControls = () => {
   };
   const handleClose = () => window.api?.windowClose();
 
-  const btnStyle: React.CSSProperties = {
-      width: '46px',
-      height: '32px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'transparent',
-      border: 'none',
-      color: '#9ca3af', // gray-400
-      cursor: 'default', // standard for window controls
-      transition: 'background 0.2s, color 0.2s',
-      WebkitAppRegion: 'no-drag' as any
-  };
+  const btnClass = "window-control-btn";
 
   return (
     <div style={{
         display: 'flex',
         height: '32px',
         WebkitAppRegion: 'no-drag' as any,
-        zIndex: 10000
+        zIndex: 10000,
+        position: 'relative' // Ensure z-index works
     }}>
+        <style>{`
+            .window-control-btn {
+                width: 46px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: transparent;
+                border: none;
+                color: #9ca3af;
+                cursor: default;
+                transition: background 0.2s ease, color 0.2s ease;
+                -webkit-app-region: no-drag;
+                outline: none;
+            }
+            .window-control-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: #FFFFFF;
+            }
+            .window-control-btn.close-btn:hover {
+                background: #E81123;
+                color: #FFFFFF;
+            }
+        `}</style>
         <button
             onClick={handleMinimize}
-            style={btnStyle}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#FFF'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9ca3af'; }}
+            className={btnClass}
             title="Minimize"
         >
             <svg width="10" height="1" viewBox="0 0 10 1"><path d="M0 0h10v1H0z" fill="currentColor"/></svg>
         </button>
         <button
             onClick={handleMaximize}
-            style={btnStyle}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#FFF'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9ca3af'; }}
+            className={btnClass}
             title="Maximize"
         >
              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0v10h10V0H0zm9 9H1V1h8v8z" fill="currentColor"/></svg>
         </button>
         <button
             onClick={handleClose}
-            style={btnStyle}
-            onMouseEnter={e => { e.currentTarget.style.background = '#E81123'; e.currentTarget.style.color = '#FFF'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9ca3af'; }}
+            className={`${btnClass} close-btn`}
             title="Close"
         >
              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.05 0L0 1.05 3.95 5 0 8.95 1.05 10 5 6.05 8.95 10 10 8.95 6.05 5 10 1.05 8.95 0 5 3.95z" fill="currentColor"/></svg>

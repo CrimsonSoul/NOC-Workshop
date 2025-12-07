@@ -272,6 +272,10 @@ function setupIpc() {
     return fileManager?.addContact(contact) ?? false;
   });
 
+  ipcMain.handle(IPC_CHANNELS.REMOVE_CONTACT, async (_event, email) => {
+    return fileManager?.removeContact(email) ?? false;
+  });
+
   ipcMain.handle(IPC_CHANNELS.ADD_GROUP, async (_event, groupName) => {
     return fileManager?.addGroup(groupName) ?? false;
   });

@@ -4,6 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Contact, GroupMap } from '@shared/ipc';
 import { ContactCard } from '../components/ContactCard';
 import { AddContactModal } from '../components/AddContactModal';
+import { Modal } from '../components/Modal';
 
 type Props = {
   contacts: Contact[];
@@ -109,6 +110,44 @@ const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups:
   );
 };
 
+// --- Context Menu for Edit/Delete ---
+const ContextMenu = ({ x, y, onEdit, onDelete, onClose }: { x: number, y: number, onEdit: () => void, onDelete: () => void, onClose: () => void }) => {
+    return (
+        <div
+            style={{
+                position: 'fixed',
+                top: y,
+                left: x,
+                background: 'var(--color-bg-card)',
+                border: 'var(--border-subtle)',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                zIndex: 99999,
+                padding: '4px',
+                minWidth: '120px'
+            }}
+            onClick={e => e.stopPropagation()}
+        >
+            <div
+                onClick={() => { onEdit(); onClose(); }}
+                style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-primary)', borderRadius: '4px' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+                Edit Contact
+            </div>
+            <div
+                onClick={() => { onDelete(); onClose(); }}
+                style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: '#EF4444', borderRadius: '4px' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+                Delete
+            </div>
+        </div>
+    );
+};
+
 
 // Extracted Row Component
 const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
@@ -116,9 +155,10 @@ const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
   recentlyAdded: Set<string>,
   onAdd: (contact: Contact) => void,
   groups: GroupMap,
-  emailToGroups: Map<string, string[]>
+  emailToGroups: Map<string, string[]>,
+  onContextMenu: (e: React.MouseEvent, contact: Contact) => void
 }>) => {
-  const { filtered, recentlyAdded, onAdd, groups, emailToGroups } = data;
+  const { filtered, recentlyAdded, onAdd, groups, emailToGroups, onContextMenu } = data;
   const contact = filtered[index];
   const added = recentlyAdded.has(contact.email);
   const [showGroups, setShowGroups] = useState(false);
@@ -219,15 +259,19 @@ const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
   );
 
   return (
-    <ContactCard
-      style={style}
-      name={contact.name}
-      email={contact.email}
-      title={contact.title}
-      phone={contact.phone}
-      groups={membership}
-      action={actionButtons}
-    />
+    <div
+        style={style}
+        onContextMenu={(e) => onContextMenu(e, contact)}
+    >
+        <ContactCard
+          name={contact.name}
+          email={contact.email}
+          title={contact.title}
+          phone={contact.phone}
+          groups={membership}
+          action={actionButtons}
+        />
+    </div>
   );
 });
 
@@ -235,6 +279,11 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const [search, setSearch] = useState('');
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Edit/Delete State
+  const [contextMenu, setContextMenu] = useState<{x: number, y: number, contact: Contact} | null>(null);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<Contact | null>(null);
 
   const emailToGroups = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -247,6 +296,16 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     });
     return map;
   }, [groups]);
+
+  // Close context menu on click elsewhere
+  useEffect(() => {
+      if (contextMenu) {
+          const handler = () => setContextMenu(null);
+          window.addEventListener('click', handler);
+          return () => window.removeEventListener('click', handler);
+      }
+      return;
+  }, [contextMenu]);
 
   const filtered = contacts.filter(c =>
     !search || c._searchString.includes(search.toLowerCase())
@@ -269,11 +328,22 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     // Reload will happen automatically via file watcher -> IPC -> React State
   };
 
-  const handleImport = async () => {
-    const success = await window.api?.importContactsWithMapping();
-    if (success) {
-      console.log('Import successful');
-    }
+  const handleUpdateContact = async (updated: Partial<Contact>) => {
+      // Re-use addContact which handles upsert by email
+      await window.api?.addContact(updated);
+      setEditingContact(null);
+  }
+
+  const handleDeleteContact = async () => {
+      if (deleteConfirmation) {
+          await window.api?.removeContact(deleteConfirmation.email);
+          setDeleteConfirmation(null);
+      }
+  };
+
+  const onContextMenu = (e: React.MouseEvent, contact: Contact) => {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY, contact });
   };
 
   return (
@@ -366,7 +436,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
               itemCount={filtered.length}
               itemSize={96}
               width={width}
-              itemData={{ filtered, recentlyAdded, onAdd: handleAddWrapper, groups, emailToGroups }}
+              itemData={{ filtered, recentlyAdded, onAdd: handleAddWrapper, groups, emailToGroups, onContextMenu }}
             >
               {ContactRow}
             </List>
@@ -394,6 +464,57 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleCreateContact}
       />
+
+      {/* Edit Modal */}
+      <AddContactModal
+        isOpen={!!editingContact}
+        onClose={() => setEditingContact(null)}
+        onSave={handleUpdateContact}
+        editContact={editingContact || undefined}
+      />
+
+      {/* Delete Modal */}
+      <Modal
+        isOpen={!!deleteConfirmation}
+        onClose={() => setDeleteConfirmation(null)}
+        title="Delete Contact"
+        width="400px"
+      >
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
+                Are you sure you want to delete <span style={{ fontWeight: 600 }}>{deleteConfirmation?.name || deleteConfirmation?.email}</span>?
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+                This action cannot be undone.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button
+                    onClick={() => setDeleteConfirmation(null)}
+                    className="tactile-button"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={handleDeleteContact}
+                    className="tactile-button"
+                    style={{ background: '#EF4444', borderColor: 'transparent', color: '#FFF' }}
+                >
+                    Delete Contact
+                </button>
+            </div>
+        </div>
+      </Modal>
+
+      {/* Context Menu */}
+      {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            onEdit={() => setEditingContact(contextMenu.contact)}
+            onDelete={() => setDeleteConfirmation(contextMenu.contact)}
+            onClose={() => setContextMenu(null)}
+          />
+      )}
     </div>
   );
 };

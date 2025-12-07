@@ -11,7 +11,9 @@ const CONTACT_FILES = ['contacts.csv'];
 const DEBOUNCE_MS = 100;
 
 function parseCsv(contents: string): any[][] {
-  return parse(contents, {
+  // Strip BOM if present
+  const cleanContents = contents.replace(/^\uFEFF/, '');
+  return parse(cleanContents, {
     trim: true,
     skip_empty_lines: true
   });
@@ -167,6 +169,47 @@ export class FileManager {
 
   // --- Write Operations ---
 
+  public async removeContact(email: string): Promise<boolean> {
+    try {
+      const path = join(this.rootDir, CONTACT_FILES[0]);
+      if (!fs.existsSync(path)) return false;
+
+      const contents = fs.readFileSync(path, 'utf-8');
+      const data = parseCsv(contents);
+
+      if (data.length < 2) return false;
+
+      const header = data[0].map(h => h.toLowerCase());
+      const emailIdx = header.findIndex(h => ['email', 'e-mail'].includes(h));
+
+      if (emailIdx === -1) return false;
+
+      const newData = [data[0]]; // Keep header
+      let removed = false;
+
+      for (let i = 1; i < data.length; i++) {
+        if (data[i][emailIdx] === email) {
+          removed = true;
+          // Skip this row (delete)
+        } else {
+          newData.push(data[i]);
+        }
+      }
+
+      if (removed) {
+        const csvOutput = stringify(newData);
+        fs.writeFileSync(path, csvOutput, 'utf-8');
+        this.readAndEmit();
+        return true;
+      }
+      return false;
+
+    } catch (e) {
+      console.error('[FileManager] removeContact error:', e);
+      return false;
+    }
+  }
+
   public async addContact(contact: Partial<Contact>): Promise<boolean> {
     try {
       const path = join(this.rootDir, CONTACT_FILES[0]);
@@ -225,27 +268,32 @@ export class FileManager {
       // Actually, better to just map to existing columns and append empty string for others
       // Re-eval: simpler to just append a new row matching current header structure
 
-      const newRow = new Array(header.length).fill('');
-
-      // Helper to set value if column exists
-      const setVal = (idx: number, val?: string) => { if (idx !== -1 && val) newRow[idx] = val; };
-
-      setVal(nameIdx, contact.name);
-      setVal(emailIdx, contact.email);
-      setVal(titleIdx, contact.title);
-      setVal(phoneIdx, contact.phone);
-
-      // Check if email already exists to prevent dupes (optional but good)
-      const emailCol = emailIdx;
-      if (emailCol !== -1 && contact.email) {
-          const exists = data.slice(1).some(row => row[emailCol] === contact.email);
-          if (exists) {
-            console.log(`[FileManager] Contact ${contact.email} already exists.`);
-            return true; // Treat as success
-          }
+      // Check if updating existing contact
+      let rowIndex = -1;
+      // We assume email is unique identifier
+      if (emailIdx !== -1 && contact.email) {
+          rowIndex = data.findIndex((row, idx) => idx > 0 && row[emailIdx] === contact.email);
       }
 
-      data.push(newRow);
+      if (rowIndex !== -1) {
+          // Update existing
+          const row = data[rowIndex];
+          if (nameIdx !== -1 && contact.name) row[nameIdx] = contact.name;
+          if (titleIdx !== -1 && contact.title) row[titleIdx] = contact.title;
+          if (phoneIdx !== -1 && contact.phone) row[phoneIdx] = contact.phone;
+          // Email is same
+      } else {
+          // Add new
+          const newRow = new Array(header.length).fill('');
+          const setVal = (idx: number, val?: string) => { if (idx !== -1 && val) newRow[idx] = val; };
+
+          setVal(nameIdx, contact.name);
+          setVal(emailIdx, contact.email);
+          setVal(titleIdx, contact.title);
+          setVal(phoneIdx, contact.phone);
+
+          data.push(newRow);
+      }
 
       const csvOutput = stringify(data);
       fs.writeFileSync(path, csvOutput, 'utf-8');
@@ -519,20 +567,6 @@ export class FileManager {
           // Read existing to determine if we should overwrite or merge
           let targetData: any[][] = [];
           const existingContent = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf-8') : '';
-
-          // Simple check for "dummy" data: if file is small (< 2KB) and contains "Elon Musk" (known dummy) or just check size/content?
-          // User said "replace dummy data".
-          // Let's check if the file is effectively the default one.
-          // Since I don't have the default hash easily, I'll rely on a heuristic:
-          // If the user has explicitly imported, and the existing list is very short (<10) or standard names, maybe overwrite?
-          // Safer approach: Always merge, but key by email. If they want to clear, they can delete the file (or I'd add a "Clear" button).
-          // Wait, user said "replace the dummy data".
-          // I will assume if the contact count is small (< 50) and no custom edits tracked, it might be dummy.
-          // Actually, let's just MERGE. If the user imports "Elon Musk" again with different data, it updates.
-          // If the user imports a new list, the old dummy data remains?
-          // User: "only have it replaces the dummy data".
-          // If I can't identify dummy data, I can't replace ONLY it.
-          // Compromise: Standard Merge (Upsert). Most users won't mind 5 extra dummy contacts if they import 100 real ones.
 
           if (fs.existsSync(targetPath)) {
              targetData = parseCsv(existingContent);
