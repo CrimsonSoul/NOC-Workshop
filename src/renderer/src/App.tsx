@@ -156,6 +156,7 @@ export default function App() {
             <div className="animate-fade-in">
               <AssemblerTab
                 groups={data.groups}
+                contacts={data.contacts}
                 selectedGroups={selectedGroups}
                 manualAdds={manualAdds}
                 manualRemoves={manualRemoves}

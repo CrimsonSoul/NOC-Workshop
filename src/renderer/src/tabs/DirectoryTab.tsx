@@ -2,24 +2,11 @@ import React, { useState, memo } from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Contact } from '@shared/ipc';
+import { ContactCard } from '../components/ContactCard';
 
 type Props = {
   contacts: Contact[];
   onAddToAssembler: (contact: Contact) => void;
-};
-
-// Avatar placeholder generator
-const getAvatarColor = (name: string) => {
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-};
-
-const getInitials = (name: string) => {
-  const parts = name.split(' ');
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
 };
 
 // Extracted Row Component for performance
@@ -31,133 +18,58 @@ const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
   const { filtered, recentlyAdded, onAdd } = data;
   const contact = filtered[index];
   const added = recentlyAdded.has(contact.email);
-  const avatarColor = getAvatarColor(contact.name);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     onAdd(contact);
   };
 
-  return (
-    <div style={{
-      ...style,
-      padding: '0'
-    }}>
-      <div
-        style={{
-          height: '64px',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 16px',
-          background: 'transparent',
-          borderBottom: 'var(--border-subtle)',
-          transition: 'background 0.15s',
-          cursor: 'default'
-        }}
-        className="directory-row"
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-        }}
-        onMouseLeave={(e) => {
+  const actionButton = (
+    <button
+      onClick={handleAdd}
+      style={{
+        padding: '6px 16px', // Pill shape padding
+        borderRadius: '20px', // Pill shape
+        border: added ? '1px solid var(--color-accent-green)' : '1px solid var(--border-subtle)',
+        background: added ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+        color: added ? 'var(--color-accent-green)' : 'var(--color-text-secondary)',
+        fontSize: '12px',
+        fontWeight: 500,
+        cursor: 'pointer',
+        minWidth: '80px',
+        transition: 'all 0.2s',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onMouseEnter={(e) => {
+        if (!added) {
+          e.currentTarget.style.borderColor = 'var(--color-accent-blue)';
+          e.currentTarget.style.color = 'var(--color-accent-blue)';
+          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!added) {
+          e.currentTarget.style.borderColor = 'var(--border-subtle)';
+          e.currentTarget.style.color = 'var(--color-text-secondary)';
           e.currentTarget.style.background = 'transparent';
-        }}
-      >
-        {/* Avatar */}
-        <div style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '50%',
-          background: `rgba(${parseInt(avatarColor.slice(1,3), 16)}, ${parseInt(avatarColor.slice(3,5), 16)}, ${parseInt(avatarColor.slice(5,7), 16)}, 0.2)`,
-          color: avatarColor,
-          border: `1px solid ${avatarColor}40`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '12px',
-          fontWeight: 600,
-          marginRight: '16px',
-          flexShrink: 0
-        }}>
-          {getInitials(contact.name)}
-        </div>
+        }
+      }}
+    >
+      {added ? 'Added' : 'Add'}
+    </button>
+  );
 
-        {/* Info */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-            {contact.name}
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {contact.title || 'No Title'}
-          </div>
-        </div>
-
-        {/* Contact Details */}
-        <div style={{
-          flex: 1,
-          minWidth: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          gap: '2px'
-        }}>
-          <div style={{
-            fontSize: '13px',
-            fontFamily: 'var(--font-family-mono)',
-            color: 'var(--color-text-secondary)',
-            opacity: 0.9,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
-            {contact.email}
-          </div>
-          {contact.phone && (
-            <div style={{
-              fontSize: '11px',
-              fontFamily: 'var(--font-family-mono)',
-              color: 'var(--color-text-tertiary)',
-              opacity: 0.7
-            }}>
-              {contact.phone}
-            </div>
-          )}
-        </div>
-
-        {/* Action */}
-        <button
-          onClick={handleAdd}
-          style={{
-            padding: '6px 12px',
-            borderRadius: '6px',
-            border: added ? '1px solid var(--color-accent-green)' : '1px solid var(--border-subtle)',
-            background: added ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-            color: added ? 'var(--color-accent-green)' : 'var(--color-text-secondary)',
-            fontSize: '12px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            minWidth: '70px',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onMouseEnter={(e) => {
-            if (!added) {
-              e.currentTarget.style.borderColor = 'var(--color-accent-blue)';
-              e.currentTarget.style.color = 'var(--color-accent-blue)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!added) {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.color = 'var(--color-text-secondary)';
-            }
-          }}
-        >
-          {added ? 'Added' : 'Add'}
-        </button>
-      </div>
-    </div>
+  return (
+    <ContactCard
+      style={style}
+      name={contact.name}
+      email={contact.email}
+      title={contact.title}
+      phone={contact.phone}
+      action={actionButton}
+    />
   );
 });
 
@@ -223,10 +135,10 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
         )}
       </div>
 
-      {/* Header Row */}
+      {/* Header Row - Updated to match ContactCard layout roughly */}
       <div style={{
         display: 'flex',
-        padding: '12px 16px',
+        padding: '12px 24px',
         borderBottom: 'var(--border-subtle)',
         background: 'rgba(255,255,255,0.02)',
         fontSize: '11px',
@@ -235,10 +147,10 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
         letterSpacing: '0.05em',
         color: 'var(--color-text-tertiary)'
       }}>
-        <div style={{ width: '52px' }}></div> {/* Avatar space */}
-        <div style={{ flex: 1 }}>Name & Role</div>
-        <div style={{ flex: 1 }}>Contact</div>
-        <div style={{ width: '70px', textAlign: 'center' }}>Action</div>
+        <div style={{ width: '62px' }}></div> {/* Avatar space (42px + 20px mr) */}
+        <div style={{ flex: 1.2, paddingRight: '16px' }}>Name & Role</div>
+        <div style={{ flex: 1.5, paddingRight: '16px' }}>Contact</div>
+        <div style={{ minWidth: '80px', textAlign: 'center' }}>Action</div>
       </div>
 
       {/* Virtualized List */}
@@ -248,7 +160,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, onAddToAssembler }) =>
             <List
               height={height}
               itemCount={filtered.length}
-              itemSize={64} // Row height
+              itemSize={72} // Matched to ContactCard height
               width={width}
               itemData={{ filtered, recentlyAdded, onAdd: handleAddWrapper }}
             >

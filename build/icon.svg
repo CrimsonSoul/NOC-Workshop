@@ -1,8 +1,6 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="256" height="256" rx="64" fill="url(#paint0_linear)"/>
-  <path d="M96 64H136C158.091 64 176 81.9086 176 104C176 126.091 158.091 144 136 144H96V64Z" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M136 144L176 192" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M96 144V192" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="128" y="128" font-family="Inter, sans-serif" font-weight="bold" font-size="140" fill="white" text-anchor="middle" dominant-baseline="central">R</text>
   <defs>
     <linearGradient id="paint0_linear" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
       <stop stop-color="#3B82F6"/>

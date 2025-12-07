@@ -9,22 +9,22 @@ test.describe('Application Shell', () => {
   });
 
   test('navigates between tabs', async ({ page }) => {
-    // Check initial state (Assembler)
-    await expect(page.getByRole('button', { name: 'Assembler' })).toHaveClass(/is-active/);
+    // Check initial state (Compose)
+    await expect(page.getByRole('button', { name: 'Compose' })).toHaveClass(/active/);
 
     // Update locator for Groups title
     await expect(page.getByRole('heading', { name: 'Groups' })).toBeVisible();
 
-    // Navigate to Directory
-    await page.getByRole('button', { name: 'Directory' }).click();
-    await expect(page.getByRole('button', { name: 'Directory' })).toHaveClass(/is-active/);
+    // Navigate to People (formerly Directory)
+    await page.getByRole('button', { name: 'People' }).click();
+    await expect(page.getByRole('button', { name: 'People' })).toHaveClass(/active/);
 
-    // Update locator for Directory search input
-    await expect(page.getByPlaceholder('Filter directory...')).toBeVisible();
+    // Update locator for People search input
+    await expect(page.getByPlaceholder('Search network...')).toBeVisible();
 
-    // Navigate to Radar
-    await page.getByRole('button', { name: 'Radar', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Radar', exact: true })).toHaveClass(/is-active/);
+    // Navigate to Live (formerly Radar)
+    await page.getByRole('button', { name: 'Live', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Live', exact: true })).toHaveClass(/active/);
   });
 
   test('assembler logic: selection and manual entry', async ({ page }) => {
@@ -38,8 +38,8 @@ test.describe('Application Shell', () => {
     // Verify logs populated
     await expect(page.getByText('alpha1@agency.net')).toBeVisible();
     await expect(page.getByText('alpha2@agency.net')).toBeVisible();
-    // Update text matcher for Log count
-    await expect(page.getByText('2 RECIPIENTS SELECTED')).toBeVisible();
+    // Update text matcher for Log count - case insensitive
+    await expect(page.getByText('2 recipients selected')).toBeVisible();
 
     // Manual Entry
     const adhocEmail = 'adhoc@agency.net';
@@ -50,10 +50,10 @@ test.describe('Application Shell', () => {
     // Verify ad-hoc added
     await expect(page.getByText(adhocEmail)).toBeVisible();
 
-    // Fix: "ADHOC" tag strict mode violation.
+    // Fix: "MANUAL" tag strict mode violation.
     await expect(page.getByText('MANUAL', { exact: true }).first()).toBeVisible();
 
-    await expect(page.getByText('3 RECIPIENTS SELECTED')).toBeVisible();
+    await expect(page.getByText('3 recipients selected')).toBeVisible();
 
     // Reset
     await page.getByRole('button', { name: 'Reset' }).click();
@@ -63,23 +63,23 @@ test.describe('Application Shell', () => {
   });
 
   test('directory search adds to assembler', async ({ page }) => {
-    // Go to Directory
-    await page.getByRole('button', { name: 'Directory' }).click();
+    // Go to People (Directory)
+    await page.getByRole('button', { name: 'People' }).click();
 
     // Search
-    const searchInput = page.getByPlaceholder('Filter directory...');
+    const searchInput = page.getByPlaceholder('Search network...');
     await searchInput.fill('Jane');
 
     // Verify filter
     await expect(page.getByText('Jane Smith')).toBeVisible();
     await expect(page.getByText('John Doe')).not.toBeVisible();
 
-    // Add to assembler - "ADD +" button
-    await page.getByRole('button', { name: 'ADD +' }).click();
-    await expect(page.getByRole('button', { name: 'ADDED' })).toBeVisible();
+    // Add to assembler - "Add" button (case insensitive or exact, updated to "Add")
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Added' })).toBeVisible();
 
-    // Go back to Assembler
-    await page.getByRole('button', { name: 'Assembler' }).click();
+    // Go back to Compose (Assembler)
+    await page.getByRole('button', { name: 'Compose' }).click();
 
     // Verify added
     await expect(page.getByText('jane.smith@agency.net')).toBeVisible();

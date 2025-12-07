@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { GroupMap } from '@shared/ipc';
+import { GroupMap, Contact } from '@shared/ipc';
+import { ContactCard } from '../components/ContactCard';
 
 type Props = {
   groups: GroupMap;
+  contacts: Contact[];
   selectedGroups: string[];
   manualAdds: string[];
   manualRemoves: string[];
@@ -33,9 +35,60 @@ const getColorForString = (str: string) => {
   return PALETTE[Math.abs(hash) % PALETTE.length];
 };
 
-export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
+const ToolbarButton = ({ onClick, label, primary = false, active = false }: { onClick: () => void, label: string, primary?: boolean, active?: boolean }) => {
+    return (
+        <button
+            onClick={onClick}
+            style={{
+                padding: '6px 16px',
+                borderRadius: '20px',
+                border: primary ? 'none' : '1px solid var(--border-subtle)',
+                background: primary ? 'var(--color-accent-blue)' : (active ? 'rgba(255,255,255,0.1)' : 'transparent'),
+                color: primary ? '#FFFFFF' : (active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'),
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                outline: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: primary ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+                if (!primary) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.color = 'var(--color-text-primary)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                } else {
+                    e.currentTarget.style.background = '#2563EB'; // Darker blue
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (!primary) {
+                     e.currentTarget.style.background = active ? 'rgba(255,255,255,0.1)' : 'transparent';
+                     e.currentTarget.style.color = active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)';
+                     e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                } else {
+                    e.currentTarget.style.background = 'var(--color-accent-blue)';
+                }
+            }}
+        >
+            {label}
+        </button>
+    )
+}
+
+export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
   const [adhocInput, setAdhocInput] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Optimized contact lookup map
+  const contactMap = useMemo(() => {
+    const map = new Map<string, Contact>();
+    contacts.forEach(c => map.set(c.email.toLowerCase(), c));
+    return map;
+  }, [contacts]);
 
   const log = useMemo(() => {
     const fromGroups = selectedGroups.flatMap(g => groups[g] || []);
@@ -205,57 +258,12 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={onResetManual}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--color-text-tertiary)',
-                cursor: 'pointer',
-                fontSize: '13px'
-              }}>Reset</button>
+            <ToolbarButton label="Reset" onClick={onResetManual} />
             {manualRemoves.length > 0 && (
-              <button
-                onClick={onUndoRemove}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--color-text-tertiary)',
-                  cursor: 'pointer',
-                  fontSize: '13px'
-                }}>Undo</button>
+               <ToolbarButton label="Undo" onClick={onUndoRemove} />
             )}
-            <button
-              onClick={handleCopy}
-              style={{
-                background: 'transparent',
-                border: 'var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                color: 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                fontSize: '13px',
-                transition: 'all 0.2s'
-              }}
-            >
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-            <button
-              onClick={handleDraftBridge}
-              style={{
-                background: 'var(--color-accent-blue)',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '6px 16px',
-                color: 'white',
-                fontWeight: 500,
-                cursor: 'pointer',
-                fontSize: '13px',
-                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-              }}
-            >
-              Draft Bridge
-            </button>
+            <ToolbarButton label={copied ? 'Copied' : 'Copy'} onClick={handleCopy} active={copied} />
+            <ToolbarButton label="Draft Bridge" onClick={handleDraftBridge} primary />
           </div>
         </div>
 
@@ -279,58 +287,57 @@ export const AssemblerTab: React.FC<Props> = ({ groups, selectedGroups, manualAd
               <div>No recipients selected</div>
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <tbody>
-                {log.map(({ email, source }) => (
-                  <tr key={email} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} className="hover-bg animate-fade-in">
-                    <td style={{ padding: '12px 24px', fontFamily: 'var(--font-family-base)', fontSize: '13px', color: 'var(--color-text-primary)' }}>
-                      {email}
-                    </td>
-                    <td style={{ padding: '12px 24px', width: '100px', textAlign: 'right' }}>
-                      {source === 'manual' && (
-                        <span style={{
-                          fontSize: '10px',
-                          background: 'rgba(139, 92, 246, 0.15)',
-                          color: '#A78BFA',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontWeight: 500
-                        }}>
-                          MANUAL
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px 24px', width: '40px' }}>
-                      <button
-                        onClick={() => onRemoveManual(email)}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--color-text-tertiary)',
-                          fontSize: '18px',
-                          padding: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          opacity: 0.5
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.opacity = '1';
-                          e.currentTarget.style.color = '#EF4444';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.opacity = '0.5';
-                          e.currentTarget.style.color = 'var(--color-text-tertiary)';
-                        }}
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+             <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {log.map(({ email, source }) => {
+                    const contact = contactMap.get(email.toLowerCase());
+                    const name = contact ? contact.name : email.split('@')[0]; // Fallback to part of email
+                    const title = contact?.title;
+                    const phone = contact?.phone;
+
+                    return (
+                        <ContactCard
+                            key={email}
+                            name={name}
+                            email={email}
+                            title={title}
+                            phone={phone}
+                            sourceLabel={source === 'manual' ? 'MANUAL' : undefined}
+                            className="animate-fade-in"
+                            action={
+                                <button
+                                    onClick={() => onRemoveManual(email)}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--color-text-tertiary)',
+                                        fontSize: '18px',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        opacity: 0.5,
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.opacity = '1';
+                                        e.currentTarget.style.color = '#EF4444';
+                                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                        e.currentTarget.style.borderRadius = '50%';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.opacity = '0.5';
+                                        e.currentTarget.style.color = 'var(--color-text-tertiary)';
+                                        e.currentTarget.style.background = 'transparent';
+                                    }}
+                                >
+                                    ×
+                                </button>
+                            }
+                        />
+                    );
+                })}
+             </div>
           )}
         </div>
       </div>
