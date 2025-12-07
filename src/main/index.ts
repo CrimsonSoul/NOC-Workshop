@@ -18,6 +18,14 @@ function getDataRoot() {
     return join(process.cwd(), 'data');
   }
 
+  // On macOS, writing inside the app bundle (Resources/data) breaks code signature.
+  // Use userData (Application Support) instead.
+  if (process.platform === 'darwin') {
+    const dataPath = join(app.getPath('userData'), 'data');
+    ensureDataFiles(dataPath, join(process.resourcesPath, 'data'), app.isPackaged);
+    return dataPath;
+  }
+
   const executableDir = process.env.PORTABLE_EXECUTABLE_DIR || dirname(process.execPath);
   const portableDataPath = join(executableDir, 'data');
 

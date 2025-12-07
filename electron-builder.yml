@@ -20,3 +20,9 @@ win:
       arch: x64
   artifactName: "Relay.exe"
   icon: build/icon.ico
+mac:
+  target:
+    - target: zip
+      arch: arm64
+  identity: null
+  icon: build/icon.png
