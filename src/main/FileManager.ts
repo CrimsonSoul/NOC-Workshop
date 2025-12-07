@@ -249,6 +249,7 @@ export class FileManager {
 
       const csvOutput = stringify(data);
       fs.writeFileSync(path, csvOutput, 'utf-8');
+      this.readAndEmit();
       return true;
     } catch (e) {
       console.error('[FileManager] addContact error:', e);
@@ -286,6 +287,7 @@ export class FileManager {
 
       const csvOutput = stringify(data);
       fs.writeFileSync(path, csvOutput, 'utf-8');
+      this.readAndEmit();
       return true;
     } catch (e) {
       console.error('[FileManager] addGroup error:', e);
@@ -354,6 +356,7 @@ export class FileManager {
 
       const csvOutput = stringify(data);
       fs.writeFileSync(path, csvOutput, 'utf-8');
+      this.readAndEmit();
       return true;
      } catch (e) {
          console.error('[FileManager] updateGroupMembership error:', e);
