@@ -62,7 +62,7 @@ const ToolbarButton = ({ onClick, label, primary = false, active = false }: { on
     )
 }
 
-export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
+export const ComposeTab: React.FC<Props> = ({ groups, contacts, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
   const [adhocInput, setAdhocInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);

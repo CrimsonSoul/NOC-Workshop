@@ -27,6 +27,9 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
       animation: 'fadeIn 0.2s ease-out'
     }} onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
         style={{
           background: 'var(--color-bg-card)',
           border: 'var(--border-subtle)',

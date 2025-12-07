@@ -47,6 +47,13 @@ test.describe('Application Shell', () => {
     await page.getByPlaceholder('Enter email address...').fill(adhocEmail);
     await page.getByPlaceholder('Enter email address...').press('Enter');
 
+    // The contact does not exist, so the AddContactModal should open
+    // We need to fill in the required fields (Name)
+    // Email should be pre-filled
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByPlaceholder('e.g. Alice Smith').fill('Adhoc User');
+    await page.getByRole('button', { name: 'Create Contact' }).click();
+
     // Verify ad-hoc added
     await expect(page.getByText(adhocEmail)).toBeVisible();
 

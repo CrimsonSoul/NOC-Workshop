@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { SettingsMenu } from './components/SettingsMenu';
 import { WorldClock } from './components/WorldClock';
-import { AssemblerTab } from './tabs/AssemblerTab';
-import { DirectoryTab } from './tabs/DirectoryTab';
-import { RadarTab } from './tabs/RadarTab';
-import { MetricsTab } from './tabs/MetricsTab';
+import { ComposeTab } from './tabs/ComposeTab';
+import { PeopleTab } from './tabs/PeopleTab';
+import { LiveTab } from './tabs/LiveTab';
+import { ReportsTab } from './tabs/ReportsTab';
 import { AppData, Contact } from '@shared/ipc';
 
 type Tab = 'Compose' | 'People' | 'Reports' | 'Live';
@@ -152,7 +152,7 @@ export default function App() {
         }}>
           {activeTab === 'Compose' && (
             <div className="animate-fade-in">
-              <AssemblerTab
+              <ComposeTab
                 groups={data.groups}
                 contacts={data.contacts}
                 selectedGroups={selectedGroups}
@@ -168,7 +168,7 @@ export default function App() {
           )}
           {activeTab === 'People' && (
              <div className="animate-fade-in" style={{ height: '100%' }}>
-              <DirectoryTab
+              <PeopleTab
                 contacts={data.contacts}
                 groups={data.groups}
                 onAddToAssembler={handleAddToAssembler}
@@ -177,12 +177,12 @@ export default function App() {
           )}
           {activeTab === 'Reports' && (
              <div className="animate-fade-in">
-               <MetricsTab />
+               <ReportsTab />
              </div>
           )}
           {activeTab === 'Live' && (
             <div className="animate-fade-in" style={{ height: '100%' }}>
-              <RadarTab />
+              <LiveTab />
             </div>
           )}
         </div>

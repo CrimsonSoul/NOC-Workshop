@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MetricsData } from '@shared/ipc';
 
-export const MetricsTab: React.FC = () => {
+export const ReportsTab: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
 
   useEffect(() => {

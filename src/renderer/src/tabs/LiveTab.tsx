@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import type { WebviewTag } from 'electron';
 
-export const RadarTab: React.FC = () => {
+export const LiveTab: React.FC = () => {
   const [url, setUrl] = useState('https://cw-intra-web/CWDashboard/Home/Radar');
   const webviewRef = useRef<WebviewTag>(null);
   const [isLoading, setIsLoading] = useState(false);

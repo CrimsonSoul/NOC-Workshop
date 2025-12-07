@@ -231,7 +231,7 @@ const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
   );
 });
 
-export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembler }) => {
+export const PeopleTab: React.FC<Props> = ({ contacts, groups, onAddToAssembler }) => {
   const [search, setSearch] = useState('');
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
