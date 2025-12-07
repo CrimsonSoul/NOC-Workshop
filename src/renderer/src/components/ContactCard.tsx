@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { getColorForString } from '../utils/colors';
 
 type ContactCardProps = {
   name: string;
@@ -22,7 +23,10 @@ const getAvatarColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const getInitials = (name: string) => {
+const getInitials = (name: string, email: string) => {
+  if (!name) {
+    return (email && email.length > 0) ? email[0].toUpperCase() : '?';
+  }
   const parts = name.trim().split(' ');
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
@@ -44,7 +48,7 @@ const formatPhone = (phone: string | undefined) => {
 };
 
 export const ContactCard = memo(({ name, email, title, phone, avatarColor, action, style, className, sourceLabel, groups = [] }: ContactCardProps) => {
-  const color = avatarColor || getAvatarColor(name);
+  const color = avatarColor || getAvatarColor(name || email);
   const formattedPhone = formatPhone(phone);
 
   return (
@@ -82,37 +86,41 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         fontWeight: 600,
         flexShrink: 0
       }}>
-        {getInitials(name)}
+        {getInitials(name, email)}
       </div>
 
       <div style={{ display: 'flex', flex: 1, minWidth: 0, gap: '12px' }}>
         {/* Info Group 1: Name & Title */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {name}
+            {name || email}
           </div>
           <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {title || 'No Title'}
           </div>
           {groups.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-              {groups.map((group) => (
-                <span
-                  key={group}
-                  style={{
-                    fontSize: '11px',
-                    color: 'var(--color-text-secondary)',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '12px',
-                    padding: '4px 8px',
-                    lineHeight: 1.1,
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {group}
-                </span>
-              ))}
+              {groups.map((group) => {
+                const groupColor = getColorForString(group);
+                return (
+                  <span
+                    key={group}
+                    style={{
+                      fontSize: '11px',
+                      color: groupColor.text,
+                      background: groupColor.bg,
+                      border: `1px solid ${groupColor.border}`,
+                      borderRadius: '12px',
+                      padding: '2px 8px',
+                      lineHeight: 1.4,
+                      whiteSpace: 'nowrap',
+                      opacity: 0.9
+                    }}
+                  >
+                    {group}
+                  </span>
+                );
+              })}
             </div>
           )}
         </div>
@@ -128,7 +136,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         }}>
           <div style={{
             fontSize: '13px',
-            fontFamily: 'var(--font-family-mono)',
+            fontFamily: 'var(--font-family-base)',
             color: 'var(--color-text-secondary)',
             opacity: 1, // Increased visibility
             overflow: 'hidden',
@@ -140,8 +148,8 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           {formattedPhone && (
             <div style={{
               fontSize: '13px', // Increased size
-              fontFamily: 'var(--font-family-mono)',
-              color: 'var(--color-text-tertiary)',
+              fontFamily: 'var(--font-family-base)',
+              color: 'var(--color-text-primary)',
               fontWeight: 500,
               opacity: 1 // Increased visibility
             }}>

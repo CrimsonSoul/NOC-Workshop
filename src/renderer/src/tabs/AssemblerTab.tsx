@@ -3,6 +3,7 @@ import { GroupMap, Contact } from '@shared/ipc';
 import { ContactCard } from '../components/ContactCard';
 import { AddContactModal } from '../components/AddContactModal';
 import { Modal } from '../components/Modal';
+import { getColorForString } from '../utils/colors';
 
 type Props = {
   groups: GroupMap;
@@ -15,26 +16,6 @@ type Props = {
   onRemoveManual: (email: string) => void;
   onUndoRemove: () => void;
   onResetManual: () => void;
-};
-
-// --- Color Utils ---
-const PALETTE = [
-  { bg: 'rgba(239, 68, 68, 0.2)', border: 'rgba(239, 68, 68, 0.4)', text: '#FCA5A5', fill: '#EF4444' }, // Red
-  { bg: 'rgba(249, 115, 22, 0.2)', border: 'rgba(249, 115, 22, 0.4)', text: '#FDBA74', fill: '#F97316' }, // Orange
-  { bg: 'rgba(245, 158, 11, 0.2)', border: 'rgba(245, 158, 11, 0.4)', text: '#FCD34D', fill: '#F59E0B' }, // Amber
-  { bg: 'rgba(16, 185, 129, 0.2)', border: 'rgba(16, 185, 129, 0.4)', text: '#6EE7B7', fill: '#10B981' }, // Emerald
-  { bg: 'rgba(59, 130, 246, 0.2)', border: 'rgba(59, 130, 246, 0.4)', text: '#93C5FD', fill: '#3B82F6' }, // Blue
-  { bg: 'rgba(99, 102, 241, 0.2)', border: 'rgba(99, 102, 241, 0.4)', text: '#A5B4FC', fill: '#6366F1' }, // Indigo
-  { bg: 'rgba(139, 92, 246, 0.2)', border: 'rgba(139, 92, 246, 0.4)', text: '#C4B5FD', fill: '#8B5CF6' }, // Violet
-  { bg: 'rgba(236, 72, 153, 0.2)', border: 'rgba(236, 72, 153, 0.4)', text: '#F9A8D4', fill: '#EC4899' }, // Pink
-];
-
-const getColorForString = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return PALETTE[Math.abs(hash) % PALETTE.length];
 };
 
 const ToolbarButton = ({ onClick, label, primary = false, active = false }: { onClick: () => void, label: string, primary?: boolean, active?: boolean }) => {
@@ -184,50 +165,30 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                  <button
                    onClick={() => setIsGroupModalOpen(true)}
                    style={{
-                       background: 'var(--color-accent-blue)',
-                       border: 'none',
-                       borderRadius: '999px',
-                       color: '#fff',
+                       background: 'transparent',
+                       border: 'var(--border-subtle)',
+                       borderRadius: '20px',
+                       color: 'var(--color-text-secondary)',
                        cursor: 'pointer',
                        padding: '6px 12px',
                        fontSize: '12px',
-                       fontWeight: 600,
+                       fontWeight: 500,
                        display: 'flex',
                        alignItems: 'center',
                        gap: '6px',
-                       boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)',
-                       transition: 'transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease'
+                       transition: 'all 0.15s ease'
                    }}
                    title="Create Group"
                    onMouseEnter={(e) => {
-                     e.currentTarget.style.background = '#2563EB';
-                     e.currentTarget.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.35)';
+                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                     e.currentTarget.style.color = 'var(--color-text-primary)';
                    }}
                    onMouseLeave={(e) => {
-                     e.currentTarget.style.background = 'var(--color-accent-blue)';
-                     e.currentTarget.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.3)';
-                     e.currentTarget.style.transform = 'translateY(0)';
-                   }}
-                   onMouseDown={(e) => {
-                     e.currentTarget.style.transform = 'translateY(1px)';
-                     e.currentTarget.style.background = '#1D4ED8';
-                   }}
-                   onMouseUp={(e) => {
-                     e.currentTarget.style.transform = 'translateY(0)';
-                     e.currentTarget.style.background = '#2563EB';
+                     e.currentTarget.style.background = 'transparent';
+                     e.currentTarget.style.color = 'var(--color-text-secondary)';
                    }}
                  >
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '18px',
-                      height: '18px',
-                      borderRadius: '50%',
-                      background: 'rgba(255,255,255,0.18)',
-                      fontSize: '14px',
-                      lineHeight: 1
-                    }}>+</span>
+                    <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
                     New group
                  </button>
             </div>

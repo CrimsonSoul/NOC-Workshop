@@ -39,8 +39,6 @@ export default function App() {
     }, delay);
   }, []);
 
-  const handleOpenGroupsFile = () => window.api?.openGroupsFile();
-  const handleOpenContactsFile = () => window.api?.openContactsFile();
   const handleImportGroups = async () => await window.api?.importGroupsFile();
   const handleImportContacts = async () => await window.api?.importContactsFile();
 
@@ -231,9 +229,6 @@ export default function App() {
                   </>
                 ) : 'Sync Data'}
               </button>
-              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
-              <button className="tactile-button" onClick={handleOpenGroupsFile}>Open Groups CSV</button>
-              <button className="tactile-button" onClick={handleOpenContactsFile}>Open Contacts CSV</button>
               <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
               <button className="tactile-button" onClick={handleImportGroups}>Import Groups...</button>
               <button className="tactile-button" onClick={handleImportContacts}>Import Contacts...</button>
