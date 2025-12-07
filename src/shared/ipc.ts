@@ -54,6 +54,7 @@ export type BridgeAPI = {
     logBridge: (groups: string[]) => void;
     getMetrics: () => Promise<MetricsData>;
     addContact: (contact: Partial<Contact>) => Promise<boolean>;
+    removeContact: (email: string) => Promise<boolean>;
     addGroup: (groupName: string) => Promise<boolean>;
     addContactToGroup: (groupName: string, email: string) => Promise<boolean>;
     removeContactFromGroup: (groupName: string, email: string) => Promise<boolean>;
@@ -82,6 +83,7 @@ export const IPC_CHANNELS = {
     IMPORT_GROUPS_FILE: 'fs:importGroupsFile',
     IMPORT_CONTACTS_FILE: 'fs:importContactsFile',
     ADD_CONTACT: 'data:addContact',
+    REMOVE_CONTACT: 'data:removeContact',
     ADD_GROUP: 'data:addGroup',
     ADD_CONTACT_TO_GROUP: 'data:addContactToGroup',
     REMOVE_CONTACT_FROM_GROUP: 'data:removeContactFromGroup',

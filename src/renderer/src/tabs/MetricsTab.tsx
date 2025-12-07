@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MetricsData } from '@shared/ipc';
+import { getColorForString } from '../utils/colors';
 
 export const MetricsTab: React.FC = () => {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
@@ -62,19 +63,36 @@ export const MetricsTab: React.FC = () => {
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
-                {metrics.topGroups.map((g, i) => (
-                  <tr key={g.name} style={{ borderBottom: 'var(--border-subtle)' }}>
-                    <td style={{ padding: '16px 24px', width: '40px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
-                      #{i + 1}
-                    </td>
-                    <td style={{ padding: '16px 24px', fontWeight: 500 }}>
-                      {g.name}
-                    </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'right', fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-secondary)' }}>
-                      {g.count}
-                    </td>
-                  </tr>
-                ))}
+                {metrics.topGroups.map((g, i) => {
+                  const color = getColorForString(g.name);
+                  return (
+                    <tr key={g.name} style={{ borderBottom: 'var(--border-subtle)' }}>
+                      <td style={{ padding: '16px 24px', width: '40px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+                        #{i + 1}
+                      </td>
+                      <td style={{ padding: '16px 24px', fontWeight: 500 }}>
+                        <span style={{
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            background: color.bg,
+                            border: `1px solid ${color.border}`,
+                            color: color.text,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            lineHeight: 1
+                        }}>
+                           {g.name}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px 24px', textAlign: 'right', fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-secondary)' }}>
+                        {g.count}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

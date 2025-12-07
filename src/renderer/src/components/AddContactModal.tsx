@@ -7,37 +7,39 @@ type Props = {
   onClose: () => void;
   onSave: (contact: Partial<Contact>) => void;
   initialEmail?: string;
+  editContact?: Contact; // If provided, we are in edit mode
 };
 
-export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialEmail = '' }) => {
+export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialEmail = '', editContact }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [title, setTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when opened
+  // Reset or populate form when opened
   useEffect(() => {
     if (isOpen) {
-      setName('');
-      setEmail(initialEmail);
-      setPhone('');
-      setTitle('');
+      if (editContact) {
+          setName(editContact.name);
+          setEmail(editContact.email);
+          setPhone(editContact.phone);
+          setTitle(editContact.title);
+      } else {
+          setName('');
+          setEmail(initialEmail);
+          setPhone('');
+          setTitle('');
+      }
       setIsSubmitting(false);
     }
-  }, [isOpen, initialEmail]);
+  }, [isOpen, initialEmail, editContact]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email) return;
 
     setIsSubmitting(true);
-
-    // Call API directly from here or pass up?
-    // Plan said "On save -> IPC ADD_CONTACT".
-    // Usually cleaner to pass up, but `DirectoryTab` handles it.
-    // Let's pass up.
-
     await onSave({ name, email, phone, title });
     onClose();
   };
@@ -63,7 +65,7 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Contact">
+    <Modal isOpen={isOpen} onClose={onClose} title={editContact ? "Edit Contact" : "Add Contact"}>
       <form onSubmit={handleSubmit}>
 
         <label style={labelStyle}>Full Name <span style={{color: '#EF4444'}}>*</span></label>
@@ -84,6 +86,13 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
           onChange={e => setEmail(e.target.value)}
           placeholder="alice@example.com"
           required
+          // If editing, email might be read-only since it's the ID?
+          // Current logic in FileManager updates based on email row finding.
+          // If they change email, it might create a duplicate or we need to handle "rename".
+          // For now, let's allow editing, but keep in mind backend behavior (upsert).
+          // If they change email, it will create a new contact. That's acceptable for now unless we track IDs.
+          // Ideally, we should warn or maybe disable email edit if it acts as ID.
+          // But user might want to fix a typo.
         />
 
         <label style={labelStyle}>Job Title</label>
@@ -121,7 +130,7 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
               color: '#FFFFFF'
             }}
           >
-            {isSubmitting ? 'Saving...' : 'Create Contact'}
+            {isSubmitting ? 'Saving...' : (editContact ? 'Update Contact' : 'Create Contact')}
           </button>
         </div>
 

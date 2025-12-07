@@ -274,14 +274,17 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                             cursor: 'pointer',
                             opacity: 0,
                             transition: 'opacity 0.2s, background 0.2s',
-                            fontSize: '12px',
-                            lineHeight: 1
+                            fontSize: '10px', // slightly smaller font for icon to fit better
+                            lineHeight: 0,
+                            padding: 0
                         }}
                         title="Delete Group"
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
                         onMouseLeave={e => e.currentTarget.style.background = color.bg}
                      >
-                         ×
+                         <svg width="8" height="8" viewBox="0 0 10 10" style={{ pointerEvents: 'none' }}>
+                             <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                         </svg>
                      </button>
                   )}
                 </div>
