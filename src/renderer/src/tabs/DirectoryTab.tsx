@@ -22,49 +22,6 @@ const getInitials = (name: string) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const Avatar = memo(({ name, url, color }: { name: string, url?: string, color: string }) => {
-  const [error, setError] = useState(false);
-
-  if (url && !error) {
-    return (
-      <img
-        src={url}
-        onError={() => setError(true)}
-        style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '50%',
-          objectFit: 'cover',
-          marginRight: '16px',
-          flexShrink: 0,
-          border: '1px solid var(--border-subtle)'
-        }}
-        alt=""
-      />
-    );
-  }
-
-  return (
-    <div style={{
-      width: '36px',
-      height: '36px',
-      borderRadius: '50%',
-      background: `rgba(${parseInt(color.slice(1,3), 16)}, ${parseInt(color.slice(3,5), 16)}, ${parseInt(color.slice(5,7), 16)}, 0.2)`,
-      color: color,
-      border: `1px solid ${color}40`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '12px',
-      fontWeight: 600,
-      marginRight: '16px',
-      flexShrink: 0
-    }}>
-      {getInitials(name)}
-    </div>
-  );
-});
-
 // Extracted Row Component for performance
 const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
   filtered: Contact[],
@@ -106,7 +63,23 @@ const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
         }}
       >
         {/* Avatar */}
-        <Avatar name={contact.name} url={contact.avatarUrl} color={avatarColor} />
+        <div style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          background: `rgba(${parseInt(avatarColor.slice(1,3), 16)}, ${parseInt(avatarColor.slice(3,5), 16)}, ${parseInt(avatarColor.slice(5,7), 16)}, 0.2)`,
+          color: avatarColor,
+          border: `1px solid ${avatarColor}40`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '12px',
+          fontWeight: 600,
+          marginRight: '16px',
+          flexShrink: 0
+        }}>
+          {getInitials(contact.name)}
+        </div>
 
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>

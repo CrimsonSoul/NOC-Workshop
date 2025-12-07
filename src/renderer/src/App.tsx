@@ -93,19 +93,6 @@ export default function App() {
   // The Sidebar component has a `onOpenSettings`.
   // Let's make a simple state for "Settings Open".
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [isAuth, setIsAuth] = useState(false);
-
-  useEffect(() => {
-    window.api?.checkMicrosoftAuth?.().then(setIsAuth);
-  }, []);
-
-  const handleLogin = async () => {
-    const success = await window.api?.loginMicrosoft?.();
-    if (success) {
-      setIsAuth(true);
-      setSettingsOpen(false);
-    }
-  };
 
   return (
     <div style={{
@@ -244,41 +231,6 @@ export default function App() {
               <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
               <button className="tactile-button" onClick={handleImportGroups}>Import Groups...</button>
               <button className="tactile-button" onClick={handleImportContacts}>Import Contacts...</button>
-              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
-              <div style={{
-                padding: '4px 0 4px',
-                fontSize: '10px',
-                fontWeight: 600,
-                color: 'var(--color-text-tertiary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Microsoft 365
-              </div>
-              <button
-                 className="tactile-button"
-                 onClick={handleLogin}
-                 disabled={isAuth}
-                 style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  background: isAuth ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                  borderColor: isAuth ? 'transparent' : 'var(--border-subtle)',
-                  color: isAuth ? 'var(--color-accent-green)' : 'var(--color-text-secondary)',
-                  cursor: isAuth ? 'default' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                 }}
-              >
-                <svg width="14" height="14" viewBox="0 0 21 21" fill="none">
-                   <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
-                   <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
-                   <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
-                   <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
-                </svg>
-                {isAuth ? 'Connected' : 'Connect Work Account'}
-              </button>
             </div>
           </div>
         </div>

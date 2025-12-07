@@ -19,8 +19,6 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@azure/msal-node": "^3.8.4",
-    "axios": "^1.13.2",
     "chokidar": "^3.6.0",
     "csv-parse": "^6.1.0",
     "react": "^18.3.1",
