@@ -65,7 +65,22 @@ export async function injectMockApi(page: Page) {
       subscribeToRadar: (callback) => {
          callback(data.mockRadar);
       },
-      radarPreloadPath: ''
+      radarPreloadPath: '',
+      logBridge: () => {},
+      getMetrics: async () => ({
+        bridgesLast7d: 10,
+        bridgesLast30d: 50,
+        bridgesLast6m: 200,
+        bridgesLast1y: 1000,
+        topGroups: []
+      }),
+      addContact: async () => true,
+      addGroup: async () => true,
+      addContactToGroup: async () => true,
+      removeContactFromGroup: async () => true,
+      importContactsWithMapping: async () => true,
+      changeDataFolder: async () => true,
+      getDataPath: async () => '/mock/data/path'
     };
 
     // Expose it as window.api

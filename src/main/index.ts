@@ -1,37 +1,34 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
-import { dirname, join } from 'path';
+import { join } from 'path';
 import fs from 'fs';
 import { FileManager } from './FileManager';
 import { BridgeLogger } from './BridgeLogger';
 import { IPC_CHANNELS } from '../shared/ipc';
-import { ensureDataFiles } from './dataUtils';
+import { ensureDataFiles, loadConfig, saveConfig } from './dataUtils';
 
 let mainWindow: BrowserWindow | null = null;
 let fileManager: FileManager | null = null;
 let bridgeLogger: BridgeLogger | null = null;
+let currentDataRoot: string = '';
 
 // Auth State
 let authCallback: ((username: string, password: string) => void) | null = null;
 
 function getDataRoot() {
-  if (!app.isPackaged) {
-    return join(process.cwd(), 'data');
+  // Check config first
+  const config = loadConfig();
+  if (config.dataRoot && fs.existsSync(config.dataRoot)) {
+    return config.dataRoot;
   }
 
-  // On macOS, writing inside the app bundle (Resources/data) breaks code signature.
-  // Use userData (Application Support) instead.
-  if (process.platform === 'darwin') {
-    const dataPath = join(app.getPath('userData'), 'data');
-    ensureDataFiles(dataPath, join(process.resourcesPath, 'data'), app.isPackaged);
-    return dataPath;
-  }
+  // Default to AppData
+  const defaultDataPath = join(app.getPath('userData'), 'data');
+  const bundledPath = app.isPackaged
+    ? join(process.resourcesPath, 'data')
+    : join(process.cwd(), 'data');
 
-  const executableDir = process.env.PORTABLE_EXECUTABLE_DIR || dirname(process.execPath);
-  const portableDataPath = join(executableDir, 'data');
-
-  ensureDataFiles(portableDataPath, join(process.resourcesPath, 'data'), app.isPackaged);
-
-  return portableDataPath;
+  ensureDataFiles(defaultDataPath, bundledPath, app.isPackaged);
+  return defaultDataPath;
 }
 
 const GROUP_FILES = ['groups.csv'];
@@ -69,10 +66,6 @@ async function createWindow(dataRoot: string) {
   if (process.env.ELECTRON_RENDERER_URL) {
     await mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    // In production, electron-builder packs renderer to dist/renderer
-    // The environment variable MAIN_WINDOW_DIST usually points to dist/renderer/index.html's parent
-    // but verifying it's set correctly by electron-vite.
-    // If we assume standard electron-vite behavior:
     const indexHtml = join(__dirname, '../renderer/index.html');
     await mainWindow.loadFile(indexHtml);
   }
@@ -88,6 +81,54 @@ async function createWindow(dataRoot: string) {
 }
 
 function setupIpc(dataRoot: string) {
+  // Config IPCs
+  ipcMain.handle(IPC_CHANNELS.GET_DATA_PATH, async () => {
+    return dataRoot;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.CHANGE_DATA_FOLDER, async () => {
+    if (!mainWindow) return false;
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select New Data Folder',
+      properties: ['openDirectory']
+    });
+
+    if (canceled || filePaths.length === 0) return false;
+
+    const newPath = filePaths[0];
+
+    // Copy current files if target is empty/missing key files
+    const essentialFiles = ['contacts.csv', 'groups.csv', 'history.json'];
+    let filesCopied = false;
+
+    for (const file of essentialFiles) {
+        const source = join(dataRoot, file);
+        const target = join(newPath, file);
+        if (fs.existsSync(source) && !fs.existsSync(target)) {
+            try {
+                fs.copyFileSync(source, target);
+                filesCopied = true;
+            } catch (e) {
+                console.error(`Failed to copy ${file} to new location:`, e);
+            }
+        }
+    }
+
+    if (filesCopied) {
+        console.log('Copied existing data files to new location.');
+    }
+
+    // Save config
+    saveConfig({ dataRoot: newPath });
+
+    // Relaunch
+    app.relaunch();
+    app.exit();
+    return true;
+  });
+
+  // FS IPCs
   ipcMain.handle(IPC_CHANNELS.OPEN_PATH, async (_event, path: string) => {
     await shell.openPath(path);
   });
@@ -100,7 +141,8 @@ function setupIpc(dataRoot: string) {
     await shell.openPath(contactsFilePath(dataRoot));
   });
 
-  const handleImport = async (targetFileName: string, title: string) => {
+  // Import Handlers (Now Merging)
+  const handleMergeImport = async (type: 'groups' | 'contacts', title: string) => {
     if (!mainWindow) return false;
 
     const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
@@ -111,45 +153,19 @@ function setupIpc(dataRoot: string) {
 
     if (canceled || filePaths.length === 0) return false;
 
-    const sourcePath = filePaths[0];
-    const targetPath = join(dataRoot, targetFileName);
-
-    const { response } = await dialog.showMessageBox(mainWindow, {
-      type: 'warning',
-      buttons: ['Cancel', 'Replace'],
-      defaultId: 0,
-      title: 'Confirm Replace',
-      message: `Are you sure you want to replace ${targetFileName}?`,
-      detail: 'This action cannot be undone.',
-      cancelId: 0
-    });
-
-    if (response === 1) {
-      try {
-        // Ensure data directory exists (it might not if using portable logic but folder deleted)
-        // Also ensure other required files are present to keep the dataset valid
-        // We need to pass bundled path again, constructing it:
-        const bundledPath = app.isPackaged ? join(process.resourcesPath, 'data') : join(process.cwd(), 'data');
-        ensureDataFiles(dataRoot, bundledPath, app.isPackaged);
-
-        fs.copyFileSync(sourcePath, targetPath);
-        fileManager?.readAndEmit();
-        return true;
-      } catch (error) {
-        console.error(`Failed to import ${targetFileName}:`, error);
-        dialog.showErrorBox('Import Failed', `Could not replace file: ${error}`);
-        return false;
-      }
+    if (type === 'contacts') {
+        return fileManager?.importContactsWithMapping(filePaths[0]) ?? false;
+    } else {
+        return fileManager?.importGroupsWithMapping(filePaths[0]) ?? false;
     }
-    return false;
   };
 
   ipcMain.handle(IPC_CHANNELS.IMPORT_GROUPS_FILE, async () => {
-    return handleImport('groups.csv', 'Import Groups CSV');
+    return handleMergeImport('groups', 'Merge Groups CSV');
   });
 
   ipcMain.handle(IPC_CHANNELS.IMPORT_CONTACTS_FILE, async () => {
-    return handleImport('contacts.csv', 'Import Contacts CSV');
+    return handleMergeImport('contacts', 'Merge Contacts CSV');
   });
 
   ipcMain.handle(IPC_CHANNELS.OPEN_EXTERNAL, async (_event, url: string) => {
@@ -185,7 +201,7 @@ function setupIpc(dataRoot: string) {
     return bridgeLogger?.getMetrics();
   });
 
-  // --- New Data Mutation Handlers ---
+  // --- Data Mutation Handlers ---
 
   ipcMain.handle(IPC_CHANNELS.ADD_CONTACT, async (_event, contact) => {
     return fileManager?.addContact(contact) ?? false;
@@ -204,17 +220,8 @@ function setupIpc(dataRoot: string) {
   });
 
   ipcMain.handle(IPC_CHANNELS.IMPORT_CONTACTS_WITH_MAPPING, async () => {
-    if (!mainWindow) return false;
-
-    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-      title: 'Import Contacts (Smart Merge)',
-      filters: [{ name: 'CSV Files', extensions: ['csv'] }],
-      properties: ['openFile']
-    });
-
-    if (canceled || filePaths.length === 0) return false;
-
-    return fileManager?.importContactsWithMapping(filePaths[0]) ?? false;
+    // Re-use logic or call directly
+    return handleMergeImport('contacts', 'Merge Contacts CSV');
   });
 }
 
@@ -234,13 +241,13 @@ app.on('login', (event, _webContents, _request, authInfo, callback) => {
 });
 
   app.whenReady().then(async () => {
-    const dataRoot = getDataRoot();
-    setupIpc(dataRoot);
-    await createWindow(dataRoot);
+    currentDataRoot = getDataRoot();
+    setupIpc(currentDataRoot);
+    await createWindow(currentDataRoot);
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
-        void createWindow(dataRoot);
+        void createWindow(currentDataRoot);
       }
     });
   });

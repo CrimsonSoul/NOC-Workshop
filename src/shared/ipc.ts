@@ -58,9 +58,13 @@ export type BridgeAPI = {
     addContactToGroup: (groupName: string, email: string) => Promise<boolean>;
     removeContactFromGroup: (groupName: string, email: string) => Promise<boolean>;
     importContactsWithMapping: () => Promise<boolean>;
+    changeDataFolder: () => Promise<boolean>;
+    getDataPath: () => Promise<string>;
 };
 
 export const IPC_CHANNELS = {
+    CHANGE_DATA_FOLDER: 'config:changeDataFolder',
+    GET_DATA_PATH: 'config:getDataPath',
     OPEN_PATH: 'fs:openPath',
     OPEN_EXTERNAL: 'shell:openExternal',
     OPEN_GROUPS_FILE: 'fs:openGroupsFile',

@@ -15,6 +15,7 @@ export const SettingsMenu = ({
   onImportContacts
 }: SettingsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dataPath, setDataPath] = useState<string>('');
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,6 +27,8 @@ export const SettingsMenu = ({
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      // Fetch path
+      window.api?.getDataPath().then(setDataPath);
     }
 
     return () => {
@@ -36,6 +39,11 @@ export const SettingsMenu = ({
   const handleAction = (action: () => void) => {
     action();
     setIsOpen(false);
+  };
+
+  const handleChangeFolder = async () => {
+     await window.api?.changeDataFolder();
+     // App will restart, no need to close menu
   };
 
   return (
@@ -63,6 +71,49 @@ export const SettingsMenu = ({
           backdropFilter: 'blur(20px)'
         }}>
           <div style={{ padding: '4px' }}>
+             {/* Data Location */}
+             <div style={{
+              padding: '8px 12px 4px',
+              fontSize: '10px',
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}>
+              Data Storage
+            </div>
+            <div style={{ padding: '4px 12px 8px', fontSize: '11px', color: 'var(--text-secondary)', wordBreak: 'break-all', opacity: 0.7 }}>
+               {dataPath || 'Loading...'}
+            </div>
+            <button
+              className="menu-item"
+              onClick={handleChangeFolder}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '8px 12px',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '13px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-glass-hover)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+            >
+              Change Folder...
+            </button>
+
+            <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 8px' }} />
+
             <div style={{
               padding: '8px 12px 4px',
               fontSize: '10px',

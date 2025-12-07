@@ -331,6 +331,103 @@ export class FileManager {
      }
   }
 
+  public async importGroupsWithMapping(sourcePath: string): Promise<boolean> {
+      try {
+          const targetPath = join(this.rootDir, GROUP_FILES[0]);
+
+          // Read source
+          const sourceContent = fs.readFileSync(sourcePath, 'utf-8');
+          const sourceData = parseCsv(sourceContent);
+          if (sourceData.length === 0) return false;
+
+          const sourceHeader = sourceData[0].map(h => String(h).trim());
+          const sourceRows = sourceData.slice(1);
+
+          // Read existing
+          let targetData: any[][] = [];
+          const existingContent = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf-8') : '';
+
+          if (fs.existsSync(targetPath)) {
+             targetData = parseCsv(existingContent);
+          }
+
+          // Initialize if empty
+          if (targetData.length === 0) {
+              targetData.push([]);
+          }
+
+          const targetHeader = targetData[0]; // Reference to header row
+
+          // Helper: ensure group column exists
+          const getTargetGroupIdx = (groupName: string) => {
+              let idx = targetHeader.findIndex(h => h === groupName);
+              if (idx === -1) {
+                  targetHeader.push(groupName);
+                  // Pad existing rows
+                  for (let i = 1; i < targetData.length; i++) {
+                      targetData[i].push('');
+                  }
+                  idx = targetHeader.length - 1;
+              }
+              return idx;
+          };
+
+          // Iterate source columns (groups)
+          for (let col = 0; col < sourceHeader.length; col++) {
+              const groupName = sourceHeader[col];
+              if (!groupName) continue;
+
+              const targetColIdx = getTargetGroupIdx(groupName);
+
+              // Get all emails in this group from source
+              const sourceEmails = new Set<string>();
+              for (const row of sourceRows) {
+                  const email = row[col];
+                  if (email && String(email).trim()) {
+                      sourceEmails.add(String(email).trim());
+                  }
+              }
+
+              // Get existing emails in target group
+              const existingEmails = new Set<string>();
+              for (let i = 1; i < targetData.length; i++) {
+                  const email = targetData[i][targetColIdx];
+                  if (email && String(email).trim()) {
+                      existingEmails.add(String(email).trim());
+                  }
+              }
+
+              // Add new emails
+              for (const email of sourceEmails) {
+                  if (!existingEmails.has(email)) {
+                      // Find empty slot or append row
+                      let added = false;
+                      for (let i = 1; i < targetData.length; i++) {
+                          if (!targetData[i][targetColIdx]) {
+                              targetData[i][targetColIdx] = email;
+                              added = true;
+                              break;
+                          }
+                      }
+                      if (!added) {
+                          const newRow = new Array(targetHeader.length).fill('');
+                          newRow[targetColIdx] = email;
+                          targetData.push(newRow);
+                      }
+                  }
+              }
+          }
+
+          const csvOutput = stringify(targetData);
+          fs.writeFileSync(targetPath, csvOutput, 'utf-8');
+          return true;
+
+      } catch (e) {
+          console.error('[FileManager] importGroupsWithMapping error:', e);
+          return false;
+      }
+  }
+
   public async importContactsWithMapping(sourcePath: string): Promise<boolean> {
       try {
           const targetPath = join(this.rootDir, CONTACT_FILES[0]);

@@ -237,6 +237,13 @@ export default function App() {
               <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
               <button className="tactile-button" onClick={handleImportGroups}>Import Groups...</button>
               <button className="tactile-button" onClick={handleImportContacts}>Import Contacts...</button>
+              <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginBottom: '4px' }}>Data Storage</div>
+              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginBottom: '8px', wordBreak: 'break-all' }}>
+                 {/* We need to fetch this async. For now, let's use a DataPath component or fetch on open */}
+                 <DataPathDisplay />
+              </div>
+              <button className="tactile-button" onClick={() => window.api?.changeDataFolder()}>Change Folder...</button>
             </div>
           </div>
         </div>
@@ -244,3 +251,11 @@ export default function App() {
     </div>
   );
 }
+
+const DataPathDisplay = () => {
+    const [path, setPath] = useState('');
+    useEffect(() => {
+        window.api?.getDataPath().then(setPath);
+    }, []);
+    return <>{path || 'Loading...'}</>;
+};

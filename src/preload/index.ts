@@ -60,7 +60,14 @@ const api: BridgeAPI = {
   radarPreloadPath,
 
   logBridge: (groups) => ipcRenderer.send(IPC_CHANNELS.LOG_BRIDGE, groups),
-  getMetrics: () => ipcRenderer.invoke(IPC_CHANNELS.GET_METRICS)
+  getMetrics: () => ipcRenderer.invoke(IPC_CHANNELS.GET_METRICS),
+  addContact: (contact) => ipcRenderer.invoke(IPC_CHANNELS.ADD_CONTACT, contact),
+  addGroup: (groupName) => ipcRenderer.invoke(IPC_CHANNELS.ADD_GROUP, groupName),
+  addContactToGroup: (groupName, email) => ipcRenderer.invoke(IPC_CHANNELS.ADD_CONTACT_TO_GROUP, groupName, email),
+  removeContactFromGroup: (groupName, email) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_CONTACT_FROM_GROUP, groupName, email),
+  importContactsWithMapping: () => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_CONTACTS_WITH_MAPPING),
+  changeDataFolder: () => ipcRenderer.invoke(IPC_CHANNELS.CHANGE_DATA_FOLDER),
+  getDataPath: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DATA_PATH)
 };
 
 contextBridge.exposeInMainWorld('api', api);
