@@ -364,6 +364,37 @@ export class FileManager {
      }
   }
 
+  public async removeGroup(groupName: string): Promise<boolean> {
+    try {
+      const path = join(this.rootDir, GROUP_FILES[0]);
+      if (!fs.existsSync(path)) return false;
+
+      const contents = fs.readFileSync(path, 'utf-8');
+      const data = parseCsv(contents);
+
+      if (data.length === 0) return false;
+
+      const groupIdx = data[0].indexOf(groupName);
+      if (groupIdx === -1) return false; // Group not found
+
+      // Remove column
+      for (let i = 0; i < data.length; i++) {
+        data[i].splice(groupIdx, 1);
+      }
+
+      // If header is empty now, file is empty?
+      // Just write it back.
+
+      const csvOutput = stringify(data);
+      fs.writeFileSync(path, csvOutput, 'utf-8');
+      this.readAndEmit();
+      return true;
+    } catch (e) {
+      console.error('[FileManager] removeGroup error:', e);
+      return false;
+    }
+  }
+
   public async importGroupsWithMapping(sourcePath: string): Promise<boolean> {
       try {
           const targetPath = join(this.rootDir, GROUP_FILES[0]);

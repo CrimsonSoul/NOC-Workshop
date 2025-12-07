@@ -66,7 +66,7 @@ async function createWindow(dataRoot: string) {
     minWidth: 800,
     minHeight: 600,
     backgroundColor: '#0b0d12',
-    titleBarStyle: 'hiddenInset',
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
@@ -284,9 +284,28 @@ function setupIpc() {
     return fileManager?.updateGroupMembership(groupName, email, true) ?? false;
   });
 
+  ipcMain.handle(IPC_CHANNELS.REMOVE_GROUP, async (_event, groupName) => {
+    return fileManager?.removeGroup(groupName) ?? false;
+  });
+
   ipcMain.handle(IPC_CHANNELS.IMPORT_CONTACTS_WITH_MAPPING, async () => {
     // Re-use logic or call directly
     return handleMergeImport('contacts', 'Merge Contacts CSV');
+  });
+
+  // Window Controls
+  ipcMain.on(IPC_CHANNELS.WINDOW_MINIMIZE, () => {
+    mainWindow?.minimize();
+  });
+  ipcMain.on(IPC_CHANNELS.WINDOW_MAXIMIZE, () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+  ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => {
+    mainWindow?.close();
   });
 }
 

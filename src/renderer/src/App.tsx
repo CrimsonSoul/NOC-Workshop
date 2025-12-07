@@ -6,6 +6,7 @@ import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
 import { RadarTab } from './tabs/RadarTab';
 import { MetricsTab } from './tabs/MetricsTab';
+import { WindowControls } from './components/WindowControls';
 import { AppData, Contact } from '@shared/ipc';
 
 type Tab = 'Compose' | 'People' | 'Reports' | 'Live';
@@ -99,8 +100,19 @@ export default function App() {
       height: '100vh',
       background: 'var(--color-bg-app)',
       color: 'var(--color-text-primary)',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      position: 'relative'
     }}>
+      {/* Window Controls - Top Right */}
+      <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          zIndex: 10000
+      }}>
+          <WindowControls />
+      </div>
+
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -122,10 +134,14 @@ export default function App() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 32px',
+          paddingRight: '140px', // Make space for window controls
           borderBottom: 'var(--border-subtle)',
-          flexShrink: 0
+          flexShrink: 0,
+          position: 'relative',
+          zIndex: 9001,
+          WebkitAppRegion: 'drag' as any
         }}>
-           <div style={{ display: 'flex', flexDirection: 'column' }}>
+           <div style={{ display: 'flex', flexDirection: 'column', WebkitAppRegion: 'no-drag' as any }}>
              <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
                Relay / {activeTab}
              </span>
@@ -138,7 +154,7 @@ export default function App() {
            </div>
 
            {/* Actions Area */}
-           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', WebkitAppRegion: 'no-drag' as any }}>
               <WorldClock />
            </div>
         </header>
