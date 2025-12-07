@@ -134,7 +134,7 @@ export default function App() {
              <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                {activeTab === 'Compose' && 'Data Composition'}
                {activeTab === 'People' && 'Contact Directory'}
-               {activeTab === 'Reports' && 'Vault Metrics'}
+               {activeTab === 'Reports' && 'Reports'}
                {activeTab === 'Live' && 'Dispatcher Radar'}
              </span>
            </div>

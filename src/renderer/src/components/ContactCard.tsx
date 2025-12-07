@@ -53,7 +53,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         height: '72px', // Slightly taller for better spacing
         display: 'flex',
         alignItems: 'center',
-        padding: '0 24px',
+        padding: '0 16px',
         background: 'transparent',
         borderBottom: 'var(--border-subtle)',
         transition: 'background 0.15s',
@@ -79,15 +79,15 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         justifyContent: 'center',
         fontSize: '14px',
         fontWeight: 600,
-        marginRight: '20px',
+        marginRight: '12px',
         flexShrink: 0
       }}>
         {getInitials(name)}
       </div>
 
       {/* Info Group 1: Name & Title */}
-      <div style={{ flex: 1.2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '16px' }}>
-        <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '12px' }}>
+        <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {name}
         </div>
         <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -97,16 +97,16 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
 
        {/* Info Group 2: Contact Details */}
        <div style={{
-          flex: 1.5,
+          flex: 1.8,
           minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           gap: '4px',
-          paddingRight: '16px'
+          paddingRight: '12px'
         }}>
           <div style={{
-            fontSize: '14px',
+            fontSize: '13px',
             fontFamily: 'var(--font-family-mono)',
             color: 'var(--color-text-secondary)',
             opacity: 1, // Increased visibility
@@ -118,7 +118,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           </div>
           {formattedPhone && (
             <div style={{
-              fontSize: '14px', // Increased size
+              fontSize: '13px', // Increased size
               fontFamily: 'var(--font-family-mono)',
               color: 'var(--color-text-tertiary)',
               fontWeight: 500,
@@ -131,7 +131,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
 
         {/* Source Label (if any) */}
         {sourceLabel && (
-          <div style={{ paddingRight: '24px' }}>
+          <div style={{ paddingRight: '12px' }}>
              <span style={{
                 fontSize: '11px',
                 background: 'rgba(139, 92, 246, 0.15)',
@@ -149,7 +149,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
 
         {/* Action Button Area */}
         {action && (
-          <div style={{ minWidth: '80px', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ minWidth: '40px', display: 'flex', justifyContent: 'flex-end' }}>
             {action}
           </div>
         )}

@@ -19,4 +19,4 @@ win:
     - target: portable
       arch: x64
   artifactName: "Relay.exe"
-  icon: build/icon.png
+  icon: build/icon.ico
