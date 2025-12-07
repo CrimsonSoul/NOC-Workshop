@@ -30,24 +30,8 @@ export const WorldClock: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-      {/* Primary Zone (CST) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: '1.2' }}>
-            {primaryTimeStr}
-          </span>
-          <div style={{ display: 'flex', gap: '6px', fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
-             <span>{primaryZoneName}</span>
-             <span>•</span>
-             <span>{primaryDateStr}</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Separator */}
-      <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)' }} />
-
-      {/* Secondary Zones */}
+      {/* Secondary Zones - NOW ON LEFT */}
       <div style={{ display: 'flex', gap: '16px' }}>
         {secondaryZones.map(z => {
           const timeStr = getFormatter(z.timeZone, { hour: 'numeric', minute: '2-digit', hour12: true }).format(time);
@@ -65,6 +49,24 @@ export const WorldClock: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Separator */}
+      <div style={{ width: '1px', height: '24px', background: 'var(--border-subtle)' }} />
+
+      {/* Primary Zone (CST) - NOW ON RIGHT */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+          <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', lineHeight: '1.2' }}>
+            {primaryTimeStr}
+          </span>
+          <div style={{ display: 'flex', gap: '6px', fontSize: '11px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+             <span>{primaryZoneName}</span>
+             <span>•</span>
+             <span>{primaryDateStr}</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };
