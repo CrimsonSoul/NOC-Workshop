@@ -14,6 +14,13 @@ npmRebuild: false
 extraResources:
   - from: data
     to: data
+mac:
+  target:
+    - target: dmg
+      arch: arm64
+  artifactName: "Relay.dmg"
+  icon: build/icon.png
+  identity: null
 win:
   target:
     - target: portable

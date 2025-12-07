@@ -18,6 +18,10 @@ function getDataRoot() {
     return join(process.cwd(), 'data');
   }
 
+  if (process.platform === 'darwin') {
+    return join(process.resourcesPath, 'data');
+  }
+
   const executableDir = process.env.PORTABLE_EXECUTABLE_DIR || dirname(process.execPath);
   const portableDataPath = join(executableDir, 'data');
 
