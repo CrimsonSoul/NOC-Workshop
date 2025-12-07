@@ -53,6 +53,11 @@ export type BridgeAPI = {
     radarPreloadPath: string;
     logBridge: (groups: string[]) => void;
     getMetrics: () => Promise<MetricsData>;
+    addContact: (contact: Partial<Contact>) => Promise<boolean>;
+    addGroup: (groupName: string) => Promise<boolean>;
+    addContactToGroup: (groupName: string, email: string) => Promise<boolean>;
+    removeContactFromGroup: (groupName: string, email: string) => Promise<boolean>;
+    importContactsWithMapping: () => Promise<boolean>;
 };
 
 export const IPC_CHANNELS = {
@@ -62,6 +67,11 @@ export const IPC_CHANNELS = {
     OPEN_CONTACTS_FILE: 'fs:openContactsFile',
     IMPORT_GROUPS_FILE: 'fs:importGroupsFile',
     IMPORT_CONTACTS_FILE: 'fs:importContactsFile',
+    ADD_CONTACT: 'data:addContact',
+    ADD_GROUP: 'data:addGroup',
+    ADD_CONTACT_TO_GROUP: 'data:addContactToGroup',
+    REMOVE_CONTACT_FROM_GROUP: 'data:removeContactFromGroup',
+    IMPORT_CONTACTS_WITH_MAPPING: 'data:importContactsWithMapping',
     DATA_UPDATED: 'data:updated',
     DATA_RELOAD: 'data:reload',
     DATA_RELOAD_STARTED: 'data:reload-started',

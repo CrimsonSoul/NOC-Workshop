@@ -184,6 +184,38 @@ function setupIpc(dataRoot: string) {
   ipcMain.handle(IPC_CHANNELS.GET_METRICS, async () => {
     return bridgeLogger?.getMetrics();
   });
+
+  // --- New Data Mutation Handlers ---
+
+  ipcMain.handle(IPC_CHANNELS.ADD_CONTACT, async (_event, contact) => {
+    return fileManager?.addContact(contact) ?? false;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ADD_GROUP, async (_event, groupName) => {
+    return fileManager?.addGroup(groupName) ?? false;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.ADD_CONTACT_TO_GROUP, async (_event, groupName, email) => {
+    return fileManager?.updateGroupMembership(groupName, email, false) ?? false;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.REMOVE_CONTACT_FROM_GROUP, async (_event, groupName, email) => {
+    return fileManager?.updateGroupMembership(groupName, email, true) ?? false;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.IMPORT_CONTACTS_WITH_MAPPING, async () => {
+    if (!mainWindow) return false;
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Import Contacts (Smart Merge)',
+      filters: [{ name: 'CSV Files', extensions: ['csv'] }],
+      properties: ['openFile']
+    });
+
+    if (canceled || filePaths.length === 0) return false;
+
+    return fileManager?.importContactsWithMapping(filePaths[0]) ?? false;
+  });
 }
 
 // Auth Interception

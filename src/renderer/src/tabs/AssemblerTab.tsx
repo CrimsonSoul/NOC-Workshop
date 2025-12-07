@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { GroupMap, Contact } from '@shared/ipc';
 import { ContactCard } from '../components/ContactCard';
+import { AddContactModal } from '../components/AddContactModal';
+import { Modal } from '../components/Modal';
 
 type Props = {
   groups: GroupMap;
@@ -82,6 +84,11 @@ const ToolbarButton = ({ onClick, label, primary = false, active = false }: { on
 export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
   const [adhocInput, setAdhocInput] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
 
   // Optimized contact lookup map
   const contactMap = useMemo(() => {
@@ -115,6 +122,41 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     window.api?.logBridge(selectedGroups);
   };
 
+  const handleQuickAdd = () => {
+    if (!adhocInput) return;
+    const email = adhocInput.trim();
+    if (!email) return;
+
+    // Check if exists
+    if (contactMap.has(email.toLowerCase())) {
+        onAddManual(email);
+        setAdhocInput('');
+    } else {
+        // Open Modal
+        setPendingEmail(email);
+        setIsAddContactModalOpen(true);
+    }
+  };
+
+  const handleContactSaved = async (contact: Partial<Contact>) => {
+      // Save to backend
+      await window.api?.addContact(contact);
+
+      // Add to manual list immediately (optimistic, but safe since we just saved it)
+      if (contact.email) {
+          onAddManual(contact.email);
+      }
+      setAdhocInput(''); // Clear input
+  };
+
+  const handleCreateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroupName) return;
+    await window.api?.addGroup(newGroupName);
+    setIsGroupModalOpen(false);
+    setNewGroupName('');
+  };
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', height: '100%', alignItems: 'start' }}>
 
@@ -125,7 +167,25 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
         <div className="glass-panel animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px', animationDelay: '0ms' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Groups</h3>
-            <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>{Object.keys(groups).length}</span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                 <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>{Object.keys(groups).length}</span>
+                 <button
+                   onClick={() => setIsGroupModalOpen(true)}
+                   style={{
+                       background: 'rgba(255,255,255,0.05)',
+                       border: 'none',
+                       borderRadius: '4px',
+                       color: 'var(--color-text-secondary)',
+                       cursor: 'pointer',
+                       padding: '2px 6px',
+                       fontSize: '14px'
+                   }}
+                   title="Create Group"
+                   className="hover-bg"
+                 >
+                     +
+                 </button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -184,7 +244,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
               placeholder="Enter email address..."
               value={adhocInput}
               onChange={(e) => setAdhocInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && adhocInput) { onAddManual(adhocInput); setAdhocInput(''); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAdd(); }}
               style={{
                 width: '100%',
                 background: 'var(--color-bg-app)',
@@ -341,6 +401,46 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
           )}
         </div>
       </div>
+
+      <AddContactModal
+        isOpen={isAddContactModalOpen}
+        onClose={() => setIsAddContactModalOpen(false)}
+        initialEmail={pendingEmail}
+        onSave={handleContactSaved}
+      />
+
+      {/* Simple Create Group Modal */}
+      <Modal
+        isOpen={isGroupModalOpen}
+        onClose={() => setIsGroupModalOpen(false)}
+        title="Create Group"
+        width="400px"
+      >
+          <form onSubmit={handleCreateGroup}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>Group Name</label>
+              <input
+                  autoFocus
+                  value={newGroupName}
+                  onChange={e => setNewGroupName(e.target.value)}
+                  style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: 'var(--border-subtle)',
+                      borderRadius: '6px',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: '16px'
+                  }}
+                  placeholder="e.g. Marketing"
+                  required
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button type="button" onClick={() => setIsGroupModalOpen(false)} className="tactile-button">Cancel</button>
+                  <button type="submit" className="tactile-button" style={{ background: 'var(--color-accent-blue)', borderColor: 'transparent', color: '#FFF' }}>Create</button>
+              </div>
+          </form>
+      </Modal>
+
     </div>
   );
 };

@@ -149,7 +149,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
 
         {/* Action Button Area */}
         {action && (
-          <div style={{ minWidth: '40px', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ minWidth: '40px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
             {action}
           </div>
         )}
