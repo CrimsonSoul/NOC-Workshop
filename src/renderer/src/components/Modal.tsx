@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 type Props = {
   isOpen: boolean;
@@ -11,7 +12,7 @@ type Props = {
 export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width = '480px' }) => {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed',
       top: 0,
@@ -78,6 +79,7 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

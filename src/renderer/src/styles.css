@@ -1,116 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
-
 :root {
-  /* Colors - Relay Theme (Matte Dark / Attio Style) */
-  --color-bg-app: #141414;
-  --color-bg-sidebar: #181818;
-  --color-bg-card: #1C1C1C;
-  --color-bg-card-hover: #232323;
-
-  /* Borders */
-  --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
-  --border-focus: 1px solid rgba(59, 130, 246, 0.5); /* Blue focus */
-
-  /* Text */
+  --color-bg-app: #0b0d12;
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A1A1A1;
-  --color-text-tertiary: #666666;
-
-  /* Accents */
+  --color-text-secondary: #A1A1AA;
+  --color-text-tertiary: #71717A;
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.1);
   --color-accent-blue: #3B82F6;
-  --color-accent-blue-dim: rgba(59, 130, 246, 0.1);
-  --color-accent-green: #10B981;
-  --color-accent-purple: #8B5CF6;
-  --color-accent-neon: #00F0FF; /* For specific data viz only */
-
-  /* Typography */
-  --font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-family-mono: 'JetBrains Mono', monospace;
-
-  /* Spacing */
-  --sidebar-width: 240px; /* Standard width, but we might make it collapsible */
-  --sidebar-width-collapsed: 64px;
-  --header-height: 0px; /* No top header */
-
-  /* Animation */
-  --transition-fast: 0.15s ease;
-  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-spring: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --color-accent-blue-dim: rgba(59, 130, 246, 0.5);
+  --color-bg-card: rgba(255, 255, 255, 0.02);
+  --font-family-base: 'Inter', sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-  user-select: none; /* App-like feel */
-}
-
-body, html {
+body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--color-bg-app);
+  background: var(--color-bg-app);
   color: var(--color-text-primary);
   font-family: var(--font-family-base);
-  overflow: hidden; /* App container handles scroll */
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+.app-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: var(--color-bg-app);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  position: relative;
 }
 
-/* Utilities */
-.glass-panel {
-  background: var(--color-bg-card);
-  border: var(--border-subtle);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: background var(--transition-fast);
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
 }
 
-.text-gradient {
-  background: linear-gradient(135deg, #FFFFFF 0%, #A1A1A1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.app-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  padding-right: 140px; /* Make space for window controls */
+  border-bottom: var(--border-subtle);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 9001;
+  -webkit-app-region: drag;
 }
 
-.font-inter {
-  font-family: var(--font-family-base) !important;
+.header-title-container {
+  display: flex;
+  flex-direction: column;
+  -webkit-app-region: no-drag;
 }
 
-/* Animation Utilities */
-.animate-fade-in {
-  animation: fadeIn var(--transition-smooth) forwards;
-  opacity: 0;
+.header-breadcrumb {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
 }
 
-.animate-slide-up {
-  animation: slideUp var(--transition-smooth) forwards;
-  opacity: 0;
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
-.animate-scale-in {
-  animation: scaleIn var(--transition-spring) forwards;
-  opacity: 0;
-  transform: scale(0.95);
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  -webkit-app-region: no-drag;
 }
 
+.content-view {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.window-controls-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10001;
+  pointer-events: auto;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
 @keyframes slideUp {
@@ -118,43 +106,35 @@ body, html {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Input Resets */
-input, button, select, textarea {
-  font-family: inherit;
-  outline: none;
-}
-
-/* Components */
-.tactile-button {
-  background: transparent;
+/* Utility Classes */
+.glass-panel {
+  background: var(--color-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: var(--border-subtle);
-  border-radius: 6px;
+}
+
+.tactile-button {
   padding: 8px 16px;
-  color: var(--color-text-primary);
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--color-text-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tactile-button:hover {
-  background: var(--color-bg-card-hover);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
   transform: translateY(-1px);
 }
 
 .tactile-button:active {
-  transform: translateY(0) scale(0.98);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.hover-bg:hover {
-  background: rgba(255, 255, 255, 0.03);
-  transform: scale(1.1);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateY(0px);
 }

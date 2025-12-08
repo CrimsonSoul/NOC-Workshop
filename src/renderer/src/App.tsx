@@ -9,6 +9,7 @@ import { RadarTab } from './tabs/RadarTab';
 import { MetricsTab } from './tabs/MetricsTab';
 import { WindowControls } from './components/WindowControls';
 import { AppData, Contact } from '@shared/ipc';
+import './styles.css';
 
 type Tab = 'Compose' | 'People' | 'Reports' | 'Live';
 
@@ -100,25 +101,10 @@ export default function App() {
   };
 
   // Logic to show settings menu.
-  // The Sidebar has a settings button. We can either show a modal or a popover.
-  // The existing SettingsMenu is a button that opens a dropdown.
-  // We can render it invisible but triggered, or refactor it.
-  // For now, let's keep it simple: clicking settings in sidebar triggers the native menu actions directly or opens a simple modal.
-  // Actually, let's just use the SettingsMenu component but trigger it programmatically or place it in the sidebar?
-  // The Sidebar component has a `onOpenSettings`.
-  // Let's make a simple state for "Settings Open".
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div style={{
-      display: 'flex',
-      width: '100vw',
-      height: '100vh',
-      background: 'var(--color-bg-app)',
-      color: 'var(--color-text-primary)',
-      overflow: 'hidden',
-      position: 'relative'
-    }}>
+    <div className="app-container">
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -129,32 +115,14 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative'
-      }}>
+      <main className="main-content">
         {/* Breadcrumb / Header Area */}
-        <header style={{
-          height: '64px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px',
-          paddingRight: '140px', // Make space for window controls
-          borderBottom: 'var(--border-subtle)',
-          flexShrink: 0,
-          position: 'relative',
-          zIndex: 9001,
-          WebkitAppRegion: 'drag' as any
-        }}>
-           <div style={{ display: 'flex', flexDirection: 'column', WebkitAppRegion: 'no-drag' as any }}>
-             <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', fontWeight: 500 }}>
+        <header className="app-header">
+           <div className="header-title-container">
+             <span className="header-breadcrumb">
                Relay / {activeTab}
              </span>
-             <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+             <span className="header-title">
                {activeTab === 'Compose' && 'Data Composition'}
                {activeTab === 'People' && 'Contact Directory'}
                {activeTab === 'Reports' && 'Reports'}
@@ -163,18 +131,13 @@ export default function App() {
            </div>
 
            {/* Actions Area */}
-           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', WebkitAppRegion: 'no-drag' as any }}>
+           <div className="header-actions">
               <WorldClock />
            </div>
         </header>
 
         {/* Content View */}
-        <div style={{
-          flex: 1,
-          padding: '24px 32px',
-          overflowY: 'auto',
-          overflowX: 'hidden'
-        }}>
+        <div className="content-view">
           {activeTab === 'Compose' && (
             <div className="animate-fade-in">
               <AssemblerTab
@@ -214,13 +177,7 @@ export default function App() {
       </main>
 
       {/* Window Controls - Top Right */}
-      <div style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          zIndex: 10001,
-          pointerEvents: 'auto'
-      }}>
+      <div className="window-controls-container">
           <WindowControls />
       </div>
 

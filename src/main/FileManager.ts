@@ -1,21 +1,27 @@
 import chokidar from 'chokidar';
 import { join } from 'path';
-import { BrowserWindow, dialog } from 'electron';
+import { BrowserWindow } from 'electron';
 import { IPC_CHANNELS, type AppData, type Contact, type GroupMap } from '@shared/ipc';
-import fs from 'fs';
-import { parse } from 'csv-parse/sync';
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
+import { parse } from 'csv-parse';
 import { stringify } from 'csv-stringify/sync';
 
 const GROUP_FILES = ['groups.csv'];
 const CONTACT_FILES = ['contacts.csv'];
 const DEBOUNCE_MS = 100;
 
-function parseCsv(contents: string): any[][] {
+function parseCsvAsync(contents: string): Promise<any[][]> {
   // Strip BOM if present
   const cleanContents = contents.replace(/^\uFEFF/, '');
-  return parse(cleanContents, {
-    trim: true,
-    skip_empty_lines: true
+  return new Promise((resolve, reject) => {
+    parse(cleanContents, {
+      trim: true,
+      skip_empty_lines: true
+    }, (err, records) => {
+        if (err) reject(err);
+        else resolve(records);
+    });
   });
 }
 
@@ -59,7 +65,7 @@ export class FileManager {
   private resolveExistingFile(fileNames: string[]): string | null {
     for (const fileName of fileNames) {
       const path = join(this.rootDir, fileName);
-      if (fs.existsSync(path)) return path;
+      if (existsSync(path)) return path;
     }
     return null;
   }
@@ -83,12 +89,12 @@ export class FileManager {
     }
   }
 
-  public readAndEmit() {
+  public async readAndEmit() {
     console.log('[FileManager] Reading data files...');
     this.emitReloadStarted();
     try {
-      const groups = this.parseGroups();
-      const contacts = this.parseContacts();
+      const groups = await this.parseGroups();
+      const contacts = await this.parseContacts();
 
       const payload: AppData = {
         groups,
@@ -107,69 +113,79 @@ export class FileManager {
     }
   }
 
-  private parseGroups(): GroupMap {
+  private async parseGroups(): Promise<GroupMap> {
     const path = this.resolveExistingFile(GROUP_FILES);
     if (!path) return {};
 
-    const contents = fs.readFileSync(path, 'utf-8');
-    const data = parseCsv(contents);
+    try {
+        const contents = await fs.readFile(path, 'utf-8');
+        const data = await parseCsvAsync(contents);
 
-    if (!data || data.length === 0) return {};
+        if (!data || data.length === 0) return {};
 
-    const groups: GroupMap = {};
-    const maxCols = data[0].length;
-    for (let col = 0; col < maxCols; col++) {
-      const groupName = data[0][col];
-      if (!groupName) continue;
-      const emails: string[] = [];
-      for (let row = 1; row < data.length; row++) {
-        const email = data[row][col];
-        if (email) emails.push(String(email).trim());
-      }
-      groups[String(groupName).trim()] = emails;
+        const groups: GroupMap = {};
+        const maxCols = data[0].length;
+        for (let col = 0; col < maxCols; col++) {
+          const groupName = data[0][col];
+          if (!groupName) continue;
+          const emails: string[] = [];
+          for (let row = 1; row < data.length; row++) {
+            const email = data[row][col];
+            if (email) emails.push(String(email).trim());
+          }
+          groups[String(groupName).trim()] = emails;
+        }
+        return groups;
+    } catch (e) {
+        console.error('Error parsing groups:', e);
+        return {};
     }
-    return groups;
   }
 
-  private parseContacts(): Contact[] {
+  private async parseContacts(): Promise<Contact[]> {
     const path = this.resolveExistingFile(CONTACT_FILES);
     if (!path) return [];
 
-    const contents = fs.readFileSync(path, 'utf-8');
-    const data = parseCsv(contents);
+    try {
+        const contents = await fs.readFile(path, 'utf-8');
+        const data = await parseCsvAsync(contents);
 
-    if (data.length < 2) return [];
+        if (data.length < 2) return [];
 
-    const header = data[0].map(h => h.trim().toLowerCase());
-    const rows = data.slice(1);
+        const header = data[0].map((h: any) => String(h).trim().toLowerCase());
+        const rows = data.slice(1);
 
-    return rows.map(rowValues => {
-      const row: { [key: string]: string } = {};
-      header.forEach((h, i) => {
-        row[h] = rowValues[i];
-      });
+        return rows.map((rowValues: any[]) => {
+          const row: { [key: string]: string } = {};
+          header.forEach((h: string, i: number) => {
+            row[h] = rowValues[i];
+          });
 
-      const getField = (fieldNames: string[]) => {
-        for (const fieldName of fieldNames) {
-          if (row[fieldName.toLowerCase()]) return row[fieldName.toLowerCase()].trim();
-        }
-        return '';
-      };
+          const getField = (fieldNames: string[]) => {
+            for (const fieldName of fieldNames) {
+              if (row[fieldName.toLowerCase()]) return row[fieldName.toLowerCase()].trim();
+            }
+            return '';
+          };
 
-      const name = getField(['name', 'full name']);
-      const email = getField(['email', 'e-mail']);
-      const phone = getField(['phone', 'phone number']);
-      const title = getField(['title', 'role', 'position', 'department', 'dept']);
+          const name = getField(['name', 'full name']);
+          const email = getField(['email', 'e-mail']);
+          const phone = getField(['phone', 'phone number']);
+          const title = getField(['title', 'role', 'position', 'department', 'dept']);
 
-      return {
-        name,
-        email,
-        phone,
-        title,
-        _searchString: `${name} ${email} ${phone} ${title}`.toLowerCase(),
-        raw: row
-      };
-    });
+          return {
+            name,
+            email,
+            phone,
+            title,
+            _searchString: `${name} ${email} ${phone} ${title}`.toLowerCase(),
+            raw: row
+          };
+        });
+    } catch (e) {
+        console.error('Error parsing contacts:', e);
+        return [];
+    }
   }
 
   // --- Write Operations ---
@@ -177,8 +193,8 @@ export class FileManager {
   private async writeAndEmit(path: string, content: string) {
     this.isInternalWrite = true;
     try {
-      fs.writeFileSync(path, content, 'utf-8');
-      this.readAndEmit();
+      await fs.writeFile(path, content, 'utf-8');
+      await this.readAndEmit();
     } finally {
       // Small delay to ensure chokidar event is ignored
       setTimeout(() => {
@@ -190,15 +206,15 @@ export class FileManager {
   public async removeContact(email: string): Promise<boolean> {
     try {
       const path = join(this.rootDir, CONTACT_FILES[0]);
-      if (!fs.existsSync(path)) return false;
+      if (!existsSync(path)) return false;
 
-      const contents = fs.readFileSync(path, 'utf-8');
-      const data = parseCsv(contents);
+      const contents = await fs.readFile(path, 'utf-8');
+      const data = await parseCsvAsync(contents);
 
       if (data.length < 2) return false;
 
-      const header = data[0].map(h => h.toLowerCase());
-      const emailIdx = header.findIndex(h => ['email', 'e-mail'].includes(h));
+      const header = data[0].map((h: any) => String(h).toLowerCase());
+      const emailIdx = header.findIndex((h: string) => ['email', 'e-mail'].includes(h));
 
       if (emailIdx === -1) return false;
 
@@ -231,32 +247,30 @@ export class FileManager {
     try {
       const path = join(this.rootDir, CONTACT_FILES[0]);
       let contents = '';
-      if (fs.existsSync(path)) {
-        contents = fs.readFileSync(path, 'utf-8');
+      if (existsSync(path)) {
+        contents = await fs.readFile(path, 'utf-8');
       } else {
         // Create if missing
         contents = '';
         // If the directory doesn't exist, we might fail writing later, but rootDir should exist by now.
       }
 
-      const data = parseCsv(contents);
+      const data = await parseCsvAsync(contents);
 
       // If empty or just header, we can append. If completely empty, init header.
       let header: string[] = [];
       if (data.length > 0) {
-        header = data[0];
+        header = data[0].map(h => String(h));
       } else {
         header = ['Name', 'Title', 'Email', 'Phone']; // Default header
         data.push(header);
       }
 
       // Find indices for standard fields
-      // NOTE: h.toLowerCase() is compared against the names array.
-      // But we need to check if names INCLUDES h.toLowerCase().
       const findIdx = (names: string[]) => header.findIndex(h => names.includes(h.toLowerCase()));
 
       // Update header ref in case it was modified (though pushing to data[0] updates it)
-      if (data.length > 0) header = data[0];
+      if (data.length > 0) header = data[0].map(h => String(h));
 
       let nameIdx = findIdx(['name', 'full name']);
       let emailIdx = findIdx(['email', 'e-mail']);
@@ -265,7 +279,8 @@ export class FileManager {
 
       // Ensure we have columns
       const ensureCol = (names: string[], defaultName: string) => {
-          if (findIdx(names) === -1) {
+          const idx = findIdx(names);
+          if (idx === -1) {
               header.push(defaultName);
               // Update all existing rows with empty string
               for (let i = 1; i < data.length; i++) {
@@ -273,17 +288,13 @@ export class FileManager {
               }
               return header.length - 1;
           }
-          return findIdx(names);
+          return idx;
       };
 
       nameIdx = ensureCol(['name', 'full name'], 'Name');
       emailIdx = ensureCol(['email', 'e-mail'], 'Email');
       titleIdx = ensureCol(['title', 'role', 'position'], 'Title');
       phoneIdx = ensureCol(['phone', 'phone number'], 'Phone');
-
-      // If we modified header (which we shouldn't if file exists, but for robustness)
-      // Actually, better to just map to existing columns and append empty string for others
-      // Re-eval: simpler to just append a new row matching current header structure
 
       // Check if updating existing contact
       let rowIndex = -1;
@@ -325,19 +336,18 @@ export class FileManager {
     try {
       const path = join(this.rootDir, GROUP_FILES[0]);
       let contents = '';
-      if (fs.existsSync(path)) {
-        contents = fs.readFileSync(path, 'utf-8');
+      if (existsSync(path)) {
+        contents = await fs.readFile(path, 'utf-8');
       } else {
         contents = '';
       }
 
-      const data = parseCsv(contents); // Array of arrays
+      const data = await parseCsvAsync(contents); // Array of arrays
 
       if (data.length === 0) {
         data.push([groupName]); // New file
       } else {
         // Check if group exists
-        // Need to check case-insensitive or exact? Usually exact for groups.
         if (data[0].includes(groupName)) return true; // Already exists
 
         // Add header
@@ -361,10 +371,10 @@ export class FileManager {
   public async updateGroupMembership(groupName: string, email: string, remove: boolean): Promise<boolean> {
      try {
       const path = join(this.rootDir, GROUP_FILES[0]);
-      if (!fs.existsSync(path)) return false;
+      if (!existsSync(path)) return false;
 
-      const contents = fs.readFileSync(path, 'utf-8');
-      const data = parseCsv(contents);
+      const contents = await fs.readFile(path, 'utf-8');
+      const data = await parseCsvAsync(contents);
 
       if (data.length === 0) return false;
 
@@ -383,18 +393,11 @@ export class FileManager {
       if (remove) {
         if (rowIndex !== -1) {
           data[rowIndex][groupIdx] = ''; // clear it
-
-          // Optional: If row is completely empty now, could remove it?
-          // But that's complex if other cols have data.
-          // Better: If we leave a gap, does our parser handle it?
-          // parseGroups loops: `if (email) emails.push(...)` so empty string is fine.
-          // However, shifting up is cleaner to avoid sparse files growing indefinitely.
-          // Let's shift this column up.
+          // Shift this column up.
            for (let i = rowIndex; i < data.length - 1; i++) {
                data[i][groupIdx] = data[i + 1][groupIdx];
            }
            data[data.length - 1][groupIdx] = '';
-           // We can trim trailing empty rows from the whole file if desired, but not strictly necessary.
         }
       } else {
         // Add
@@ -429,10 +432,10 @@ export class FileManager {
   public async removeGroup(groupName: string): Promise<boolean> {
     try {
       const path = join(this.rootDir, GROUP_FILES[0]);
-      if (!fs.existsSync(path)) return false;
+      if (!existsSync(path)) return false;
 
-      const contents = fs.readFileSync(path, 'utf-8');
-      const data = parseCsv(contents);
+      const contents = await fs.readFile(path, 'utf-8');
+      const data = await parseCsvAsync(contents);
 
       if (data.length === 0) return false;
 
@@ -443,9 +446,6 @@ export class FileManager {
       for (let i = 0; i < data.length; i++) {
         data[i].splice(groupIdx, 1);
       }
-
-      // If header is empty now, file is empty?
-      // Just write it back.
 
       const csvOutput = stringify(data);
       await this.writeAndEmit(path, csvOutput);
@@ -459,10 +459,10 @@ export class FileManager {
   public async renameGroup(oldName: string, newName: string): Promise<boolean> {
     try {
       const path = join(this.rootDir, GROUP_FILES[0]);
-      if (!fs.existsSync(path)) return false;
+      if (!existsSync(path)) return false;
 
-      const contents = fs.readFileSync(path, 'utf-8');
-      const data = parseCsv(contents);
+      const contents = await fs.readFile(path, 'utf-8');
+      const data = await parseCsvAsync(contents);
 
       if (data.length === 0) return false;
 
@@ -472,10 +472,7 @@ export class FileManager {
 
       // Check if new name already exists
       if (data[0].includes(newName)) {
-        // Renaming to an existing group name would require merging.
-        // For now, let's treat this as an error or just merge automatically?
-        // Merging is safer for data integrity than erroring.
-        // Let's MERGE.
+        // Merging
         const targetIdx = data[0].indexOf(newName);
         // Move all emails from old col to new col
         for (let i = 1; i < data.length; i++) {
@@ -511,19 +508,19 @@ export class FileManager {
           const targetPath = join(this.rootDir, GROUP_FILES[0]);
 
           // Read source
-          const sourceContent = fs.readFileSync(sourcePath, 'utf-8');
-          const sourceData = parseCsv(sourceContent);
+          const sourceContent = await fs.readFile(sourcePath, 'utf-8');
+          const sourceData = await parseCsvAsync(sourceContent);
           if (sourceData.length === 0) return false;
 
-          const sourceHeader = sourceData[0].map(h => String(h).trim());
+          const sourceHeader = sourceData[0].map((h: any) => String(h).trim());
           const sourceRows = sourceData.slice(1);
 
           // Read existing
           let targetData: any[][] = [];
-          const existingContent = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf-8') : '';
+          const existingContent = existsSync(targetPath) ? await fs.readFile(targetPath, 'utf-8') : '';
 
-          if (fs.existsSync(targetPath)) {
-             targetData = parseCsv(existingContent);
+          if (existsSync(targetPath)) {
+             targetData = await parseCsvAsync(existingContent);
           }
 
           // Initialize if empty
@@ -535,7 +532,7 @@ export class FileManager {
 
           // Helper: ensure group column exists
           const getTargetGroupIdx = (groupName: string) => {
-              let idx = targetHeader.findIndex(h => h === groupName);
+              let idx = targetHeader.findIndex((h: string) => h === groupName);
               if (idx === -1) {
                   targetHeader.push(groupName);
                   // Pad existing rows
@@ -608,15 +605,15 @@ export class FileManager {
           const targetPath = join(this.rootDir, CONTACT_FILES[0]);
 
           // Read source
-          const sourceContent = fs.readFileSync(sourcePath, 'utf-8');
-          const sourceData = parseCsv(sourceContent);
+          const sourceContent = await fs.readFile(sourcePath, 'utf-8');
+          const sourceData = await parseCsvAsync(sourceContent);
           if (sourceData.length < 2) return false;
 
-          const sourceHeader = sourceData[0].map(h => h.toLowerCase().trim());
+          const sourceHeader = sourceData[0].map((h: any) => String(h).toLowerCase().trim());
           const sourceRows = sourceData.slice(1);
 
           // Map headers
-          const mapHeader = (candidates: string[]) => sourceHeader.findIndex(h => candidates.includes(h));
+          const mapHeader = (candidates: string[]) => sourceHeader.findIndex((h: string) => candidates.includes(h));
           const srcNameIdx = mapHeader(['name', 'full name', 'contact name']);
           const srcEmailIdx = mapHeader(['email', 'e-mail', 'mail', 'email address']);
           const srcPhoneIdx = mapHeader(['phone', 'phone number', 'mobile']);
@@ -629,10 +626,10 @@ export class FileManager {
 
           // Read existing to determine if we should overwrite or merge
           let targetData: any[][] = [];
-          const existingContent = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf-8') : '';
+          const existingContent = existsSync(targetPath) ? await fs.readFile(targetPath, 'utf-8') : '';
 
-          if (fs.existsSync(targetPath)) {
-             targetData = parseCsv(existingContent);
+          if (existsSync(targetPath)) {
+             targetData = await parseCsvAsync(existingContent);
           }
 
           // Initialize target if empty
@@ -640,11 +637,11 @@ export class FileManager {
               targetData.push(['Name', 'Email', 'Phone', 'Title']);
           }
 
-          const targetHeader = targetData[0].map(h => h.toLowerCase());
+          const targetHeader = targetData[0].map((h: any) => String(h).toLowerCase());
 
           // Helper to get target index or add column
           const getTargetIdx = (name: string) => {
-              let idx = targetHeader.findIndex(h => h === name.toLowerCase());
+              let idx = targetHeader.findIndex((h: string) => h === name.toLowerCase());
               if (idx === -1) {
                   targetHeader.push(name.toLowerCase());
                   targetData[0].push(name);

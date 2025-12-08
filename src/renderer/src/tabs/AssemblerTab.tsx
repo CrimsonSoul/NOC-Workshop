@@ -122,6 +122,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   const [groupContextMenu, setGroupContextMenu] = useState<{ x: number, y: number, group: string } | null>(null);
   const [groupToRename, setGroupToRename] = useState<string | null>(null);
   const [renamedGroupName, setRenamedGroupName] = useState('');
+  const [renameConflict, setRenameConflict] = useState<string | null>(null);
 
   // Close context menu on scroll or resize
   useEffect(() => {
@@ -580,13 +581,59 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
        {/* Rename Group Modal */}
       <Modal
           isOpen={!!groupToRename}
-          onClose={() => setGroupToRename(null)}
+          onClose={() => {
+              setGroupToRename(null);
+              setRenameConflict(null);
+          }}
           title="Rename Group"
           width="400px"
       >
+        {renameConflict ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                 <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
+                    Group <span style={{ fontWeight: 600 }}>{renameConflict}</span> already exists.
+                </div>
+                <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+                    Do you want to merge <span style={{ fontWeight: 600 }}>{groupToRename}</span> into <span style={{ fontWeight: 600 }}>{renameConflict}</span>? All contacts will be moved.
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                    <button
+                        onClick={() => setRenameConflict(null)}
+                        className="tactile-button"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+                            if (groupToRename && renameConflict) {
+                                await window.api?.renameGroup(groupToRename, renameConflict);
+                                if (selectedGroups.includes(groupToRename)) {
+                                    onToggleGroup(groupToRename, false);
+                                    onToggleGroup(renameConflict, true);
+                                }
+                            }
+                            setGroupToRename(null);
+                            setRenameConflict(null);
+                        }}
+                        className="tactile-button"
+                        style={{ background: 'var(--color-accent-blue)', borderColor: 'transparent', color: '#FFF' }}
+                    >
+                        Merge Groups
+                    </button>
+                </div>
+            </div>
+        ) : (
           <form onSubmit={async (e) => {
               e.preventDefault();
+              console.log('Submitting rename:', { groupToRename, renamedGroupName, groupsKeys: Object.keys(groups) });
               if (groupToRename && renamedGroupName && renamedGroupName !== groupToRename) {
+                  // Check conflict
+                  if (groups[renamedGroupName]) {
+                      console.log('Conflict detected for:', renamedGroupName);
+                      setRenameConflict(renamedGroupName);
+                      return;
+                  }
+
                   await window.api?.renameGroup(groupToRename, renamedGroupName);
                   // Update selection if needed
                   if (selectedGroups.includes(groupToRename)) {
@@ -617,6 +664,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                   <button type="submit" className="tactile-button" style={{ background: 'var(--color-accent-blue)', borderColor: 'transparent', color: '#FFF' }}>Save</button>
               </div>
           </form>
+        )}
       </Modal>
 
        {/* Group Context Menu */}
