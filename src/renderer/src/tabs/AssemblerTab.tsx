@@ -75,7 +75,7 @@ const GroupContextMenu = ({ x, y, onRename, onDelete, onClose }: { x: number, y:
                     position: 'fixed',
                     top: y,
                     left: x,
-                    background: 'var(--color-bg-card)',
+                    background: 'var(--color-bg-surface)',
                     border: 'var(--border-subtle)',
                     borderRadius: '8px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)',

@@ -29,7 +29,7 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
     }} onClick={onClose}>
       <div
         style={{
-          background: 'var(--color-bg-card)',
+          background: 'var(--color-bg-surface)',
           border: 'var(--border-subtle)',
           borderRadius: '12px',
           width: width,

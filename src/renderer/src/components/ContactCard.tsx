@@ -158,11 +158,12 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         {sourceLabel && (
           <div style={{ paddingRight: '12px' }}>
              <span style={{
-                fontSize: '11px',
-                background: 'rgba(139, 92, 246, 0.15)',
-                color: '#A78BFA',
-                padding: '4px 8px',
-                borderRadius: '6px',
+                fontSize: '10px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: 'var(--color-text-secondary)',
+                padding: '2px 6px',
+                borderRadius: '4px',
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em'

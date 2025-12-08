@@ -7,11 +7,33 @@
   --color-accent-blue: #3B82F6;
   --color-accent-blue-dim: rgba(59, 130, 246, 0.5);
   --color-bg-card: rgba(255, 255, 255, 0.02);
+  --color-bg-surface: #18181b;
   --font-family-base: 'Inter', sans-serif;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Minimalist Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
 input:focus {
