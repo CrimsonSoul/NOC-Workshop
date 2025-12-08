@@ -57,7 +57,7 @@ async function createWindow(dataRoot: string) {
     backgroundColor: '#0b0d12',
     titleBarStyle: 'hidden',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
