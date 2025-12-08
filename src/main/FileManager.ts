@@ -135,7 +135,7 @@ export class FileManager {
 
     if (data.length < 2) return [];
 
-    const header = data[0].map(h => h.toLowerCase());
+    const header = data[0].map(h => h.trim().toLowerCase());
     const rows = data.slice(1);
 
     return rows.map(rowValues => {
@@ -439,6 +439,57 @@ export class FileManager {
       return true;
     } catch (e) {
       console.error('[FileManager] removeGroup error:', e);
+      return false;
+    }
+  }
+
+  public async renameGroup(oldName: string, newName: string): Promise<boolean> {
+    try {
+      const path = join(this.rootDir, GROUP_FILES[0]);
+      if (!fs.existsSync(path)) return false;
+
+      const contents = fs.readFileSync(path, 'utf-8');
+      const data = parseCsv(contents);
+
+      if (data.length === 0) return false;
+
+      // Ensure exact match for old group
+      const groupIdx = data[0].indexOf(oldName);
+      if (groupIdx === -1) return false;
+
+      // Check if new name already exists
+      if (data[0].includes(newName)) {
+        // Renaming to an existing group name would require merging.
+        // For now, let's treat this as an error or just merge automatically?
+        // Merging is safer for data integrity than erroring.
+        // Let's MERGE.
+        const targetIdx = data[0].indexOf(newName);
+        // Move all emails from old col to new col
+        for (let i = 1; i < data.length; i++) {
+            const email = data[i][groupIdx];
+            if (email) {
+                // Add to target if not empty
+                if (!data[i][targetIdx]) {
+                    data[i][targetIdx] = email;
+                }
+            }
+        }
+        // Remove old column
+        for (let i = 0; i < data.length; i++) {
+            data[i].splice(groupIdx, 1);
+        }
+      } else {
+         // Simple Rename
+         data[0][groupIdx] = newName;
+      }
+
+      const csvOutput = stringify(data);
+      fs.writeFileSync(path, csvOutput, 'utf-8');
+      this.readAndEmit();
+      return true;
+
+    } catch (e) {
+      console.error('[FileManager] renameGroup error:', e);
       return false;
     }
   }

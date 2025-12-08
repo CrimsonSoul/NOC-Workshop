@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { GroupMap, Contact } from '@shared/ipc';
 import { ContactCard } from '../components/ContactCard';
 import { AddContactModal } from '../components/AddContactModal';
@@ -62,6 +63,50 @@ const ToolbarButton = ({ onClick, label, primary = false, active = false }: { on
     )
 }
 
+const GroupContextMenu = ({ x, y, onRename, onDelete, onClose }: { x: number, y: number, onRename: () => void, onDelete: () => void, onClose: () => void }) => {
+    return createPortal(
+        <>
+            <div
+                style={{ position: 'fixed', inset: 0, zIndex: 99998 }}
+                onClick={(e) => { e.stopPropagation(); onClose(); }}
+            />
+            <div
+                style={{
+                    position: 'fixed',
+                    top: y,
+                    left: x,
+                    background: 'var(--color-bg-card)',
+                    border: 'var(--border-subtle)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    zIndex: 99999,
+                    padding: '4px',
+                    minWidth: '120px'
+                }}
+                onClick={e => e.stopPropagation()}
+            >
+                <div
+                    onClick={() => { onRename(); onClose(); }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-primary)', borderRadius: '4px' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                    Rename Group
+                </div>
+                <div
+                    onClick={() => { onDelete(); onClose(); }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: '#EF4444', borderRadius: '4px' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                    Delete Group
+                </div>
+            </div>
+        </>,
+        document.body
+    );
+}
+
 export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
   const [adhocInput, setAdhocInput] = useState('');
   const [copied, setCopied] = useState(false);
@@ -72,6 +117,22 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   const [newGroupName, setNewGroupName] = useState('');
 
   const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+
+  // Group Context Menu State
+  const [groupContextMenu, setGroupContextMenu] = useState<{ x: number, y: number, group: string } | null>(null);
+  const [groupToRename, setGroupToRename] = useState<string | null>(null);
+  const [renamedGroupName, setRenamedGroupName] = useState('');
+
+  // Close context menu on scroll or resize
+  useEffect(() => {
+     const handler = () => setGroupContextMenu(null);
+     window.addEventListener('resize', handler);
+     window.addEventListener('scroll', handler, true);
+     return () => {
+         window.removeEventListener('resize', handler);
+         window.removeEventListener('scroll', handler, true);
+     }
+  }, []);
 
   // Optimized contact lookup map
   const contactMap = useMemo(() => {
@@ -219,6 +280,10 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 >
                   <button
                     onClick={() => onToggleGroup(g, !isSelected)}
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        setGroupContextMenu({ x: e.clientX, y: e.clientY, group: g });
+                    }}
                     style={{
                       padding: '6px 12px',
                       borderRadius: '20px', // Chip style
@@ -232,8 +297,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                       outline: 'none',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      paddingRight: isSelected ? '12px' : '24px' // Extra space for delete button on hover
+                      gap: '6px'
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
@@ -249,44 +313,6 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                     {isSelected && <span style={{ fontSize: '14px', lineHeight: 0 }}>✓</span>}
                     {g}
                   </button>
-                  {/* Delete Button - Overlay */}
-                  {!isSelected && (
-                     <button
-                        className="delete-btn"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setGroupToDelete(g);
-                        }}
-                        style={{
-                            position: 'absolute',
-                            right: '4px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '50%',
-                            background: color.bg,
-                            border: 'none',
-                            color: color.text,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            opacity: 0,
-                            transition: 'opacity 0.2s, background 0.2s',
-                            fontSize: '10px', // slightly smaller font for icon to fit better
-                            lineHeight: 0,
-                            padding: 0
-                        }}
-                        title="Delete Group"
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-                        onMouseLeave={e => e.currentTarget.style.background = color.bg}
-                     >
-                         <svg width="8" height="8" viewBox="0 0 10 10" style={{ pointerEvents: 'none' }}>
-                             <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                         </svg>
-                     </button>
-                  )}
                 </div>
               );
             })}
@@ -435,28 +461,32 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                                         background: 'transparent',
                                         border: 'none',
                                         color: 'var(--color-text-tertiary)',
-                                        fontSize: '18px',
-                                        padding: '8px',
+                                        width: '24px',
+                                        height: '24px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
                                         opacity: 0.5,
-                                        transition: 'all 0.2s'
+                                        transition: 'all 0.2s',
+                                        borderRadius: '4px'
                                     }}
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.opacity = '1';
                                         e.currentTarget.style.color = '#EF4444';
                                         e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                                        e.currentTarget.style.borderRadius = '50%';
                                     }}
                                     onMouseLeave={(e) => {
                                         e.currentTarget.style.opacity = '0.5';
                                         e.currentTarget.style.color = 'var(--color-text-tertiary)';
                                         e.currentTarget.style.background = 'transparent';
                                     }}
+                                    title="Remove from List"
                                 >
-                                    ×
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
                                 </button>
                             }
                         />
@@ -546,6 +576,62 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
             </div>
         </div>
       </Modal>
+
+       {/* Rename Group Modal */}
+      <Modal
+          isOpen={!!groupToRename}
+          onClose={() => setGroupToRename(null)}
+          title="Rename Group"
+          width="400px"
+      >
+          <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (groupToRename && renamedGroupName && renamedGroupName !== groupToRename) {
+                  await window.api?.renameGroup(groupToRename, renamedGroupName);
+                  // Update selection if needed
+                  if (selectedGroups.includes(groupToRename)) {
+                       onToggleGroup(groupToRename, false);
+                       onToggleGroup(renamedGroupName, true);
+                  }
+              }
+              setGroupToRename(null);
+          }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>Group Name</label>
+              <input
+                  autoFocus
+                  value={renamedGroupName}
+                  onChange={e => setRenamedGroupName(e.target.value)}
+                  style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: 'var(--border-subtle)',
+                      borderRadius: '6px',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: '16px'
+                  }}
+                  required
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button type="button" onClick={() => setGroupToRename(null)} className="tactile-button">Cancel</button>
+                  <button type="submit" className="tactile-button" style={{ background: 'var(--color-accent-blue)', borderColor: 'transparent', color: '#FFF' }}>Save</button>
+              </div>
+          </form>
+      </Modal>
+
+       {/* Group Context Menu */}
+       {groupContextMenu && (
+           <GroupContextMenu
+               x={groupContextMenu.x}
+               y={groupContextMenu.y}
+               onRename={() => {
+                   setGroupToRename(groupContextMenu.group);
+                   setRenamedGroupName(groupContextMenu.group);
+               }}
+               onDelete={() => setGroupToDelete(groupContextMenu.group)}
+               onClose={() => setGroupContextMenu(null)}
+           />
+       )}
 
     </div>
   );
