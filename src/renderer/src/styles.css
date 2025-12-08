@@ -10,6 +10,15 @@
   --font-family-base: 'Inter', sans-serif;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--color-accent-blue) !important;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -124,7 +133,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Increased visibility from 0.1 */
   background: transparent;
   color: var(--color-text-primary);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -137,4 +146,17 @@ body {
 
 .tactile-button:active {
   transform: translateY(0px);
+}
+
+.hover-bg {
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.hover-bg:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.1);
+}
+
+.hover-bg:active {
+  transform: scale(0.95);
 }

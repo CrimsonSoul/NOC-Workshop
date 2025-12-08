@@ -65,7 +65,6 @@ export async function injectMockApi(page: Page) {
       subscribeToRadar: (callback) => {
          callback(data.mockRadar);
       },
-      radarPreloadPath: '',
       logBridge: () => {},
       getMetrics: async () => ({
         bridgesLast7d: 10,
