@@ -32,6 +32,9 @@ export default defineConfig({
     build: {
       outDir: 'dist/preload',
       rollupOptions: {
+        output: {
+          format: 'cjs'
+        },
         input: {
           index: resolve(__dirname, 'src/preload/index.ts'),
           radar: resolve(__dirname, 'src/preload/radar.ts')
