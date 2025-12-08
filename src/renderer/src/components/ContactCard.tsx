@@ -54,6 +54,8 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
   return (
     <div
       style={{
+        width: '100%',
+        height: '100%',
         ...style,
         display: 'flex',
         alignItems: 'stretch',

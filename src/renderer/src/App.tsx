@@ -103,16 +103,6 @@ export default function App() {
       overflow: 'hidden',
       position: 'relative'
     }}>
-      {/* Window Controls - Top Right */}
-      <div style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          zIndex: 10000
-      }}>
-          <WindowControls />
-      </div>
-
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -203,6 +193,17 @@ export default function App() {
           )}
         </div>
       </main>
+
+      {/* Window Controls - Top Right */}
+      <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          zIndex: 10001,
+          pointerEvents: 'auto'
+      }}>
+          <WindowControls />
+      </div>
 
       {/* Hidden Settings Menu (Triggered via state or ref) - Quick hack to reuse logic */}
       {settingsOpen && (

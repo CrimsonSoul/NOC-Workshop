@@ -214,7 +214,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', height: '100%', alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 320px) 1fr', gap: '24px', height: '100%', alignItems: 'start' }}>
 
       {/* Sidebar Controls */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -407,10 +407,10 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <ToolbarButton label="Reset" onClick={onResetManual} />
             {manualRemoves.length > 0 && (
                <ToolbarButton label="Undo" onClick={onUndoRemove} />
             )}
+            <ToolbarButton label="Reset" onClick={onResetManual} />
             <ToolbarButton label={copied ? 'Copied' : 'Copy'} onClick={handleCopy} active={copied} />
             <ToolbarButton label="Draft Bridge" onClick={handleDraftBridge} primary />
           </div>
