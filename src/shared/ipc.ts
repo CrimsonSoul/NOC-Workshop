@@ -50,7 +50,6 @@ export type BridgeAPI = {
     submitAuth: (username: string, password: string) => void;
     cancelAuth: () => void;
     subscribeToRadar: (callback: (data: RadarSnapshot) => void) => void;
-    radarPreloadPath: string;
     logBridge: (groups: string[]) => void;
     getMetrics: () => Promise<MetricsData>;
     addContact: (contact: Partial<Contact>) => Promise<boolean>;
