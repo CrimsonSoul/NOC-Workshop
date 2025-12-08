@@ -88,7 +88,6 @@ export const IPC_CHANNELS = {
     ADD_GROUP: 'data:addGroup',
     ADD_CONTACT_TO_GROUP: 'data:addContactToGroup',
     REMOVE_CONTACT_FROM_GROUP: 'data:removeContactFromGroup',
-    REMOVE_GROUP: 'data:removeGroup',
     RENAME_GROUP: 'data:renameGroup',
     IMPORT_CONTACTS_WITH_MAPPING: 'data:importContactsWithMapping',
     DATA_UPDATED: 'data:updated',

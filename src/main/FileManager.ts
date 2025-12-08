@@ -24,6 +24,7 @@ export class FileManager {
   private rootDir: string;
   private mainWindow: BrowserWindow;
   private debounceTimer: NodeJS.Timeout | null = null;
+  private isInternalWrite = false;
 
   constructor(window: BrowserWindow, rootDir: string) {
     this.mainWindow = window;
@@ -46,6 +47,10 @@ export class FileManager {
     });
 
     this.watcher.on('all', (event, path) => {
+      if (this.isInternalWrite) {
+        console.log(`[FileManager] Ignoring internal write event: ${event} on ${path}`);
+        return;
+      }
       console.log(`[FileManager] File event: ${event} on ${path}`);
       this.debouncedRead();
     });
@@ -169,6 +174,19 @@ export class FileManager {
 
   // --- Write Operations ---
 
+  private async writeAndEmit(path: string, content: string) {
+    this.isInternalWrite = true;
+    try {
+      fs.writeFileSync(path, content, 'utf-8');
+      this.readAndEmit();
+    } finally {
+      // Small delay to ensure chokidar event is ignored
+      setTimeout(() => {
+        this.isInternalWrite = false;
+      }, 500);
+    }
+  }
+
   public async removeContact(email: string): Promise<boolean> {
     try {
       const path = join(this.rootDir, CONTACT_FILES[0]);
@@ -198,8 +216,7 @@ export class FileManager {
 
       if (removed) {
         const csvOutput = stringify(newData);
-        fs.writeFileSync(path, csvOutput, 'utf-8');
-        this.readAndEmit();
+        await this.writeAndEmit(path, csvOutput);
         return true;
       }
       return false;
@@ -296,8 +313,7 @@ export class FileManager {
       }
 
       const csvOutput = stringify(data);
-      fs.writeFileSync(path, csvOutput, 'utf-8');
-      this.readAndEmit();
+      await this.writeAndEmit(path, csvOutput);
       return true;
     } catch (e) {
       console.error('[FileManager] addContact error:', e);
@@ -334,8 +350,7 @@ export class FileManager {
       }
 
       const csvOutput = stringify(data);
-      fs.writeFileSync(path, csvOutput, 'utf-8');
-      this.readAndEmit();
+      await this.writeAndEmit(path, csvOutput);
       return true;
     } catch (e) {
       console.error('[FileManager] addGroup error:', e);
@@ -403,8 +418,7 @@ export class FileManager {
       }
 
       const csvOutput = stringify(data);
-      fs.writeFileSync(path, csvOutput, 'utf-8');
-      this.readAndEmit();
+      await this.writeAndEmit(path, csvOutput);
       return true;
      } catch (e) {
          console.error('[FileManager] updateGroupMembership error:', e);
@@ -434,8 +448,7 @@ export class FileManager {
       // Just write it back.
 
       const csvOutput = stringify(data);
-      fs.writeFileSync(path, csvOutput, 'utf-8');
-      this.readAndEmit();
+      await this.writeAndEmit(path, csvOutput);
       return true;
     } catch (e) {
       console.error('[FileManager] removeGroup error:', e);
@@ -484,8 +497,7 @@ export class FileManager {
       }
 
       const csvOutput = stringify(data);
-      fs.writeFileSync(path, csvOutput, 'utf-8');
-      this.readAndEmit();
+      await this.writeAndEmit(path, csvOutput);
       return true;
 
     } catch (e) {
@@ -582,7 +594,7 @@ export class FileManager {
           }
 
           const csvOutput = stringify(targetData);
-          fs.writeFileSync(targetPath, csvOutput, 'utf-8');
+          await this.writeAndEmit(targetPath, csvOutput);
           return true;
 
       } catch (e) {
@@ -683,7 +695,7 @@ export class FileManager {
           }
 
           const csvOutput = stringify(targetData);
-          fs.writeFileSync(targetPath, csvOutput, 'utf-8');
+          await this.writeAndEmit(targetPath, csvOutput);
           return true;
 
       } catch (e) {

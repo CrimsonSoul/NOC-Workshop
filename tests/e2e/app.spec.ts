@@ -20,7 +20,7 @@ test.describe('Application Shell', () => {
     await expect(page.getByRole('button', { name: 'People' })).toHaveClass(/active/);
 
     // Update locator for People search input
-    await expect(page.getByPlaceholder('Search network...')).toBeVisible();
+    await expect(page.getByPlaceholder('Search people...')).toBeVisible();
 
     // Navigate to Live (formerly Radar)
     await page.getByRole('button', { name: 'Live', exact: true }).click();
@@ -47,6 +47,12 @@ test.describe('Application Shell', () => {
     await page.getByPlaceholder('Enter email address...').fill(adhocEmail);
     await page.getByPlaceholder('Enter email address...').press('Enter');
 
+    // The mock data doesn't include this email, so the app will trigger the Add Contact Modal.
+    // We need to handle that modal flow.
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByPlaceholder('e.g. Alice Smith').fill('Adhoc User');
+    await page.getByRole('button', { name: 'Create Contact', exact: true }).click();
+
     // Verify ad-hoc added
     await expect(page.getByText(adhocEmail)).toBeVisible();
 
@@ -67,7 +73,7 @@ test.describe('Application Shell', () => {
     await page.getByRole('button', { name: 'People' }).click();
 
     // Search
-    const searchInput = page.getByPlaceholder('Search network...');
+    const searchInput = page.getByPlaceholder('Search people...');
     await searchInput.fill('Jane');
 
     // Verify filter
