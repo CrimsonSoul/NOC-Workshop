@@ -29,15 +29,15 @@ export const WindowControls = () => {
                 justify-content: center;
                 background: transparent;
                 border: none;
-                color: #9ca3af;
+                color: var(--color-text-secondary);
                 cursor: default;
-                transition: background 0.2s ease, color 0.2s ease;
+                transition: background 0.1s ease, color 0.1s ease;
                 -webkit-app-region: no-drag;
                 outline: none;
             }
             .window-control-btn:hover {
-                background: rgba(255, 255, 255, 0.1);
-                color: #FFFFFF;
+                background: rgba(255, 255, 255, 0.06);
+                color: var(--color-text-primary);
             }
             .window-control-btn.close-btn:hover {
                 background: #E81123;
@@ -48,7 +48,6 @@ export const WindowControls = () => {
             onClick={handleMinimize}
             className={btnClass}
             title="Minimize"
-            style={{ WebkitAppRegion: 'no-drag' as any }}
         >
             <svg width="10" height="1" viewBox="0 0 10 1"><path d="M0 0h10v1H0z" fill="currentColor"/></svg>
         </button>
@@ -56,7 +55,6 @@ export const WindowControls = () => {
             onClick={handleMaximize}
             className={btnClass}
             title="Maximize"
-            style={{ WebkitAppRegion: 'no-drag' as any }}
         >
              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0v10h10V0H0zm9 9H1V1h8v8z" fill="currentColor"/></svg>
         </button>
@@ -64,7 +62,6 @@ export const WindowControls = () => {
             onClick={handleClose}
             className={`${btnClass} close-btn`}
             title="Close"
-            style={{ WebkitAppRegion: 'no-drag' as any }}
         >
              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1.05 0L0 1.05 3.95 5 0 8.95 1.05 10 5 6.05 8.95 10 10 8.95 6.05 5 10 1.05 8.95 0 5 3.95z" fill="currentColor"/></svg>
         </button>

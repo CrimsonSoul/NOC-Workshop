@@ -19,13 +19,13 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0,0,0,0.6)',
+      background: 'rgba(0,0,0,0.5)',
       backdropFilter: 'blur(4px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 20000,
-      animation: 'fadeIn 0.2s ease-out'
+      animation: 'fadeIn 0.2s ease-out forwards'
     }} onClick={onClose}>
       <div
         style={{
@@ -37,8 +37,9 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
-          animation: 'scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          boxShadow: 'var(--shadow-modal)',
+          animation: 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          transformOrigin: 'center center'
         }}
         onClick={e => e.stopPropagation()}
         role="dialog"
@@ -46,13 +47,14 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
       >
         {/* Header */}
         <div style={{
-          padding: '20px 24px',
+          padding: '16px 24px',
           borderBottom: 'var(--border-subtle)',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexShrink: 0
         }}>
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+          <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
             {title}
           </h2>
           <button
@@ -62,20 +64,20 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
               border: 'none',
               color: 'var(--color-text-tertiary)',
               cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '4px',
+              padding: '6px',
+              borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
             className="hover-bg"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
 
         {/* Content */}
-        <div style={{ padding: '24px', overflowY: 'auto' }}>
+        <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
           {children}
         </div>
       </div>

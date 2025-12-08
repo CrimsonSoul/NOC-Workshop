@@ -33,11 +33,12 @@ export default defineConfig({
       outDir: 'dist/preload',
       rollupOptions: {
         output: {
-          format: 'cjs'
+          format: 'cjs',
+          inlineDynamicImports: true,
+          entryFileNames: '[name].cjs'
         },
         input: {
-          index: resolve(__dirname, 'src/preload/index.ts'),
-          radar: resolve(__dirname, 'src/preload/radar.ts')
+          index: resolve(__dirname, 'src/preload/index.ts')
         }
       }
     }

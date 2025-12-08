@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
+import { TactileButton } from './TactileButton';
 
 type Props = {
   isOpen: boolean;
@@ -44,43 +45,70 @@ export const SettingsModal: React.FC<Props> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Settings" width="400px">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button
-            onClick={onSync}
-            className="tactile-button"
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                justifyContent: 'center',
-                borderColor: isSyncing ? 'var(--color-accent-blue)' : 'var(--border-subtle)',
-                color: isSyncing ? 'var(--color-accent-blue)' : 'var(--color-text-primary)'
-            }}
-            >
-            {isSyncing ? (
-                <>
-                    <span style={{ width: '12px', height: '12px', border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                    Syncing...
-                </>
-            ) : 'Sync Data'}
-            </button>
+    <Modal isOpen={isOpen} onClose={onClose} title="Settings" width="420px">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-            <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
-
-            <button className="tactile-button" onClick={onImportGroups}>Import Groups...</button>
-            <button className="tactile-button" onClick={onImportContacts}>Import Contacts...</button>
-
-            <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '8px 0' }} />
-
-            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginBottom: '4px' }}>Data Storage</div>
-            <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginBottom: '8px', wordBreak: 'break-all', fontFamily: 'var(--font-family-mono)' }}>
-                <DataPathDisplay key={pathKey} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Data Synchronization
+                </div>
+                <TactileButton
+                    onClick={onSync}
+                    variant="primary"
+                    style={{
+                        width: '100%',
+                        justifyContent: 'center'
+                    }}
+                >
+                    {isSyncing ? (
+                        <>
+                            <span className="spin" style={{ width: '12px', height: '12px', border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%' }} />
+                            Syncing...
+                        </>
+                    ) : 'Sync Data Now'}
+                </TactileButton>
             </div>
 
-            <button className="tactile-button" onClick={handleChangeFolder}>Change Folder...</button>
-            <button className="tactile-button" onClick={handleResetFolder}>Reset to Default</button>
+            <div style={{ height: '1px', background: 'var(--border-subtle)' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                 <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Data Management
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <TactileButton onClick={onImportGroups}>Import Groups...</TactileButton>
+                    <TactileButton onClick={onImportContacts}>Import Contacts...</TactileButton>
+                </div>
+            </div>
+
+            <div style={{ height: '1px', background: 'var(--border-subtle)' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Storage Location
+                </div>
+                <div style={{
+                    fontSize: '11px',
+                    color: 'var(--color-text-secondary)',
+                    padding: '8px 12px',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: 'var(--border-subtle)',
+                    borderRadius: '6px',
+                    wordBreak: 'break-all',
+                    fontFamily: 'var(--font-family-mono)'
+                }}>
+                    <DataPathDisplay key={pathKey} />
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                     <TactileButton onClick={handleChangeFolder} style={{ flex: 1, justifyContent: 'center' }}>Change...</TactileButton>
+                     <TactileButton onClick={handleResetFolder} style={{ flex: 1, justifyContent: 'center' }}>Reset to Default</TactileButton>
+                </div>
+            </div>
         </div>
+        <style>{`
+            .spin { animation: spin 1s linear infinite; }
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        `}</style>
     </Modal>
   );
 };
