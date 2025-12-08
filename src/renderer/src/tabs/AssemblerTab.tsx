@@ -625,11 +625,9 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
         ) : (
           <form onSubmit={async (e) => {
               e.preventDefault();
-              console.log('Submitting rename:', { groupToRename, renamedGroupName, groupsKeys: Object.keys(groups) });
               if (groupToRename && renamedGroupName && renamedGroupName !== groupToRename) {
                   // Check conflict
                   if (groups[renamedGroupName]) {
-                      console.log('Conflict detected for:', renamedGroupName);
                       setRenameConflict(renamedGroupName);
                       return;
                   }

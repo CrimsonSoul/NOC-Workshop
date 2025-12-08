@@ -193,7 +193,11 @@ export class FileManager {
   private async writeAndEmit(path: string, content: string) {
     this.isInternalWrite = true;
     try {
-      await fs.writeFile(path, content, 'utf-8');
+      // Atomic write: write to .tmp file then rename
+      const tmpPath = `${path}.tmp`;
+      await fs.writeFile(tmpPath, content, 'utf-8');
+      await fs.rename(tmpPath, path);
+
       await this.readAndEmit();
     } finally {
       // Small delay to ensure chokidar event is ignored

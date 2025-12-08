@@ -26,7 +26,6 @@ export const SettingsModal: React.FC<Props> = ({
     onImportGroups,
     onImportContacts
 }) => {
-  console.log("SettingsModal rendering, isOpen:", isOpen);
   // Force re-render of path when modal opens or folder changes
   const [pathKey, setPathKey] = useState(0);
 

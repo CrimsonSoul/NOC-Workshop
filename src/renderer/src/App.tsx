@@ -109,7 +109,6 @@ export default function App() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenSettings={() => {
-            console.log("Opening settings");
             setSettingsOpen(true);
         }}
       />

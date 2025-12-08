@@ -37,5 +37,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: noc-workshop-windows
+          name: relay
           path: release/*.exe
