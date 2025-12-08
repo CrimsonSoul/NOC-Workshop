@@ -71,6 +71,7 @@ const api: BridgeAPI = {
   resetDataFolder: () => ipcRenderer.invoke(IPC_CHANNELS.RESET_DATA_FOLDER),
   getDataPath: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DATA_PATH),
   removeGroup: (groupName) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_GROUP, groupName),
+  renameGroup: (oldName, newName) => ipcRenderer.invoke(IPC_CHANNELS.RENAME_GROUP, oldName, newName),
   windowMinimize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
   windowMaximize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
   windowClose: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE)

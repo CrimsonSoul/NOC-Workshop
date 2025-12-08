@@ -1,4 +1,5 @@
 import React, { useState, memo, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Contact, GroupMap } from '@shared/ipc';
@@ -112,39 +113,50 @@ const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups:
 
 // --- Context Menu for Edit/Delete ---
 const ContextMenu = ({ x, y, onEdit, onDelete, onClose }: { x: number, y: number, onEdit: () => void, onDelete: () => void, onClose: () => void }) => {
-    return (
-        <div
-            style={{
-                position: 'fixed',
-                top: y,
-                left: x,
-                background: 'var(--color-bg-card)',
-                border: 'var(--border-subtle)',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                zIndex: 99999,
-                padding: '4px',
-                minWidth: '120px'
-            }}
-            onClick={e => e.stopPropagation()}
-        >
+    return createPortal(
+        <>
             <div
-                onClick={() => { onEdit(); onClose(); }}
-                style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-primary)', borderRadius: '4px' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-                Edit Contact
-            </div>
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 99998
+                }}
+                onClick={(e) => { e.stopPropagation(); onClose(); }}
+            />
             <div
-                onClick={() => { onDelete(); onClose(); }}
-                style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: '#EF4444', borderRadius: '4px' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                style={{
+                    position: 'fixed',
+                    top: y,
+                    left: x,
+                    background: 'var(--color-bg-card)',
+                    border: 'var(--border-subtle)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    zIndex: 99999,
+                    padding: '4px',
+                    minWidth: '120px'
+                }}
+                onClick={e => e.stopPropagation()}
             >
-                Delete
+                <div
+                    onClick={() => { onEdit(); onClose(); }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-primary)', borderRadius: '4px' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                    Edit Contact
+                </div>
+                <div
+                    onClick={() => { onDelete(); onClose(); }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: '#EF4444', borderRadius: '4px' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                    Delete
+                </div>
             </div>
-        </div>
+        </>,
+        document.body
     );
 };
 
@@ -377,7 +389,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input
-            placeholder="Search network..."
+            placeholder="Search people..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus

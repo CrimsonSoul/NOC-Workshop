@@ -292,6 +292,10 @@ function setupIpc() {
     return fileManager?.removeGroup(groupName) ?? false;
   });
 
+  ipcMain.handle(IPC_CHANNELS.RENAME_GROUP, async (_event, oldName, newName) => {
+    return fileManager?.renameGroup(oldName, newName) ?? false;
+  });
+
   ipcMain.handle(IPC_CHANNELS.IMPORT_CONTACTS_WITH_MAPPING, async () => {
     // Re-use logic or call directly
     return handleMergeImport('contacts', 'Merge Contacts CSV');
