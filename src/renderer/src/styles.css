@@ -3,12 +3,14 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A1A1AA;
   --color-text-tertiary: #71717A;
-  --border-subtle: 1px solid rgba(255, 255, 255, 0.1);
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.08); /* More subtle for Attio */
   --color-accent-blue: #3B82F6;
   --color-accent-blue-dim: rgba(59, 130, 246, 0.5);
+  --color-accent-green: #10B981;
   --color-bg-card: rgba(255, 255, 255, 0.02);
   --color-bg-surface: #18181b;
   --font-family-base: 'Inter', sans-serif;
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 * {
@@ -26,14 +28,14 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 5px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 input:focus {
@@ -69,17 +71,18 @@ body {
 }
 
 .app-header {
-  height: 64px;
+  height: 52px; /* Condensed header */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 24px;
   padding-right: 140px; /* Make space for window controls */
   border-bottom: var(--border-subtle);
   flex-shrink: 0;
   position: relative;
   z-index: 9001;
   -webkit-app-region: drag;
+  background: var(--color-bg-app);
 }
 
 .header-title-container {
@@ -89,13 +92,13 @@ body {
 }
 
 .header-breadcrumb {
-  font-size: 12px;
-  color: var(--color-text-tertiary);
+  font-size: 13px;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .header-title {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -103,15 +106,16 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   -webkit-app-region: no-drag;
 }
 
 .content-view {
   flex: 1;
-  padding: 24px 32px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding: 0; /* Remove padding to allow full-bleed tables */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .window-controls-container {
@@ -129,16 +133,21 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.2s ease-out forwards;
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-slide-up {
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 /* Utility Classes */
@@ -150,35 +159,44 @@ body {
 }
 
 .tactile-button {
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Increased visibility from 0.1 */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background: transparent;
   color: var(--color-text-primary);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tactile-button:hover {
   background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tactile-button:active {
+  background: rgba(255, 255, 255, 0.02);
   transform: translateY(0px);
 }
 
+.tactile-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .hover-bg {
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.1s;
 }
 
 .hover-bg:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .hover-bg:active {
-  transform: scale(0.95);
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }

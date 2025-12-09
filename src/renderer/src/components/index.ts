@@ -7,3 +7,6 @@ export * from './Modal';
 export * from './Sidebar';
 export * from './WindowControls';
 export * from './WorldClock';
+export * from './Input';
+export * from './ContextMenu';
+export * from './SidebarItem';

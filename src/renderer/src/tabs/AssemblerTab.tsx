@@ -1,12 +1,13 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useMemo, useState } from 'react';
 import { GroupMap, Contact } from '@shared/ipc';
 import { ContactCard } from '../components/ContactCard';
 import { AddContactModal } from '../components/AddContactModal';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { getColorForString } from '../utils/colors';
 import { ToolbarButton } from '../components/ToolbarButton';
+import { Input } from '../components/Input';
+import { SidebarItem } from '../components/SidebarItem';
+import { ContextMenu } from '../components/ContextMenu';
 
 type Props = {
   groups: GroupMap;
@@ -20,94 +21,6 @@ type Props = {
   onUndoRemove: () => void;
   onResetManual: () => void;
 };
-
-const ToolbarButton = ({ onClick, label, primary = false, active = false }: { onClick: () => void, label: string, primary?: boolean, active?: boolean }) => {
-    return (
-        <button
-            onClick={onClick}
-            style={{
-                padding: '6px 16px',
-                borderRadius: '20px',
-                border: primary ? 'none' : '1px solid var(--border-subtle)',
-                background: primary ? 'var(--color-accent-blue)' : (active ? 'rgba(255,255,255,0.1)' : 'transparent'),
-                color: primary ? '#FFFFFF' : (active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'),
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                outline: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: primary ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
-            }}
-            onMouseEnter={(e) => {
-                if (!primary) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                    e.currentTarget.style.color = 'var(--color-text-primary)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                } else {
-                    e.currentTarget.style.background = '#2563EB'; // Darker blue
-                }
-            }}
-            onMouseLeave={(e) => {
-                if (!primary) {
-                     e.currentTarget.style.background = active ? 'rgba(255,255,255,0.1)' : 'transparent';
-                     e.currentTarget.style.color = active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)';
-                     e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                } else {
-                    e.currentTarget.style.background = 'var(--color-accent-blue)';
-                }
-            }}
-        >
-            {label}
-        </button>
-    )
-}
-
-const GroupContextMenu = ({ x, y, onRename, onDelete, onClose }: { x: number, y: number, onRename: () => void, onDelete: () => void, onClose: () => void }) => {
-    return createPortal(
-        <>
-            <div
-                style={{ position: 'fixed', inset: 0, zIndex: 99998 }}
-                onClick={(e) => { e.stopPropagation(); onClose(); }}
-            />
-            <div
-                style={{
-                    position: 'fixed',
-                    top: y,
-                    left: x,
-                    background: 'var(--color-bg-surface)',
-                    border: 'var(--border-subtle)',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                    zIndex: 99999,
-                    padding: '4px',
-                    minWidth: '120px'
-                }}
-                onClick={e => e.stopPropagation()}
-            >
-                <div
-                    onClick={() => { onRename(); onClose(); }}
-                    style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-text-primary)', borderRadius: '4px' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                    Rename Group
-                </div>
-                <div
-                    onClick={() => { onDelete(); onClose(); }}
-                    style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', color: '#EF4444', borderRadius: '4px' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                    Delete Group
-                </div>
-            </div>
-        </>,
-        document.body
-    );
-}
 
 export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
   const { showToast } = useToast();
@@ -125,17 +38,6 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   const [groupToRename, setGroupToRename] = useState<string | null>(null);
   const [renamedGroupName, setRenamedGroupName] = useState('');
   const [renameConflict, setRenameConflict] = useState<string | null>(null);
-
-  // Close context menu on scroll or resize
-  useEffect(() => {
-     const handler = () => setGroupContextMenu(null);
-     window.addEventListener('resize', handler);
-     window.addEventListener('scroll', handler, true);
-     return () => {
-         window.removeEventListener('resize', handler);
-         window.removeEventListener('scroll', handler, true);
-     }
-  }, []);
 
   // Optimized contact lookup map
   const contactMap = useMemo(() => {
@@ -228,196 +130,103 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 320px) 1fr', gap: '24px', height: '100%', alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '0px', height: '100%', alignItems: 'start' }}>
 
-      {/* Sidebar Controls */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Sidebar Controls - Clean, no glass panel wrapper */}
+      <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          padding: '24px',
+          borderRight: 'var(--border-subtle)',
+          height: '100%',
+          overflowY: 'auto'
+      }}>
+
+        {/* Quick Add */}
+        <div>
+             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginBottom: '8px', paddingLeft: '4px' }}>QUICK ADD</div>
+             <Input
+                placeholder="Add by email..."
+                value={adhocInput}
+                onChange={(e) => setAdhocInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAdd(); }}
+                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>}
+             />
+        </div>
 
         {/* Groups Selection */}
-        <div className="glass-panel animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px', animationDelay: '0ms' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Groups</h3>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                 <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>{Object.keys(groups).length}</span>
-                 <button
-                   onClick={() => setIsGroupModalOpen(true)}
-                   style={{
-                       background: 'transparent',
-                       border: 'var(--border-subtle)',
-                       borderRadius: '20px',
-                       color: 'var(--color-text-secondary)',
-                       cursor: 'pointer',
-                       padding: '6px 12px',
-                       fontSize: '12px',
-                       fontWeight: 500,
-                       display: 'flex',
-                       alignItems: 'center',
-                       gap: '6px',
-                       transition: 'all 0.15s ease'
-                   }}
-                   title="Create Group"
-                   onMouseEnter={(e) => {
-                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                     e.currentTarget.style.color = 'var(--color-text-primary)';
-                   }}
-                   onMouseLeave={(e) => {
-                     e.currentTarget.style.background = 'transparent';
-                     e.currentTarget.style.color = 'var(--color-text-secondary)';
-                   }}
-                 >
-                    <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
-                    New group
-                 </button>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)' }}>GROUPS</div>
+            <button
+               onClick={() => setIsGroupModalOpen(true)}
+               style={{
+                   background: 'transparent',
+                   border: 'none',
+                   color: 'var(--color-text-tertiary)',
+                   cursor: 'pointer',
+                   padding: '4px',
+                   borderRadius: '4px',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center'
+               }}
+               className="hover-bg"
+               title="Create Group"
+            >
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {Object.keys(groups).map(g => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {Object.keys(groups).sort().map(g => {
               const isSelected = selectedGroups.includes(g);
-              const color = getColorForString(g);
               return (
-                <div
-                  key={g}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                  onMouseEnter={e => {
-                    const btn = e.currentTarget.querySelector('.delete-btn');
-                    if (btn) (btn as HTMLElement).style.opacity = '1';
-                  }}
-                  onMouseLeave={e => {
-                    const btn = e.currentTarget.querySelector('.delete-btn');
-                    if (btn) (btn as HTMLElement).style.opacity = '0';
-                  }}
-                >
-                  <button
+                <SidebarItem
+                    key={g}
+                    label={g}
+                    count={groups[g].length}
+                    active={isSelected}
                     onClick={() => onToggleGroup(g, !isSelected)}
                     onContextMenu={(e) => {
                         e.preventDefault();
                         setGroupContextMenu({ x: e.clientX, y: e.clientY, group: g });
                     }}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '20px', // Chip style
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      background: isSelected ? color.fill : 'transparent',
-                      border: `1px solid ${isSelected ? color.fill : color.border}`,
-                      color: isSelected ? '#FFFFFF' : color.text,
-                      transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                          e.currentTarget.style.background = color.bg;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                          e.currentTarget.style.background = 'transparent';
-                      }
-                    }}
-                  >
-                    {isSelected && <span style={{ fontSize: '14px', lineHeight: 0 }}>✓</span>}
-                    {g}
-                  </button>
-                </div>
+                />
               );
             })}
             {Object.keys(groups).length === 0 && (
-              <div style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontStyle: 'italic' }}>
-                No groups found.
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontStyle: 'italic', paddingLeft: '4px' }}>
+                No groups.
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Manual Add - Zero Friction Input */}
-        <div className="glass-panel animate-slide-up" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', borderRadius: '12px', animationDelay: '100ms' }}>
-          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Quick Add</h3>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Enter email address..."
-              value={adhocInput}
-              onChange={(e) => setAdhocInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAdd(); }}
-              style={{
-                width: '100%',
-                background: 'var(--color-bg-app)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                fontSize: '14px',
-                color: 'var(--color-text-primary)',
-                outline: 'none',
-                fontFamily: 'var(--font-family-base)',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-              onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-accent-blue)';
-                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-accent-blue-dim)';
-              }}
-              onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-              }}
-            />
-            {adhocInput && (
-               <div
-               style={{
-                 position: 'absolute',
-                 right: '12px',
-                 top: '50%',
-                 transform: 'translateY(-50%)',
-                 color: 'var(--color-accent-blue)',
-                 fontSize: '10px',
-                 fontWeight: 700,
-                 background: 'rgba(59, 130, 246, 0.1)',
-                 padding: '2px 6px',
-                 borderRadius: '4px',
-                 pointerEvents: 'none'
-               }}
-             >
-               ENTER
-             </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Main Log Area - Card */}
-      <div className="glass-panel animate-slide-up" style={{
+      {/* Main Log Area - Table Layout */}
+      <div style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        borderRadius: '12px',
-        background: 'var(--color-bg-card)',
-        border: 'var(--border-subtle)',
-        animationDelay: '200ms'
+        background: 'var(--color-bg-app)', // Seamless with sidebar
       }}>
 
         {/* Toolbar */}
         <div style={{
-          padding: '24px',
+          padding: '16px 32px',
           borderBottom: 'var(--border-subtle)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <div>
-            <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Composition</div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: '4px' }}>
-              {log.length} recipients selected
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+             <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>Composition</h2>
+             <span style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '12px' }}>
+                {log.length}
+             </span>
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
@@ -430,11 +239,32 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
           </div>
         </div>
 
+        {/* Header Row */}
+        <div style={{
+            display: 'flex',
+            padding: '10px 32px', // Match side padding of content
+            borderBottom: 'var(--border-subtle)',
+            background: 'rgba(255,255,255,0.02)',
+            fontSize: '11px',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'var(--color-text-tertiary)',
+            gap: '16px',
+            paddingRight: '48px' // Account for scrollbar/padding
+        }}>
+            <div style={{ flex: 1.5, paddingLeft: '40px' }}>Name</div>
+            <div style={{ flex: 1 }}>Job Title</div>
+            <div style={{ flex: 1.2 }}>Email</div>
+            <div style={{ flex: 1 }}>Groups</div>
+            <div style={{ width: '80px', textAlign: 'right' }}>Actions</div>
+        </div>
+
         {/* List */}
         <div style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '0'
+          padding: '0' // Content has its own padding
         }}>
           {log.length === 0 ? (
             <div style={{
@@ -453,7 +283,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
              <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {log.map(({ email, source }) => {
                     const contact = contactMap.get(email.toLowerCase());
-                    const name = contact ? contact.name : email.split('@')[0]; // Fallback to part of email
+                    const name = contact ? contact.name : email.split('@')[0];
                     const title = contact?.title;
                     const phone = contact?.phone;
                     const membership = emailToGroups.get(email.toLowerCase()) || [];
@@ -467,7 +297,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                             phone={phone}
                             groups={membership}
                             sourceLabel={source === 'manual' ? 'MANUAL' : undefined}
-                            className="animate-fade-in"
+                            style={{ paddingLeft: '32px', paddingRight: '32px', height: '50px' }} // Match toolbar padding
                             action={
                                 <button
                                     onClick={() => onRemoveManual(email)}
@@ -481,23 +311,22 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         cursor: 'pointer',
-                                        opacity: 0.5,
+                                        opacity: 0.7,
                                         transition: 'all 0.2s',
                                         borderRadius: '4px'
                                     }}
+                                    className="hover-bg"
+                                    title="Remove from List"
                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.opacity = '1';
                                         e.currentTarget.style.color = '#EF4444';
                                         e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.opacity = '0.5';
                                         e.currentTarget.style.color = 'var(--color-text-tertiary)';
                                         e.currentTarget.style.background = 'transparent';
                                     }}
-                                    title="Remove from List"
                                 >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                       <line x1="18" y1="6" x2="6" y2="18"></line>
                                       <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
@@ -527,21 +356,13 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
       >
           <form onSubmit={handleCreateGroup}>
               <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>Group Name</label>
-              <input
+              <Input
                   autoFocus
                   value={newGroupName}
                   onChange={e => setNewGroupName(e.target.value)}
-                  style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: 'var(--border-subtle)',
-                      borderRadius: '6px',
-                      color: 'var(--color-text-primary)',
-                      marginBottom: '16px'
-                  }}
                   placeholder="e.g. Marketing"
                   required
+                  style={{ marginBottom: '16px' }}
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                   <button type="button" onClick={() => setIsGroupModalOpen(false)} className="tactile-button">Cancel</button>
@@ -576,7 +397,6 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                         if (groupToDelete) {
                             const success = await window.api?.removeGroup(groupToDelete);
                             if (success) {
-                                // Deselect if selected
                                  if (selectedGroups.includes(groupToDelete)) {
                                      onToggleGroup(groupToDelete, false);
                                  }
@@ -649,7 +469,6 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
           <form onSubmit={async (e) => {
               e.preventDefault();
               if (groupToRename && renamedGroupName && renamedGroupName !== groupToRename) {
-                  // Check conflict
                   if (groups[renamedGroupName]) {
                       setRenameConflict(renamedGroupName);
                       return;
@@ -657,7 +476,6 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
                   const success = await window.api?.renameGroup(groupToRename, renamedGroupName);
                   if (success) {
-                      // Update selection if needed
                       if (selectedGroups.includes(groupToRename)) {
                            onToggleGroup(groupToRename, false);
                            onToggleGroup(renamedGroupName, true);
@@ -670,20 +488,12 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
               setGroupToRename(null);
           }}>
               <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>Group Name</label>
-              <input
+              <Input
                   autoFocus
                   value={renamedGroupName}
                   onChange={e => setRenamedGroupName(e.target.value)}
-                  style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: 'var(--border-subtle)',
-                      borderRadius: '6px',
-                      color: 'var(--color-text-primary)',
-                      marginBottom: '16px'
-                  }}
                   required
+                  style={{ marginBottom: '16px' }}
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                   <button type="button" onClick={() => setGroupToRename(null)} className="tactile-button">Cancel</button>
@@ -695,15 +505,26 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
        {/* Group Context Menu */}
        {groupContextMenu && (
-           <GroupContextMenu
+           <ContextMenu
                x={groupContextMenu.x}
                y={groupContextMenu.y}
-               onRename={() => {
-                   setGroupToRename(groupContextMenu.group);
-                   setRenamedGroupName(groupContextMenu.group);
-               }}
-               onDelete={() => setGroupToDelete(groupContextMenu.group)}
                onClose={() => setGroupContextMenu(null)}
+               items={[
+                   {
+                       label: 'Rename',
+                       onClick: () => {
+                           setGroupToRename(groupContextMenu.group);
+                           setRenamedGroupName(groupContextMenu.group);
+                       },
+                       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                   },
+                   {
+                       label: 'Delete Group',
+                       onClick: () => setGroupToDelete(groupContextMenu.group),
+                       danger: true,
+                       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                   }
+               ]}
            />
        )}
 

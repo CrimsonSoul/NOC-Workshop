@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Contact } from '@shared/ipc';
+import { Input } from './Input';
 
 type Props = {
   isOpen: boolean;
@@ -45,18 +46,6 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
     onClose();
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 12px',
-    background: 'rgba(255,255,255,0.03)',
-    border: 'var(--border-subtle)',
-    borderRadius: '6px',
-    color: 'var(--color-text-primary)',
-    fontSize: '14px',
-    marginBottom: '16px',
-    transition: 'border-color 0.2s'
-  };
-
   const labelStyle: React.CSSProperties = {
     display: 'block',
     fontSize: '12px',
@@ -65,55 +54,56 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
     marginBottom: '6px'
   };
 
+  const fieldStyle: React.CSSProperties = {
+      marginBottom: '16px'
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={editContact ? "Edit Contact" : "Add Contact"}>
       <form onSubmit={handleSubmit}>
 
-        <label style={labelStyle}>Full Name <span style={{color: '#EF4444'}}>*</span></label>
-        <input
-          style={inputStyle}
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder="e.g. Alice Smith"
-          required
-          autoFocus
-        />
+        <div style={fieldStyle}>
+            <label style={labelStyle}>Full Name <span style={{color: '#EF4444'}}>*</span></label>
+            <Input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Alice Smith"
+              required
+              autoFocus
+            />
+        </div>
 
-        <label style={labelStyle}>Email Address <span style={{color: '#EF4444'}}>*</span></label>
-        <input
-          type="email"
-          style={inputStyle}
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="alice@example.com"
-          required
-          // If editing, email might be read-only since it's the ID?
-          // Current logic in FileManager updates based on email row finding.
-          // If they change email, it might create a duplicate or we need to handle "rename".
-          // For now, let's allow editing, but keep in mind backend behavior (upsert).
-          // If they change email, it will create a new contact. That's acceptable for now unless we track IDs.
-          // Ideally, we should warn or maybe disable email edit if it acts as ID.
-          // But user might want to fix a typo.
-        />
+        <div style={fieldStyle}>
+            <label style={labelStyle}>Email Address <span style={{color: '#EF4444'}}>*</span></label>
+            <Input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="alice@example.com"
+              required
+            />
+        </div>
 
-        <label style={labelStyle}>Job Title</label>
-        <input
-          style={inputStyle}
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          placeholder="e.g. Marketing Director"
-        />
+        <div style={fieldStyle}>
+            <label style={labelStyle}>Job Title</label>
+            <Input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Marketing Director"
+            />
+        </div>
 
-        <label style={labelStyle}>Phone Number</label>
-        <input
-          type="tel"
-          style={inputStyle}
-          value={phone}
-          onChange={e => setPhone(e.target.value)}
-          placeholder="e.g. (555) 123-4567"
-        />
+        <div style={fieldStyle}>
+            <label style={labelStyle}>Phone Number</label>
+            <Input
+              type="tel"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="e.g. (555) 123-4567"
+            />
+        </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
           <button
             type="button"
             onClick={onClose}
