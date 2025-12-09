@@ -5,6 +5,7 @@ import { FileManager } from './FileManager';
 import { BridgeLogger } from './BridgeLogger';
 import { IPC_CHANNELS } from '../shared/ipc';
 import { copyDataFiles, ensureDataFiles, loadConfig, saveConfig } from './dataUtils';
+import { validateDataPath } from './pathValidation';
 import { setupIpcHandlers } from './ipcHandlers';
 
 let mainWindow: BrowserWindow | null = null;
@@ -100,6 +101,12 @@ async function createWindow(dataRoot: string) {
 
 function handleDataPathChange(newPath: string) {
     if (!mainWindow) return;
+
+    // 0. Validate Path
+    const validation = validateDataPath(newPath);
+    if (!validation.success) {
+      throw new Error(validation.error || 'Invalid data path');
+    }
 
     // 1. Ensure files exist in new location (copy from OLD location if missing)
     copyDataFiles(currentDataRoot, newPath, getBundledDataPath());

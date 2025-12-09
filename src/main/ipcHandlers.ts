@@ -28,16 +28,24 @@ export function setupIpcHandlers(
       properties: ['openDirectory']
     });
 
-    if (canceled || filePaths.length === 0) return false;
+    if (canceled || filePaths.length === 0) return { success: false, error: 'Cancelled' };
 
-    onDataPathChange(filePaths[0]);
-    return true;
+    try {
+      onDataPathChange(filePaths[0]);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
   });
 
   ipcMain.handle(IPC_CHANNELS.RESET_DATA_FOLDER, async () => {
     const defaultPath = getDefaultDataPath();
-    onDataPathChange(defaultPath);
-    return true;
+    try {
+      onDataPathChange(defaultPath);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
   });
 
   // Helper for path validation
