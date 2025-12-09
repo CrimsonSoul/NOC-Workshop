@@ -6,6 +6,7 @@ import { AddContactModal } from '../components/AddContactModal';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { getColorForString } from '../utils/colors';
+import { ToolbarButton } from '../components/ToolbarButton';
 
 type Props = {
   groups: GroupMap;
