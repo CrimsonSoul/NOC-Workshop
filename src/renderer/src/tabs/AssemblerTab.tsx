@@ -4,6 +4,7 @@ import { GroupMap, Contact } from '@shared/ipc';
 import { ContactCard } from '../components/ContactCard';
 import { AddContactModal } from '../components/AddContactModal';
 import { Modal } from '../components/Modal';
+import { useToast } from '../components/Toast';
 import { getColorForString } from '../utils/colors';
 
 type Props = {
@@ -108,8 +109,8 @@ const GroupContextMenu = ({ x, y, onRename, onDelete, onClose }: { x: number, y:
 }
 
 export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
+  const { showToast } = useToast();
   const [adhocInput, setAdhocInput] = useState('');
-  const [copied, setCopied] = useState(false);
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
 
@@ -166,8 +167,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
   const handleCopy = () => {
     navigator.clipboard.writeText(log.map(m => m.email).join('; '));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    showToast('Copied to clipboard', 'success');
   };
 
   const handleDraftBridge = () => {
@@ -177,6 +177,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     const url = `https://teams.microsoft.com/l/meeting/new?subject=${dateStr}&attendees=${attendees}`;
     window.api?.openExternal(url);
     window.api?.logBridge(selectedGroups);
+    showToast('Bridge drafted', 'success');
   };
 
   const handleQuickAdd = () => {
@@ -188,6 +189,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     if (contactMap.has(email.toLowerCase())) {
         onAddManual(email);
         setAdhocInput('');
+        showToast(`Added ${email}`, 'success');
     } else {
         // Open Modal
         setPendingEmail(email);
@@ -197,21 +199,31 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
   const handleContactSaved = async (contact: Partial<Contact>) => {
       // Save to backend
-      await window.api?.addContact(contact);
+      const success = await window.api?.addContact(contact);
 
-      // Add to manual list immediately (optimistic, but safe since we just saved it)
-      if (contact.email) {
-          onAddManual(contact.email);
+      if (success) {
+          // Add to manual list immediately (optimistic, but safe since we just saved it)
+          if (contact.email) {
+              onAddManual(contact.email);
+          }
+          setAdhocInput(''); // Clear input
+          showToast('Contact created successfully', 'success');
+      } else {
+          showToast('Failed to create contact', 'error');
       }
-      setAdhocInput(''); // Clear input
   };
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGroupName) return;
-    await window.api?.addGroup(newGroupName);
-    setIsGroupModalOpen(false);
-    setNewGroupName('');
+    const success = await window.api?.addGroup(newGroupName);
+    if (success) {
+        setIsGroupModalOpen(false);
+        setNewGroupName('');
+        showToast(`Group "${newGroupName}" created`, 'success');
+    } else {
+        showToast('Failed to create group', 'error');
+    }
   };
 
   return (
@@ -412,7 +424,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                <ToolbarButton label="Undo" onClick={onUndoRemove} />
             )}
             <ToolbarButton label="Reset" onClick={onResetManual} />
-            <ToolbarButton label={copied ? 'Copied' : 'Copy'} onClick={handleCopy} active={copied} />
+            <ToolbarButton label="Copy" onClick={handleCopy} />
             <ToolbarButton label="Draft Bridge" onClick={handleDraftBridge} primary />
           </div>
         </div>
@@ -561,11 +573,16 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 <button
                     onClick={async () => {
                         if (groupToDelete) {
-                            await window.api?.removeGroup(groupToDelete);
-                            // Deselect if selected
-                             if (selectedGroups.includes(groupToDelete)) {
-                                 onToggleGroup(groupToDelete, false);
-                             }
+                            const success = await window.api?.removeGroup(groupToDelete);
+                            if (success) {
+                                // Deselect if selected
+                                 if (selectedGroups.includes(groupToDelete)) {
+                                     onToggleGroup(groupToDelete, false);
+                                 }
+                                 showToast(`Group "${groupToDelete}" deleted`, 'success');
+                            } else {
+                                showToast('Failed to delete group', 'error');
+                            }
                         }
                         setGroupToDelete(null);
                     }}
@@ -606,10 +623,15 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                     <button
                         onClick={async () => {
                             if (groupToRename && renameConflict) {
-                                await window.api?.renameGroup(groupToRename, renameConflict);
-                                if (selectedGroups.includes(groupToRename)) {
-                                    onToggleGroup(groupToRename, false);
-                                    onToggleGroup(renameConflict, true);
+                                const success = await window.api?.renameGroup(groupToRename, renameConflict);
+                                if (success) {
+                                    if (selectedGroups.includes(groupToRename)) {
+                                        onToggleGroup(groupToRename, false);
+                                        onToggleGroup(renameConflict, true);
+                                    }
+                                    showToast(`Merged "${groupToRename}" into "${renameConflict}"`, 'success');
+                                } else {
+                                    showToast('Failed to merge groups', 'error');
                                 }
                             }
                             setGroupToRename(null);
@@ -632,11 +654,16 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                       return;
                   }
 
-                  await window.api?.renameGroup(groupToRename, renamedGroupName);
-                  // Update selection if needed
-                  if (selectedGroups.includes(groupToRename)) {
-                       onToggleGroup(groupToRename, false);
-                       onToggleGroup(renamedGroupName, true);
+                  const success = await window.api?.renameGroup(groupToRename, renamedGroupName);
+                  if (success) {
+                      // Update selection if needed
+                      if (selectedGroups.includes(groupToRename)) {
+                           onToggleGroup(groupToRename, false);
+                           onToggleGroup(renamedGroupName, true);
+                      }
+                      showToast(`Renamed "${groupToRename}" to "${renamedGroupName}"`, 'success');
+                  } else {
+                      showToast('Failed to rename group', 'error');
                   }
               }
               setGroupToRename(null);

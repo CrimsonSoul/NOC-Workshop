@@ -8,8 +8,8 @@ type Props = {
   onClose: () => void;
   isSyncing: boolean;
   onSync: () => void;
-  onImportGroups: () => void;
-  onImportContacts: () => void;
+  onImportGroups: () => Promise<boolean>;
+  onImportContacts: () => Promise<boolean>;
 };
 
 const DataPathDisplay = () => {
@@ -36,6 +36,28 @@ export const SettingsModal: React.FC<Props> = ({
   }, [isOpen]);
 
   const { showToast } = useToast();
+
+  const handleImportGroupsClick = async () => {
+      const success = await onImportGroups();
+      if (success) {
+          showToast('Groups imported successfully', 'success');
+      } else {
+          // It might be cancelled, but generic error is safer than silence if it failed
+          // Ideally backend returns specific error, but generic for now.
+          // If purely cancelled, maybe silent is better?
+          // The user agreed to "generic ones are fine".
+          // If I return false on cancel, I shouldn't error.
+          // But I can't distinguish.
+          // I will skip error toast here to avoid "Error" on "Cancel".
+      }
+  };
+
+  const handleImportContactsClick = async () => {
+      const success = await onImportContacts();
+      if (success) {
+          showToast('Contacts imported successfully', 'success');
+      }
+  };
 
   const handleChangeFolder = async () => {
       try {
@@ -99,8 +121,8 @@ export const SettingsModal: React.FC<Props> = ({
                     Data Management
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <TactileButton onClick={onImportGroups}>Import Groups...</TactileButton>
-                    <TactileButton onClick={onImportContacts}>Import Contacts...</TactileButton>
+                    <TactileButton onClick={handleImportGroupsClick}>Import Groups...</TactileButton>
+                    <TactileButton onClick={handleImportContactsClick}>Import Contacts...</TactileButton>
                 </div>
             </div>
 

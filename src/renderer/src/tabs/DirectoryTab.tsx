@@ -6,6 +6,7 @@ import { Contact, GroupMap } from '@shared/ipc';
 import { ContactCard } from '../components/ContactCard';
 import { AddContactModal } from '../components/AddContactModal';
 import { Modal } from '../components/Modal';
+import { useToast } from '../components/Toast';
 
 type Props = {
   contacts: Contact[];
@@ -288,6 +289,7 @@ const ContactRow = memo(({ index, style, data }: ListChildComponentProps<{
 });
 
 export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembler }) => {
+  const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -336,20 +338,35 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   };
 
   const handleCreateContact = async (contact: Partial<Contact>) => {
-    await window.api?.addContact(contact);
-    // Reload will happen automatically via file watcher -> IPC -> React State
+    const success = await window.api?.addContact(contact);
+    if (success) {
+        showToast('Contact created successfully', 'success');
+        // Reload will happen automatically via file watcher -> IPC -> React State
+    } else {
+        showToast('Failed to create contact', 'error');
+    }
   };
 
   const handleUpdateContact = async (updated: Partial<Contact>) => {
       // Re-use addContact which handles upsert by email
-      await window.api?.addContact(updated);
-      setEditingContact(null);
+      const success = await window.api?.addContact(updated);
+      if (success) {
+          setEditingContact(null);
+          showToast('Contact updated successfully', 'success');
+      } else {
+          showToast('Failed to update contact', 'error');
+      }
   }
 
   const handleDeleteContact = async () => {
       if (deleteConfirmation) {
-          await window.api?.removeContact(deleteConfirmation.email);
-          setDeleteConfirmation(null);
+          const success = await window.api?.removeContact(deleteConfirmation.email);
+          if (success) {
+              setDeleteConfirmation(null);
+              showToast('Contact deleted successfully', 'success');
+          } else {
+              showToast('Failed to delete contact', 'error');
+          }
       }
   };
 
