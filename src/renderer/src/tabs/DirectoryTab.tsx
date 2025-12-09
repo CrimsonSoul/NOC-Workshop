@@ -294,10 +294,52 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // Optimistic State
+  const [optimisticAdds, setOptimisticAdds] = useState<Contact[]>([]);
+  const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, Partial<Contact>>>(new Map());
+  const [optimisticDeletes, setOptimisticDeletes] = useState<Set<string>>(new Set());
+
   // Edit/Delete State
   const [contextMenu, setContextMenu] = useState<{x: number, y: number, contact: Contact} | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<Contact | null>(null);
+
+  // Sync state on real update
+  useEffect(() => {
+    setOptimisticAdds([]);
+    setOptimisticUpdates(new Map());
+    setOptimisticDeletes(new Set());
+  }, [contacts]);
+
+  const effectiveContacts = useMemo(() => {
+      let result = [...contacts];
+
+      // Remove deleted
+      result = result.filter(c => !optimisticDeletes.has(c.email));
+
+      // Apply updates
+      result = result.map(c => {
+          const update = optimisticUpdates.get(c.email);
+          if (update) {
+              return { ...c, ...update };
+          }
+          return c;
+      });
+
+      // Add new
+      result = [...optimisticAdds, ...result];
+
+      // Dedupe by email (prefer newer/optimistic)
+      const seen = new Set();
+      const deduped: Contact[] = [];
+      for (const c of result) {
+          if (!seen.has(c.email)) {
+              seen.add(c.email);
+              deduped.push(c);
+          }
+      }
+      return deduped;
+  }, [contacts, optimisticAdds, optimisticUpdates, optimisticDeletes]);
 
   const emailToGroups = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -338,33 +380,60 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   };
 
   const handleCreateContact = async (contact: Partial<Contact>) => {
+    // Optimistic Add
+    const newContact = {
+        name: contact.name || '',
+        email: contact.email || '',
+        phone: contact.phone || '',
+        title: contact.title || '',
+        _searchString: (contact.name + contact.email + contact.title + contact.phone).toLowerCase(),
+        avatar: undefined
+    } as Contact;
+
+    setOptimisticAdds(prev => [newContact, ...prev]);
+    setIsAddModalOpen(false);
+
     const success = await window.api?.addContact(contact);
-    if (success) {
-        showToast('Contact created successfully', 'success');
-        // Reload will happen automatically via file watcher -> IPC -> React State
-    } else {
+    if (!success) {
+        setOptimisticAdds(prev => prev.filter(c => c.email !== contact.email)); // Revert
         showToast('Failed to create contact', 'error');
     }
   };
 
   const handleUpdateContact = async (updated: Partial<Contact>) => {
+      // Optimistic Update
+      if (updated.email) {
+          setOptimisticUpdates(prev => new Map(prev).set(updated.email!, updated));
+      }
+      setEditingContact(null);
+
       // Re-use addContact which handles upsert by email
       const success = await window.api?.addContact(updated);
-      if (success) {
-          setEditingContact(null);
-          showToast('Contact updated successfully', 'success');
-      } else {
+      if (!success) {
+          if (updated.email) {
+             setOptimisticUpdates(prev => {
+                 const next = new Map(prev);
+                 next.delete(updated.email!);
+                 return next;
+             });
+          }
           showToast('Failed to update contact', 'error');
       }
   }
 
   const handleDeleteContact = async () => {
       if (deleteConfirmation) {
-          const success = await window.api?.removeContact(deleteConfirmation.email);
-          if (success) {
-              setDeleteConfirmation(null);
-              showToast('Contact deleted successfully', 'success');
-          } else {
+          const email = deleteConfirmation.email;
+          setOptimisticDeletes(prev => new Set(prev).add(email));
+          setDeleteConfirmation(null);
+
+          const success = await window.api?.removeContact(email);
+          if (!success) {
+              setOptimisticDeletes(prev => {
+                  const next = new Set(prev);
+                  next.delete(email);
+                  return next;
+              });
               showToast('Failed to delete contact', 'error');
           }
       }

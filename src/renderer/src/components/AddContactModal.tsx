@@ -35,12 +35,13 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
     }
   }, [isOpen, initialEmail, editContact]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email) return;
 
     setIsSubmitting(true);
-    await onSave({ name, email, phone, title });
+    // Optimistic: Do not await.
+    onSave({ name, email, phone, title });
     onClose();
   };
 
