@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { TactileButton } from './TactileButton';
+import { useToast } from './Toast';
 
 type Props = {
   isOpen: boolean;
@@ -34,13 +35,35 @@ export const SettingsModal: React.FC<Props> = ({
       if (isOpen) setPathKey(p => p + 1);
   }, [isOpen]);
 
+  const { showToast } = useToast();
+
   const handleChangeFolder = async () => {
-      await window.api?.changeDataFolder();
+      try {
+          const result = await window.api?.changeDataFolder();
+          if (result && typeof result === 'object') {
+              if (result.success) {
+                  showToast('Data folder updated successfully', 'success');
+              } else if (result.error !== 'Cancelled') {
+                  showToast(`Failed to update data folder: ${result.error}`, 'error');
+              }
+          }
+      } catch (e: any) {
+          showToast(`Error: ${e.message}`, 'error');
+      }
       setPathKey(p => p + 1);
   };
 
   const handleResetFolder = async () => {
-      await window.api?.resetDataFolder();
+      try {
+          const result = await window.api?.resetDataFolder();
+          if (result && result.success) {
+              showToast('Data folder reset to default', 'success');
+          } else if (result && result.error) {
+              showToast(result.error, 'error');
+          }
+      } catch (e: any) {
+           showToast(e.message, 'error');
+      }
       setPathKey(p => p + 1);
   };
 

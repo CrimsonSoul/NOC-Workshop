@@ -8,12 +8,13 @@ import { DirectoryTab } from './tabs/DirectoryTab';
 import { RadarTab } from './tabs/RadarTab';
 import { MetricsTab } from './tabs/MetricsTab';
 import { WindowControls } from './components/WindowControls';
+import { ToastProvider } from './components/Toast';
 import { AppData, Contact } from '@shared/ipc';
 import './styles.css';
 
 type Tab = 'Compose' | 'People' | 'Reports' | 'Live';
 
-export default function App() {
+export function MainApp() {
   const [activeTab, setActiveTab] = useState<Tab>('Compose');
   const [data, setData] = useState<AppData>({ groups: {}, contacts: [], lastUpdated: 0 });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -107,7 +108,10 @@ export default function App() {
     <div className="app-container">
       <Sidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab: any) => {
+            if (isReloading) return; // Prevent tab switch during reload
+            setActiveTab(tab);
+        }}
         onOpenSettings={() => {
             setSettingsOpen(true);
         }}
@@ -190,4 +194,12 @@ export default function App() {
       />
     </div>
   );
+}
+
+export default function App() {
+    return (
+        <ToastProvider>
+            <MainApp />
+        </ToastProvider>
+    );
 }

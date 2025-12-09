@@ -16,7 +16,9 @@
     "typecheck": "tsc --noEmit",
     "build:renderer": "vite build --config vite.renderer.config.ts",
     "preview:renderer": "npm run build:renderer && vite preview --config vite.renderer.config.ts --host --port 4173",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:unit": "vitest run",
+    "test:renderer": "vitest run -c vitest.renderer.config.ts"
   },
   "dependencies": {
     "chokidar": "^3.6.0",
@@ -39,7 +41,9 @@
     "electron": "^32.1.2",
     "electron-builder": "^26.0.12",
     "electron-vite": "^2.3.0",
+    "jsdom": "^27.3.0",
     "typescript": "^5.9.3",
-    "vite": "^5.3.5"
+    "vite": "^5.3.5",
+    "vitest": "^4.0.15"
   }
 }
