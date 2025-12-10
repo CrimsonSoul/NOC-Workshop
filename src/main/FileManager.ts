@@ -326,13 +326,14 @@ export class FileManager {
       if (rowIndex !== -1) {
           // Update existing
           const row = workingData[rowIndex];
-          if (nameIdx !== -1 && contact.name) row[nameIdx] = contact.name;
-          if (titleIdx !== -1 && contact.title) row[titleIdx] = contact.title;
-          if (phoneIdx !== -1 && contact.phone) row[phoneIdx] = contact.phone;
+          // Use !== undefined so we can clear fields with ""
+          if (nameIdx !== -1 && contact.name !== undefined) row[nameIdx] = contact.name;
+          if (titleIdx !== -1 && contact.title !== undefined) row[titleIdx] = contact.title;
+          if (phoneIdx !== -1 && contact.phone !== undefined) row[phoneIdx] = contact.phone;
       } else {
           // Add new
           const newRow = new Array(workingHeader.length).fill('');
-          const setVal = (idx: number, val?: string) => { if (idx !== -1 && val) newRow[idx] = val; };
+          const setVal = (idx: number, val?: string) => { if (idx !== -1 && val !== undefined) newRow[idx] = val; };
 
           setVal(nameIdx, contact.name);
           setVal(emailIdx, contact.email);

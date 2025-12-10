@@ -121,7 +121,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
                 height: '16px',
                 borderRadius: '50%',
                 background: 'rgba(255,255,255,0.1)',
-                zIndex: 10,
+                zIndex: 20, // Boosted Z-index
                 transition: 'all 0.1s'
             }}
             onMouseEnter={e => {
@@ -132,6 +132,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
                 e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
                 e.currentTarget.style.color = 'var(--color-text-tertiary)';
             }}
+            title="Clear"
         >
              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                  <line x1="18" y1="6" x2="6" y2="18"></line>

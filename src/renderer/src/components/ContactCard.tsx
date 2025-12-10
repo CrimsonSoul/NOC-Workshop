@@ -17,6 +17,7 @@ type ContactRowProps = {
     name: number;
     title: number;
     email: number;
+    phone: number;
     groups: number;
   };
 };
@@ -62,7 +63,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
   const validName = isValidName(name);
   const displayName = validName ? name : email;
 
-  const getStyle = (key: 'name' | 'title' | 'email' | 'groups' | 'default', defaultFlex: number) => {
+  const getStyle = (key: 'name' | 'title' | 'email' | 'phone' | 'groups' | 'default', defaultFlex: number) => {
       if (columnWidths && key !== 'default' && columnWidths[key]) {
           return { width: columnWidths[key], flex: 'none', minWidth: 0 };
       }
@@ -140,12 +141,17 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
             {title || '-'}
         </div>
 
-        {/* Column 3: Email */}
-        <div style={{ ...getStyle('email', 1.2), fontSize: '13px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {/* Column 3: Email - Prominent */}
+        <div style={{ ...getStyle('email', 1.2), fontSize: '13px', color: 'var(--color-text-primary)', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {email}
         </div>
 
-        {/* Column 4: Groups */}
+        {/* Column 4: Phone - Prominent */}
+        <div style={{ ...getStyle('phone', 1), fontSize: '13px', color: 'var(--color-text-primary)', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {formattedPhone || '-'}
+        </div>
+
+        {/* Column 5: Groups */}
         <div style={{ ...getStyle('groups', 1), display: 'flex', gap: '4px', overflow: 'hidden' }}>
             {groups.slice(0, 2).map(g => {
                  const c = getColorForString(g);
@@ -168,7 +174,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
             )}
         </div>
 
-        {/* Column 5: Actions (Fixed) */}
+        {/* Column 6: Actions (Fixed) */}
         <div className="row-actions" style={{
             width: '80px',
             flexShrink: 0,

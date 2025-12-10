@@ -20,6 +20,7 @@ const DEFAULT_WIDTHS = {
     name: 250,
     title: 150,
     email: 200,
+    phone: 150,
     groups: 150
 };
 
@@ -284,7 +285,9 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const [columnWidths, setColumnWidths] = useState(() => {
       try {
           const saved = localStorage.getItem('relay-directory-columns');
-          return saved ? JSON.parse(saved) : DEFAULT_WIDTHS;
+          const parsed = saved ? JSON.parse(saved) : DEFAULT_WIDTHS;
+          // Ensure new fields exist if loaded from old state
+          return { ...DEFAULT_WIDTHS, ...parsed };
       } catch (e) {
           console.error('Failed to parse column widths:', e);
           return DEFAULT_WIDTHS;
@@ -357,7 +360,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       return;
   }, [contextMenu]);
 
-  const filtered = contacts.filter(c =>
+  const filtered = effectiveContacts.filter(c =>
     !search || c._searchString.includes(search.toLowerCase())
   );
 
@@ -500,6 +503,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
          <ResizableHeader label="Name" width={columnWidths.name} onResize={(w) => handleResize('name', w)} />
          <ResizableHeader label="Job Title" width={columnWidths.title} onResize={(w) => handleResize('title', w)} />
          <ResizableHeader label="Email" width={columnWidths.email} onResize={(w) => handleResize('email', w)} />
+         <ResizableHeader label="Phone" width={columnWidths.phone} onResize={(w) => handleResize('phone', w)} />
          <ResizableHeader label="Groups" width={columnWidths.groups} onResize={(w) => handleResize('groups', w)} />
 
          <div style={{ width: '80px', textAlign: 'right', flexShrink: 0 }}>Actions</div>

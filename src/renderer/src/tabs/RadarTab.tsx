@@ -35,17 +35,7 @@ export const RadarTab: React.FC = () => {
         alignItems: 'center'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-           <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Live Signal</h2>
-           <span style={{
-               fontSize: '11px',
-               color: 'var(--color-text-tertiary)',
-               background: 'rgba(255,255,255,0.05)',
-               padding: '2px 8px',
-               borderRadius: '12px',
-               fontFamily: 'var(--font-family-mono)'
-           }}>
-             SOURCE: INTRANET
-           </span>
+           <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Live</h2>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -76,20 +66,29 @@ export const RadarTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Webview Container */}
-      <div style={{ flex: 1, position: 'relative', background: '#000' }}>
-        <webview
-          ref={webviewRef}
-          src={url}
-          allowpopups="true"
-          onDidStopLoading={handleLoadStop}
-          style={{
+      {/* Webview Container with Padding */}
+      <div style={{ flex: 1, position: 'relative', background: 'transparent', padding: '16px' }}>
+        <div style={{
             width: '100%',
             height: '100%',
-            border: 'none',
-            background: 'white' // Webviews often assume white bg
-          }}
-        />
+            borderRadius: '8px',
+            overflow: 'hidden',
+            border: 'var(--border-subtle)', // Optional: inner border for the webview frame
+            background: '#000'
+        }}>
+            <webview
+            ref={webviewRef}
+            src={url}
+            allowpopups="true"
+            onDidStopLoading={handleLoadStop}
+            style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                background: 'white'
+            }}
+            />
+        </div>
       </div>
 
       <style>{`

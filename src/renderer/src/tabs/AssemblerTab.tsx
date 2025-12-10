@@ -323,6 +323,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
             <div style={{ flex: 1.5, paddingLeft: '40px' }}>Name</div>
             <div style={{ flex: 1 }}>Job Title</div>
             <div style={{ flex: 1.2 }}>Email</div>
+            <div style={{ flex: 1 }}>Phone</div>
             <div style={{ flex: 1 }}>Groups</div>
             <div style={{ width: '80px', textAlign: 'right' }}>Actions</div>
         </div>
