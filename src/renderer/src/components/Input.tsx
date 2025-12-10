@@ -89,7 +89,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
         style={{
           width: '100%',
           background: 'var(--color-bg-surface)',
-          border: '1px solid var(--border-subtle)',
+          border: '1px solid rgba(255, 255, 255, 0.12)', // Increased visibility (was var(--border-subtle) / 0.08)
           borderRadius: '6px',
           padding: '8px 12px',
           paddingLeft: icon ? '32px' : '12px',
@@ -108,7 +108,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
           props.onFocus?.(e);
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = 'var(--border-subtle)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
           e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
           props.onBlur?.(e);
         }}

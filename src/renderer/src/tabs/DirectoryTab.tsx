@@ -24,14 +24,20 @@ const DEFAULT_WIDTHS = {
     groups: 150
 };
 
+type SortConfig = {
+    key: keyof typeof DEFAULT_WIDTHS;
+    direction: 'asc' | 'desc';
+};
+
 // --- Group Selector Popover ---
 const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups: GroupMap, onClose: () => void }) => {
   const [membership, setMembership] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const mem: Record<string, boolean> = {};
+    const contactEmail = contact.email.toLowerCase();
     Object.entries(groups).forEach(([gName, emails]) => {
-      mem[gName] = emails.includes(contact.email);
+      mem[gName] = emails.some(e => e.toLowerCase() === contactEmail);
     });
     setMembership(mem);
   }, [contact, groups]);
@@ -222,7 +228,23 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   );
 });
 
-const ResizableHeader = ({ label, width, minWidth = 50, onResize }: { label: string, width: number, minWidth?: number, onResize: (w: number) => void }) => {
+const ResizableHeader = ({
+    label,
+    width,
+    minWidth = 50,
+    sortKey,
+    currentSort,
+    onResize,
+    onSort
+}: {
+    label: string,
+    width: number,
+    minWidth?: number,
+    sortKey: keyof typeof DEFAULT_WIDTHS,
+    currentSort: SortConfig,
+    onResize: (w: number) => void,
+    onSort: (key: keyof typeof DEFAULT_WIDTHS) => void
+}) => {
     const [isResizing, setIsResizing] = useState(false);
     const startX = useRef(0);
     const startWidth = useRef(0);
@@ -250,9 +272,28 @@ const ResizableHeader = ({ label, width, minWidth = 50, onResize }: { label: str
         };
     }, [isResizing, minWidth, onResize]);
 
+    const isSorted = currentSort.key === sortKey;
+
     return (
-        <div style={{ width: width, flex: 'none', position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <div
+            style={{
+                width: width,
+                flex: 'none',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer'
+            }}
+            onClick={() => onSort(sortKey)}
+        >
             {label}
+            {isSorted && (
+                <span style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>
+                    {currentSort.direction === 'asc' ? '▲' : '▼'}
+                </span>
+            )}
+
             <div
                 style={{
                     position: 'absolute',
@@ -265,6 +306,7 @@ const ResizableHeader = ({ label, width, minWidth = 50, onResize }: { label: str
                 }}
                 onMouseDown={(e) => {
                     e.preventDefault();
+                    e.stopPropagation(); // Prevent sort click
                     setIsResizing(true);
                     startX.current = e.clientX;
                     startWidth.current = width;
@@ -280,6 +322,9 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const [search, setSearch] = useState('');
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Sorting
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
 
   // Column Widths
   const [columnWidths, setColumnWidths] = useState(() => {
@@ -300,6 +345,14 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       localStorage.setItem('relay-directory-columns', JSON.stringify(newWidths));
   };
 
+  const handleSort = (key: keyof typeof DEFAULT_WIDTHS) => {
+      setSortConfig(current => {
+          if (current.key === key) {
+              return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+          }
+          return { key, direction: 'asc' };
+      });
+  };
 
   // Optimistic State
   const [optimisticAdds, setOptimisticAdds] = useState<Contact[]>([]);
@@ -344,7 +397,10 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       emails.forEach((email) => {
         const key = email.toLowerCase();
         const existing = map.get(key) || [];
-        map.set(key, [...existing, groupName]);
+        // Deduplicate groups and ensure unique set
+        if (!existing.includes(groupName)) {
+           map.set(key, [...existing, groupName]);
+        }
       });
     });
     return map;
@@ -360,9 +416,29 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       return;
   }, [contextMenu]);
 
-  const filtered = effectiveContacts.filter(c =>
-    !search || c._searchString.includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+      let res = effectiveContacts.filter(c =>
+        !search || c._searchString.includes(search.toLowerCase())
+      );
+
+      return res.sort((a, b) => {
+          const key = sortConfig.key;
+          const dir = sortConfig.direction === 'asc' ? 1 : -1;
+
+          if (key === 'groups') {
+              const groupsA = emailToGroups.get(a.email.toLowerCase()) || [];
+              const groupsB = emailToGroups.get(b.email.toLowerCase()) || [];
+              const strA = groupsA.sort().join(', ');
+              const strB = groupsB.sort().join(', ');
+              return strA.localeCompare(strB) * dir;
+          }
+
+          const valA = (a[key as keyof Contact] || '').toString().toLowerCase();
+          const valB = (b[key as keyof Contact] || '').toString().toLowerCase();
+
+          return valA.localeCompare(valB) * dir;
+      });
+  }, [effectiveContacts, search, sortConfig, emailToGroups]);
 
   const handleAddWrapper = (contact: Contact) => {
     onAddToAssembler(contact);
@@ -500,11 +576,11 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
          {/* We need an extra wrapper to apply the same gap spacing */}
          <div style={{ flex: 1.5, paddingLeft: '40px', display: 'none' }}>Name</div> {/* Legacy */}
 
-         <ResizableHeader label="Name" width={columnWidths.name} onResize={(w) => handleResize('name', w)} />
-         <ResizableHeader label="Job Title" width={columnWidths.title} onResize={(w) => handleResize('title', w)} />
-         <ResizableHeader label="Email" width={columnWidths.email} onResize={(w) => handleResize('email', w)} />
-         <ResizableHeader label="Phone" width={columnWidths.phone} onResize={(w) => handleResize('phone', w)} />
-         <ResizableHeader label="Groups" width={columnWidths.groups} onResize={(w) => handleResize('groups', w)} />
+         <ResizableHeader label="Name" width={columnWidths.name} sortKey="name" currentSort={sortConfig} onSort={handleSort} onResize={(w) => handleResize('name', w)} />
+         <ResizableHeader label="Job Title" width={columnWidths.title} sortKey="title" currentSort={sortConfig} onSort={handleSort} onResize={(w) => handleResize('title', w)} />
+         <ResizableHeader label="Email" width={columnWidths.email} sortKey="email" currentSort={sortConfig} onSort={handleSort} onResize={(w) => handleResize('email', w)} />
+         <ResizableHeader label="Phone" width={columnWidths.phone} sortKey="phone" currentSort={sortConfig} onSort={handleSort} onResize={(w) => handleResize('phone', w)} />
+         <ResizableHeader label="Groups" width={columnWidths.groups} sortKey="groups" currentSort={sortConfig} onSort={handleSort} onResize={(w) => handleResize('groups', w)} />
 
          <div style={{ width: '80px', textAlign: 'right', flexShrink: 0 }}>Actions</div>
       </div>
