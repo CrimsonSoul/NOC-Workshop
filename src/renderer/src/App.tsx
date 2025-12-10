@@ -142,7 +142,7 @@ export function MainApp() {
         {/* Content View */}
         <div className="content-view">
           {activeTab === 'Compose' && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-in" style={{ height: '100%' }}>
               <AssemblerTab
                 groups={data.groups}
                 contacts={data.contacts}
@@ -167,7 +167,7 @@ export function MainApp() {
             </div>
           )}
           {activeTab === 'Reports' && (
-             <div className="animate-fade-in">
+             <div className="animate-fade-in" style={{ height: '100%' }}>
                <MetricsTab />
              </div>
           )}

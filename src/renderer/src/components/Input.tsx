@@ -8,6 +8,15 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
   const innerRef = useRef<HTMLInputElement>(null);
   const [hasValue, setHasValue] = useState(!!props.value || !!props.defaultValue);
 
+  // Separate layout styles for wrapper vs visual styles for input
+  const {
+    width, height, minWidth, minHeight, maxWidth, maxHeight,
+    margin, marginTop, marginBottom, marginLeft, marginRight,
+    flex, flexGrow, flexShrink, flexBasis,
+    position, zIndex, top, bottom, left, right,
+    ...inputStyle
+  } = style || {};
+
   // Sync internal ref with external ref if provided
   useLayoutEffect(() => {
     if (typeof ref === 'function') {
@@ -52,7 +61,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div style={{
+        position: position || 'relative',
+        width: width || '100%',
+        height, minWidth, minHeight, maxWidth, maxHeight,
+        margin, marginTop, marginBottom, marginLeft, marginRight,
+        flex, flexGrow, flexShrink, flexBasis,
+        zIndex, top, bottom, left, right
+    }}>
       {icon && (
         <div style={{
           position: 'absolute',
@@ -84,7 +100,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
           fontFamily: 'var(--font-family-base)',
           transition: 'all 0.15s ease',
           boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-          ...style
+          ...inputStyle
         }}
         onFocus={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-accent-blue)';
