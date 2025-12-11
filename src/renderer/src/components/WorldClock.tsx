@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 const ZONES = [
   { label: 'CST', timeZone: 'America/Chicago', primary: true },
@@ -6,6 +6,20 @@ const ZONES = [
   { label: 'MST', timeZone: 'America/Denver' },
   { label: 'PST', timeZone: 'America/Los_Angeles' }
 ];
+
+// Bolt: Cache Intl formatters to avoid constructing several new formatter instances on every tick
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+const getFormatter = (timeZone: string, options: Intl.DateTimeFormatOptions) => {
+  const key = `${timeZone}-${JSON.stringify(options)}`;
+  let formatter = formatterCache.get(key);
+
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('en-US', { timeZone, ...options });
+    formatterCache.set(key, formatter);
+  }
+
+  return formatter;
+};
 
 export const WorldClock: React.FC = () => {
   const [time, setTime] = useState(new Date());
@@ -15,13 +29,9 @@ export const WorldClock: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Sort: Primary first, then others
-  const primaryZone = ZONES.find(z => z.primary)!;
-  const secondaryZones = ZONES.filter(z => !z.primary);
-
-  // Formatters
-  const getFormatter = (timeZone: string, options: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat('en-US', { timeZone, ...options });
+  // Sort: Primary first, then others. Memoize to avoid recalculating on every second tick.
+  const primaryZone = useMemo(() => ZONES.find(z => z.primary)!, []);
+  const secondaryZones = useMemo(() => ZONES.filter(z => !z.primary), []);
 
   // CST: Full details
   const primaryTimeStr = getFormatter(primaryZone.timeZone, { hour: 'numeric', minute: '2-digit', hour12: true }).format(time);
