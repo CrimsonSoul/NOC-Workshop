@@ -106,6 +106,16 @@ export function MainApp() {
   // Logic to show settings menu.
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Extracted callback to avoid conditional hook call
+  const handleToggleGroup = useCallback((group: string) => {
+    setSelectedGroups(prev => {
+      if (prev.includes(group)) {
+        return prev.filter(g => g !== group);
+      }
+      return [...prev, group];
+    });
+  }, []);
+
   return (
     <div className="app-container">
       <Sidebar
@@ -152,14 +162,7 @@ export function MainApp() {
                 selectedGroups={selectedGroups}
                 manualAdds={manualAdds}
                 manualRemoves={manualRemoves}
-                onToggleGroup={useCallback((group: string) => {
-                  setSelectedGroups(prev => {
-                    if (prev.includes(group)) {
-                      return prev.filter(g => g !== group);
-                    }
-                    return [...prev, group];
-                  });
-                }, [])}
+                onToggleGroup={handleToggleGroup}
                 onAddManual={(email) => setManualAdds(p => [...p, email])}
                 onRemoveManual={(email) => setManualRemoves(p => [...p, email])}
                 onUndoRemove={handleUndoRemove}

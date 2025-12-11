@@ -190,7 +190,7 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   }, [showGroups]);
 
   // Safety check: sometimes virtual list requests index out of bounds during filter changes
-  if (index >= filtered.length) return null;
+  if (index >= filtered.length) return <div style={style} />;
 
   const contact = filtered[index];
   const added = recentlyAdded.has(contact.email);
