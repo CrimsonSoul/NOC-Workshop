@@ -183,40 +183,89 @@ export class FileManager {
 
       try {
           const contents = await fs.readFile(path, 'utf-8');
-          const data = await parseCsvAsync(contents);
+
+          // Robust parsing logic:
+          // 1. Scan first 20 lines for "VM-M" (Server Name) to detect header
+          // 2. Parse from that line
+          // 3. Filter garbage rows (empty VM-M)
+          // 4. Rewrite if dirty
+
+          const lines = contents.split(/\r?\n/);
+          let headerLineIndex = 0;
+          let isDirty = false;
+
+          for(let i = 0; i < Math.min(lines.length, 20); i++) {
+              if (lines[i].includes('VM-M')) { // Fast check
+                  headerLineIndex = i;
+                  if (i > 0) isDirty = true; // Skipped lines = dirty
+                  break;
+              }
+          }
+
+          const cleanContents = lines.slice(headerLineIndex).join('\n');
+          const data = await parseCsvAsync(cleanContents);
 
           if (data.length < 2) return [];
 
           const header = data[0].map((h: any) => desanitizeField(String(h).trim().toLowerCase()));
           const rows = data.slice(1);
 
-          return rows.map((rowValues: any[]) => {
-              const row: { [key: string]: string } = {};
-              header.forEach((h: string, i: number) => {
-                  row[h] = desanitizeField(rowValues[i]);
-              });
+          const findCol = (candidates: string[]) => {
+              return header.findIndex(h => candidates.includes(h));
+          };
 
-              const getField = (fieldNames: string[]) => {
-                  for (const fieldName of fieldNames) {
-                      const lower = fieldName.toLowerCase();
-                      if (row[lower] !== undefined) return row[lower].trim();
-                  }
-                  return '';
+          const nameIdx = findCol(['vm-m', 'server name', 'name', 'vm name']);
+          const businessAreaIdx = findCol(['business area', 'businessarea']);
+          const lobIdx = findCol(['lob', 'line of business']);
+          const commentIdx = findCol(['comment', 'comments', 'notes']);
+          const ownerIdx = findCol(['lob owner', 'owner', 'lobowner']);
+          const contactIdx = findCol(['it tech support contact', 'it support', 'contact', 'tech support']);
+          const osTypeIdx = findCol(['server os', 'os type', 'os']);
+          const osIdx = findCol(['os according to the configuration file', 'config os', 'configuration os']);
+
+          if (nameIdx === -1) {
+              console.error('[FileManager] No Name column found in servers.csv');
+              return [];
+          }
+
+          // Check if we have extra columns (more than the ~8 we need + maybe a few allowed)
+          // If we have > 20 columns, it's definitely the raw export -> trigger rewrite
+          if (header.length > 20) isDirty = true;
+
+          const results: Server[] = [];
+          const cleanDataForRewrite: string[][] = [['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS', 'OS According to the Configuration File']];
+
+          for(const rowValues of rows) {
+              const getVal = (idx: number) => {
+                  if (idx === -1 || idx >= rowValues.length) return '';
+                  return desanitizeField(rowValues[idx]);
               };
 
-              const name = getField(['vm-m', 'server name', 'name', 'vm name']);
-              const businessArea = getField(['business area', 'businessarea']);
-              const lob = getField(['lob', 'line of business']);
-              const comment = getField(['comment', 'comments', 'notes']);
-              const owner = getField(['lob owner', 'owner', 'lobowner']);
-              const contact = getField(['it tech support contact', 'it support', 'contact', 'tech support']);
-              const osType = getField(['server os', 'os type', 'os']);
-              const os = getField(['os according to the configuration file', 'config os', 'configuration os']);
+              const name = getVal(nameIdx);
+              if (!name) {
+                  isDirty = true; // Found an empty row/sub-header -> dirty
+                  continue;
+              }
 
-              // Fallback: If 'os' is empty but 'osType' has content, or vice versa, logic can be applied if needed.
-              // For now, strict mapping as requested.
+              const businessArea = getVal(businessAreaIdx);
+              const lob = getVal(lobIdx);
+              const comment = getVal(commentIdx);
+              const owner = getVal(ownerIdx);
+              const contact = getVal(contactIdx);
+              const osType = getVal(osTypeIdx);
+              const os = getVal(osIdx);
 
-              return {
+              const raw: Record<string, string> = {};
+              raw['vm-m'] = name;
+              raw['business area'] = businessArea;
+              raw['lob'] = lob;
+              raw['comment'] = comment;
+              raw['lob owner'] = owner;
+              raw['it tech support contact'] = contact;
+              raw['server os'] = osType;
+              raw['os according to the configuration file'] = os;
+
+              results.push({
                   name,
                   businessArea,
                   lob,
@@ -226,12 +275,52 @@ export class FileManager {
                   osType,
                   os,
                   _searchString: `${name} ${businessArea} ${lob} ${owner} ${contact} ${osType} ${os} ${comment}`.toLowerCase(),
-                  raw: row
-              };
-          });
+                  raw
+              });
+
+              cleanDataForRewrite.push([name, businessArea, lob, comment, owner, contact, osType, os]);
+          }
+
+          // If file was dirty (metadata lines, extra cols, or sub-headers), rewrite it
+          if (isDirty) {
+              console.log('[FileManager] servers.csv is dirty (raw export detected). Rewriting cleaned version...');
+              // Use safeStringify to sanitize before writing
+              const csvOutput = this.safeStringify(cleanDataForRewrite);
+              // Write without triggering reload loop?
+              // writeAndEmit triggers reload, but that's fine, the UI will just refresh with clean data.
+              // But we are currently INSIDE readAndEmit -> parseServers.
+              // If we call writeAndEmit, it calls readAndEmit again. Loop risk?
+              // No, because writeAndEmit sets isInternalWrite = true.
+              // However, readAndEmit calls parseServers.
+              // If we await writeAndEmit here, we are recursing.
+              // Better to fire and forget or schedule it?
+              // Actually, we should just write it. The watcher will see it.
+              // But we must suppress the watcher for this write, OR let it reload.
+
+              // We can't await writeAndEmit inside parseServers because parseServers is awaited by readAndEmit.
+              // This would be a deadlock if writeAndEmit also awaits readAndEmit.
+              // Let's modify writeAndEmit or use a direct write.
+
+              // We'll run it detached.
+              this.rewriteServersFile(path, csvOutput).catch(err => console.error('Failed to rewrite servers.csv', err));
+          }
+
+          return results;
       } catch (e) {
           console.error('Error parsing servers:', e);
           return [];
+      }
+  }
+
+  private async rewriteServersFile(path: string, content: string) {
+      this.isInternalWrite = true;
+      try {
+          const tmpPath = `${path}.tmp`;
+          await fs.writeFile(tmpPath, content, 'utf-8');
+          await fs.rename(tmpPath, path);
+          console.log('[FileManager] servers.csv cleaned and saved.');
+      } finally {
+          setTimeout(() => { this.isInternalWrite = false; }, 1000);
       }
   }
 
