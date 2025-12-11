@@ -85,7 +85,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
                         {displayName}
                     </div>
                      {sourceLabel && (
-                        <span style={{
+                        <span className="source-label" style={{
                             fontSize: '9px',
                             background: 'rgba(255, 255, 255, 0.1)',
                             color: 'var(--color-text-secondary)',

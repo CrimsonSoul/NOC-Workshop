@@ -64,8 +64,8 @@ test.describe('Application Shell', () => {
     await page.getByPlaceholder('e.g. Alice Smith').fill('Adhoc User');
     await page.getByRole('button', { name: 'Create Contact', exact: true }).click();
 
-    // Fix: "MANUAL" tag strict mode violation.
-    await expect(adhocRow.getByText('MANUAL')).toBeVisible();
+    // Verify "MANUAL" tag is present (using scoped class to avoid strict mode violation)
+    await expect(adhocRow.locator('.source-label')).toHaveText('MANUAL');
 
     // Replaced "3 recipients selected" with check for badge count
     await expect(page.locator('h2:has-text("Composition") + span')).toHaveText('3');
@@ -101,6 +101,6 @@ test.describe('Application Shell', () => {
 
     // Verify it's marked as MANUAL
     const janeRow = page.locator('.contact-row', { has: page.getByText('jane.smith@agency.net') });
-    await expect(janeRow.getByText('MANUAL')).toBeVisible();
+    await expect(janeRow.locator('.source-label')).toHaveText('MANUAL');
   });
 });
