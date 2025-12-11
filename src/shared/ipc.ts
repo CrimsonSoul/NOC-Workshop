@@ -8,9 +8,23 @@ export type Contact = {
     raw: Record<string, any>;
 };
 
+export type Server = {
+    name: string;
+    businessArea: string;
+    lob: string;
+    comment: string;
+    owner: string; // Email
+    contact: string; // Email
+    osType: string;
+    os: string;
+    _searchString: string;
+    raw: Record<string, any>;
+};
+
 export type AppData = {
     groups: GroupMap;
     contacts: Contact[];
+    servers: Server[];
     lastUpdated: number;
 };
 
@@ -42,6 +56,7 @@ export type BridgeAPI = {
     openContactsFile: () => Promise<void>;
     importGroupsFile: () => Promise<boolean>;
     importContactsFile: () => Promise<boolean>;
+    importServersFile: () => Promise<boolean>;
     subscribeToData: (callback: (data: AppData) => void) => void;
     onReloadStart: (callback: () => void) => void;
     onReloadComplete: (callback: (success: boolean) => void) => void;
@@ -55,6 +70,8 @@ export type BridgeAPI = {
     resetMetrics: () => Promise<boolean>;
     addContact: (contact: Partial<Contact>) => Promise<boolean>;
     removeContact: (email: string) => Promise<boolean>;
+    addServer: (server: Partial<Server>) => Promise<boolean>;
+    removeServer: (name: string) => Promise<boolean>;
     addGroup: (groupName: string) => Promise<boolean>;
     addContactToGroup: (groupName: string, email: string) => Promise<boolean>;
     removeContactFromGroup: (groupName: string, email: string) => Promise<boolean>;
@@ -83,8 +100,11 @@ export const IPC_CHANNELS = {
     OPEN_CONTACTS_FILE: 'fs:openContactsFile',
     IMPORT_GROUPS_FILE: 'fs:importGroupsFile',
     IMPORT_CONTACTS_FILE: 'fs:importContactsFile',
+    IMPORT_SERVERS_FILE: 'fs:importServersFile',
     ADD_CONTACT: 'data:addContact',
     REMOVE_CONTACT: 'data:removeContact',
+    ADD_SERVER: 'data:addServer',
+    REMOVE_SERVER: 'data:removeServer',
     ADD_GROUP: 'data:addGroup',
     ADD_CONTACT_TO_GROUP: 'data:addContactToGroup',
     REMOVE_CONTACT_FROM_GROUP: 'data:removeContactFromGroup',

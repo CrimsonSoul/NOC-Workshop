@@ -1,7 +1,7 @@
 import chokidar from 'chokidar';
 import { join } from 'path';
 import { BrowserWindow } from 'electron';
-import { IPC_CHANNELS, type AppData, type Contact, type GroupMap } from '@shared/ipc';
+import { IPC_CHANNELS, type AppData, type Contact, type GroupMap, type Server } from '@shared/ipc';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -9,6 +9,7 @@ import { parseCsvAsync, sanitizeField, desanitizeField } from './csvUtils';
 
 const GROUP_FILES = ['groups.csv'];
 const CONTACT_FILES = ['contacts.csv'];
+const SERVER_FILES = ['servers.csv'];
 const DEBOUNCE_MS = 100;
 
 export class FileManager {
@@ -28,7 +29,7 @@ export class FileManager {
   }
 
   private startWatching() {
-    const pathsToWatch = [...GROUP_FILES, ...CONTACT_FILES].map(file => join(this.rootDir, file));
+    const pathsToWatch = [...GROUP_FILES, ...CONTACT_FILES, ...SERVER_FILES].map(file => join(this.rootDir, file));
 
     this.watcher = chokidar.watch(pathsToWatch, {
       ignoreInitial: true,
@@ -81,10 +82,12 @@ export class FileManager {
     try {
       const groups = await this.parseGroups();
       const contacts = await this.parseContacts();
+      const servers = await this.parseServers();
 
       const payload: AppData = {
         groups,
         contacts,
+        servers,
         lastUpdated: Date.now()
       };
 
@@ -172,6 +175,64 @@ export class FileManager {
         console.error('Error parsing contacts:', e);
         return [];
     }
+  }
+
+  private async parseServers(): Promise<Server[]> {
+      const path = this.resolveExistingFile(SERVER_FILES);
+      if (!path) return [];
+
+      try {
+          const contents = await fs.readFile(path, 'utf-8');
+          const data = await parseCsvAsync(contents);
+
+          if (data.length < 2) return [];
+
+          const header = data[0].map((h: any) => desanitizeField(String(h).trim().toLowerCase()));
+          const rows = data.slice(1);
+
+          return rows.map((rowValues: any[]) => {
+              const row: { [key: string]: string } = {};
+              header.forEach((h: string, i: number) => {
+                  row[h] = desanitizeField(rowValues[i]);
+              });
+
+              const getField = (fieldNames: string[]) => {
+                  for (const fieldName of fieldNames) {
+                      const lower = fieldName.toLowerCase();
+                      if (row[lower] !== undefined) return row[lower].trim();
+                  }
+                  return '';
+              };
+
+              const name = getField(['vm-m', 'server name', 'name', 'vm name']);
+              const businessArea = getField(['business area', 'businessarea']);
+              const lob = getField(['lob', 'line of business']);
+              const comment = getField(['comment', 'comments', 'notes']);
+              const owner = getField(['lob owner', 'owner', 'lobowner']);
+              const contact = getField(['it tech support contact', 'it support', 'contact', 'tech support']);
+              const osType = getField(['server os', 'os type', 'os']);
+              const os = getField(['os according to the configuration file', 'config os', 'configuration os']);
+
+              // Fallback: If 'os' is empty but 'osType' has content, or vice versa, logic can be applied if needed.
+              // For now, strict mapping as requested.
+
+              return {
+                  name,
+                  businessArea,
+                  lob,
+                  comment,
+                  owner,
+                  contact,
+                  osType,
+                  os,
+                  _searchString: `${name} ${businessArea} ${lob} ${owner} ${contact} ${osType} ${os} ${comment}`.toLowerCase(),
+                  raw: row
+              };
+          });
+      } catch (e) {
+          console.error('Error parsing servers:', e);
+          return [];
+      }
   }
 
   // --- Write Operations ---
@@ -689,6 +750,235 @@ export class FileManager {
 
       } catch (e) {
           console.error('[FileManager] importContactsWithMapping error:', e);
+          return false;
+      }
+  }
+
+  public async addServer(server: Partial<Server>): Promise<boolean> {
+      try {
+          const path = join(this.rootDir, SERVER_FILES[0]);
+          let contents = '';
+          if (existsSync(path)) {
+              contents = await fs.readFile(path, 'utf-8');
+          }
+
+          const data = await parseCsvAsync(contents);
+          const workingData = data.map(row => row.map(cell => desanitizeField(cell)));
+          let workingHeader = workingData.length > 0 ? workingData[0] : [];
+
+          const findIdx = (names: string[]) => workingHeader.findIndex(h => names.includes(h.toLowerCase()));
+          const ensureCol = (names: string[], defaultName: string) => {
+              let idx = findIdx(names);
+              if (idx === -1) {
+                  workingHeader.push(defaultName);
+                  for(let i=1; i<workingData.length; i++) workingData[i].push('');
+                  idx = workingHeader.length - 1;
+              }
+              return idx;
+          };
+
+          if (workingData.length === 0) {
+              workingHeader = ['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS', 'OS According to the Configuration File'];
+              workingData.push(workingHeader);
+          }
+
+          // Use the EXACT headers requested by the user for new columns, or map to existing if they vary
+          // 'vm-m', 'server name', 'name', 'vm name'
+          const nameIdx = ensureCol(['vm-m', 'server name', 'name', 'vm name'], 'VM-M');
+          const businessAreaIdx = ensureCol(['business area', 'businessarea'], 'Business Area');
+          const lobIdx = ensureCol(['lob', 'line of business'], 'LOB');
+          const commentIdx = ensureCol(['comment', 'comments', 'notes'], 'Comment');
+          const ownerIdx = ensureCol(['lob owner', 'owner', 'lobowner'], 'LOB Owner');
+          const contactIdx = ensureCol(['it tech support contact', 'it support', 'contact', 'tech support'], 'IT Tech Support Contact');
+          const osTypeIdx = ensureCol(['server os', 'os type', 'os'], 'Server OS');
+          const osIdx = ensureCol(['os according to the configuration file', 'config os', 'configuration os'], 'OS According to the Configuration File');
+
+          // Update or Add
+          let rowIndex = -1;
+          // Use name as primary key
+          if (server.name) {
+              const lowerName = server.name.toLowerCase();
+              rowIndex = workingData.findIndex((row, idx) => idx > 0 && row[nameIdx]?.trim().toLowerCase() === lowerName);
+          }
+
+          const setVal = (row: any[], idx: number, val?: string) => {
+               if (idx !== -1 && val !== undefined) row[idx] = val;
+          };
+
+          if (rowIndex !== -1) {
+               const row = workingData[rowIndex];
+               setVal(row, nameIdx, server.name);
+               setVal(row, businessAreaIdx, server.businessArea);
+               setVal(row, lobIdx, server.lob);
+               setVal(row, commentIdx, server.comment);
+               setVal(row, ownerIdx, server.owner);
+               setVal(row, contactIdx, server.contact);
+               setVal(row, osTypeIdx, server.osType);
+               setVal(row, osIdx, server.os);
+          } else {
+               const newRow = new Array(workingHeader.length).fill('');
+               setVal(newRow, nameIdx, server.name);
+               setVal(newRow, businessAreaIdx, server.businessArea);
+               setVal(newRow, lobIdx, server.lob);
+               setVal(newRow, commentIdx, server.comment);
+               setVal(newRow, ownerIdx, server.owner);
+               setVal(newRow, contactIdx, server.contact);
+               setVal(newRow, osTypeIdx, server.osType);
+               setVal(newRow, osIdx, server.os);
+               workingData.push(newRow);
+          }
+
+          const csvOutput = this.safeStringify(workingData);
+          await this.writeAndEmit(path, csvOutput);
+          return true;
+      } catch (e) {
+          console.error('[FileManager] addServer error:', e);
+          return false;
+      }
+  }
+
+  public async removeServer(name: string): Promise<boolean> {
+      try {
+          const path = join(this.rootDir, SERVER_FILES[0]);
+          if (!existsSync(path)) return false;
+
+          const contents = await fs.readFile(path, 'utf-8');
+          const data = await parseCsvAsync(contents);
+          const workingData = data.map(row => row.map(c => desanitizeField(c)));
+
+          if (workingData.length < 2) return false;
+
+          const header = workingData[0].map(h => String(h).toLowerCase());
+          const nameIdx = header.findIndex(h => ['vm-m', 'server name', 'name', 'vm name'].includes(h));
+
+          if (nameIdx === -1) return false;
+
+          const newData = [workingData[0]];
+          let removed = false;
+
+          for (let i = 1; i < workingData.length; i++) {
+              if (workingData[i][nameIdx]?.trim().toLowerCase() === name.toLowerCase()) {
+                  removed = true;
+              } else {
+                  newData.push(workingData[i]);
+              }
+          }
+
+          if (removed) {
+              const csvOutput = this.safeStringify(newData);
+              await this.writeAndEmit(path, csvOutput);
+              return true;
+          }
+          return false;
+      } catch (e) {
+          console.error('[FileManager] removeServer error:', e);
+          return false;
+      }
+  }
+
+  public async importServersWithMapping(sourcePath: string): Promise<boolean> {
+      try {
+          const targetPath = join(this.rootDir, SERVER_FILES[0]);
+          const sourceContent = await fs.readFile(sourcePath, 'utf-8');
+          const sourceDataRaw = await parseCsvAsync(sourceContent);
+          const sourceData = sourceDataRaw.map(r => r.map(c => desanitizeField(c)));
+
+          if (sourceData.length < 2) return false;
+
+          const sourceHeader = sourceData[0].map((h: any) => String(h).toLowerCase().trim());
+          const sourceRows = sourceData.slice(1);
+
+          const mapHeader = (candidates: string[]) => sourceHeader.findIndex((h: string) => candidates.includes(h));
+
+          const s_nameIdx = mapHeader(['vm-m', 'server name', 'name', 'vm name']);
+          const s_baIdx = mapHeader(['business area', 'businessarea']);
+          const s_lobIdx = mapHeader(['lob', 'line of business']);
+          const s_commentIdx = mapHeader(['comment', 'comments', 'notes']);
+          const s_ownerIdx = mapHeader(['lob owner', 'owner', 'lobowner']);
+          const s_contactIdx = mapHeader(['it tech support contact', 'it support', 'contact', 'tech support']);
+          const s_osTypeIdx = mapHeader(['server os', 'os type', 'os']);
+          const s_osIdx = mapHeader(['os according to the configuration file', 'config os', 'configuration os']);
+
+          // If no name, abort? No, maybe they have other cols. But name is key.
+          if (s_nameIdx === -1) {
+              console.error('Import servers failed: No name column found');
+              return false;
+          }
+
+          let targetData: any[][] = [];
+          if (existsSync(targetPath)) {
+              const existing = await fs.readFile(targetPath, 'utf-8');
+              targetData = (await parseCsvAsync(existing)).map(r => r.map(c => desanitizeField(c)));
+          }
+
+          if (targetData.length === 0) {
+               targetData.push(['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS', 'OS According to the Configuration File']);
+          }
+
+          const targetHeader = targetData[0].map(h => String(h).toLowerCase());
+
+          const ensureTargetCol = (candidates: string[], defaultName: string) => {
+              let idx = targetHeader.findIndex(h => candidates.includes(h));
+              if (idx === -1) {
+                  targetHeader.push(defaultName.toLowerCase());
+                  targetData[0].push(defaultName);
+                  for (let i = 1; i < targetData.length; i++) targetData[i].push('');
+                  idx = targetHeader.length - 1;
+              }
+              return idx;
+          };
+
+          const t_nameIdx = ensureTargetCol(['vm-m', 'server name', 'name', 'vm name'], 'VM-M');
+          const t_baIdx = ensureTargetCol(['business area', 'businessarea'], 'Business Area');
+          const t_lobIdx = ensureTargetCol(['lob', 'line of business'], 'LOB');
+          const t_commentIdx = ensureTargetCol(['comment', 'comments', 'notes'], 'Comment');
+          const t_ownerIdx = ensureTargetCol(['lob owner', 'owner', 'lobowner'], 'LOB Owner');
+          const t_contactIdx = ensureTargetCol(['it tech support contact', 'it support', 'contact', 'tech support'], 'IT Tech Support Contact');
+          const t_osTypeIdx = ensureTargetCol(['server os', 'os type', 'os'], 'Server OS');
+          const t_osIdx = ensureTargetCol(['os according to the configuration file', 'config os', 'configuration os'], 'OS According to the Configuration File');
+
+          for (const row of sourceRows) {
+              const name = row[s_nameIdx]?.trim();
+              if (!name) continue;
+
+              let matchRowIdx = -1;
+              for (let i = 1; i < targetData.length; i++) {
+                  if (targetData[i][t_nameIdx]?.trim().toLowerCase() === name.toLowerCase()) {
+                      matchRowIdx = i;
+                      break;
+                  }
+              }
+
+              const getValue = (idx: number) => (idx !== -1 && row[idx]) ? row[idx].trim() : '';
+
+              if (matchRowIdx !== -1) {
+                  const tRow = targetData[matchRowIdx];
+                  if (s_baIdx !== -1) tRow[t_baIdx] = getValue(s_baIdx);
+                  if (s_lobIdx !== -1) tRow[t_lobIdx] = getValue(s_lobIdx);
+                  if (s_commentIdx !== -1) tRow[t_commentIdx] = getValue(s_commentIdx);
+                  if (s_ownerIdx !== -1) tRow[t_ownerIdx] = getValue(s_ownerIdx);
+                  if (s_contactIdx !== -1) tRow[t_contactIdx] = getValue(s_contactIdx);
+                  if (s_osTypeIdx !== -1) tRow[t_osTypeIdx] = getValue(s_osTypeIdx);
+                  if (s_osIdx !== -1) tRow[t_osIdx] = getValue(s_osIdx);
+              } else {
+                  const newRow = new Array(targetData[0].length).fill('');
+                  newRow[t_nameIdx] = name;
+                  newRow[t_baIdx] = getValue(s_baIdx);
+                  newRow[t_lobIdx] = getValue(s_lobIdx);
+                  newRow[t_commentIdx] = getValue(s_commentIdx);
+                  newRow[t_ownerIdx] = getValue(s_ownerIdx);
+                  newRow[t_contactIdx] = getValue(s_contactIdx);
+                  newRow[t_osTypeIdx] = getValue(s_osTypeIdx);
+                  newRow[t_osIdx] = getValue(s_osIdx);
+                  targetData.push(newRow);
+              }
+          }
+
+          const csvOutput = this.safeStringify(targetData);
+          await this.writeAndEmit(targetPath, csvOutput);
+          return true;
+      } catch (e) {
+          console.error('[FileManager] importServersWithMapping error:', e);
           return false;
       }
   }
