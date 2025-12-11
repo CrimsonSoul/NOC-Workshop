@@ -1,4 +1,4 @@
-import React, { useMemo, useState, memo, useRef, useEffect } from 'react';
+import React, { useMemo, useState, memo, useRef, useEffect, useCallback } from 'react';
 import { GroupMap, Contact } from '@shared/ipc';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -304,10 +304,18 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     }
   };
 
-  const handleAddToContacts = (email: string) => {
+  const handleAddToContacts = useCallback((email: string) => {
       setPendingEmail(email);
       setIsAddContactModalOpen(true);
-  };
+  }, []);
+
+  const itemData = useMemo(() => ({
+    log,
+    contactMap,
+    emailToGroups,
+    onRemoveManual,
+    onAddToContacts: handleAddToContacts
+  }), [log, contactMap, emailToGroups, onRemoveManual, handleAddToContacts]);
 
   const handleContactSaved = async (contact: Partial<Contact>) => {
       // Save to backend
@@ -548,7 +556,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                   itemCount={log.length}
                   itemSize={50}
                   width={width}
-                  itemData={{ log, contactMap, emailToGroups, onRemoveManual, onAddToContacts: handleAddToContacts }}
+                  itemData={itemData}
                 >
                   {VirtualRow}
                 </List>

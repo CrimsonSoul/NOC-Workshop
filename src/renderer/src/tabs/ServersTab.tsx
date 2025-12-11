@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo, memo, useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -267,10 +267,18 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       }
   };
 
-  const handleContextMenu = (e: React.MouseEvent, server: Server) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, server: Server) => {
       e.preventDefault();
       setContextMenu({ x: e.clientX, y: e.clientY, server });
-  };
+  }, []);
+
+  const itemData = useMemo(() => ({
+    servers: filteredServers,
+    contacts,
+    columns: columnWidths,
+    columnOrder,
+    onContextMenu: handleContextMenu
+  }), [filteredServers, contacts, columnWidths, columnOrder, handleContextMenu]);
 
   const handleDelete = async () => {
       if (contextMenu) {
@@ -390,7 +398,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
               width={width}
               itemCount={filteredServers.length}
               itemSize={50} // Denser row
-              itemData={{ servers: filteredServers, contacts, columns: columnWidths, columnOrder, onContextMenu: handleContextMenu }}
+              itemData={itemData}
             >
               {ServerRow}
             </List>
