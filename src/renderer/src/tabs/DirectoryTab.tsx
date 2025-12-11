@@ -6,6 +6,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalList
 import { CSS } from '@dnd-kit/utilities';
 import { Contact, GroupMap } from '@shared/ipc';
 import { useDebounce } from '../hooks/useDebounce';
+import { useGroupMaps } from '../hooks/useGroupMaps';
 import { ContactCard } from '../components/ContactCard'; // This is now the dense row
 import { AddContactModal } from '../components/AddContactModal';
 import { Modal } from '../components/Modal';
@@ -166,25 +167,14 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   recentlyAdded: Set<string>,
   onAdd: (contact: Contact) => void,
   groups: GroupMap,
-  emailToGroups: Map<string, string[]>,
+  groupMap: Map<string, string[]>,
   onContextMenu: (e: React.MouseEvent, contact: Contact) => void,
   columnWidths: typeof DEFAULT_WIDTHS,
   columnOrder: (keyof typeof DEFAULT_WIDTHS)[]
 }>) => {
-  const { filtered, recentlyAdded, onAdd, groups, emailToGroups, onContextMenu, columnWidths, columnOrder } = data;
-  // Safety check: sometimes virtual list requests index out of bounds during filter changes
-  if (index >= filtered.length) return null;
+  const { filtered, recentlyAdded, onAdd, groups, groupMap, onContextMenu, columnWidths, columnOrder } = data;
 
-  const contact = filtered[index];
-  const added = recentlyAdded.has(contact.email);
   const [showGroups, setShowGroups] = useState(false);
-  const membership = emailToGroups.get(contact.email.toLowerCase()) || [];
-
-  const handleAdd = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onAdd(contact);
-  };
-
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Close on click outside
@@ -198,6 +188,18 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
     document.addEventListener('click', clickHandler);
     return () => document.removeEventListener('click', clickHandler);
   }, [showGroups]);
+
+  // Safety check: sometimes virtual list requests index out of bounds during filter changes
+  if (index >= filtered.length) return null;
+
+  const contact = filtered[index];
+  const added = recentlyAdded.has(contact.email);
+  const membership = groupMap.get(contact.email.toLowerCase()) || [];
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onAdd(contact);
+  };
 
   const actionButtons = (
     <div ref={wrapperRef} style={{ display: 'flex', gap: '8px', position: 'relative', alignItems: 'center' }}>
@@ -365,24 +367,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       return deduped;
   }, [contacts, optimisticAdds, optimisticUpdates, optimisticDeletes]);
 
-  const emailToGroups = useMemo(() => {
-    const map = new Map<string, string[]>();
-    Object.entries(groups).forEach(([groupName, emails]) => {
-      emails.forEach((email) => {
-        const key = email.toLowerCase();
-        const existing = map.get(key) || [];
-        // Deduplicate groups and ensure unique set
-        if (!existing.includes(groupName)) {
-           map.set(key, [...existing, groupName]);
-        }
-      });
-    });
-    // Bolt: Sort groups for consistent display and faster sorting
-    for (const groups of map.values()) {
-        groups.sort();
-    }
-    return map;
-  }, [groups]);
+  const { groupMap, groupStringMap } = useGroupMaps(groups);
 
   // Close context menu on click elsewhere
   useEffect(() => {
@@ -404,11 +389,9 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
           const dir = sortConfig.direction === 'asc' ? 1 : -1;
 
           if (key === 'groups') {
-              const groupsA = emailToGroups.get(a.email.toLowerCase()) || [];
-              const groupsB = emailToGroups.get(b.email.toLowerCase()) || [];
-              // Bolt: Use pre-sorted arrays
-              const strA = groupsA.join(', ');
-              const strB = groupsB.join(', ');
+              // Bolt: Use pre-calculated joined strings for O(1) access
+              const strA = groupStringMap.get(a.email.toLowerCase()) || '';
+              const strB = groupStringMap.get(b.email.toLowerCase()) || '';
               return strA.localeCompare(strB) * dir;
           }
 
@@ -417,7 +400,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
 
           return valA.localeCompare(valB) * dir;
       });
-  }, [effectiveContacts, debouncedSearch, sortConfig, emailToGroups]);
+  }, [effectiveContacts, debouncedSearch, sortConfig, groupStringMap]);
 
   // Bolt: Memoize callback to prevent itemData change and row re-renders
   const handleAddWrapper = useCallback((contact: Contact) => {
@@ -502,11 +485,11 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     recentlyAdded,
     onAdd: handleAddWrapper,
     groups,
-    emailToGroups,
+    groupMap,
     onContextMenu,
     columnWidths,
     columnOrder
-  }), [filtered, recentlyAdded, handleAddWrapper, groups, emailToGroups, onContextMenu, columnWidths, columnOrder]);
+  }), [filtered, recentlyAdded, handleAddWrapper, groups, groupMap, onContextMenu, columnWidths, columnOrder]);
 
   // Label Map
   const LABELS: Record<keyof typeof DEFAULT_WIDTHS, string> = {

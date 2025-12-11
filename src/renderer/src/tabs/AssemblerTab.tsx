@@ -1,6 +1,7 @@
 import React, { useMemo, useState, memo, useRef, useEffect, useCallback } from 'react';
 import { GroupMap, Contact } from '@shared/ipc';
 import { useDebounce } from '../hooks/useDebounce';
+import { useGroupMaps } from '../hooks/useGroupMaps';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { ContactCard } from '../components/ContactCard';
@@ -35,17 +36,17 @@ type SortConfig = {
 const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   log: { email: string, source: string }[],
   contactMap: Map<string, Contact>,
-  emailToGroups: Map<string, string[]>,
+  groupMap: Map<string, string[]>,
   onRemoveManual: (email: string) => void,
   onAddToContacts: (email: string) => void
 }>) => {
-  const { log, contactMap, emailToGroups, onRemoveManual, onAddToContacts } = data;
+  const { log, contactMap, groupMap, onRemoveManual, onAddToContacts } = data;
   const { email, source } = log[index];
   const contact = contactMap.get(email.toLowerCase());
   const name = contact ? contact.name : email.split('@')[0];
   const title = contact?.title;
   const phone = contact?.phone;
-  const membership = emailToGroups.get(email.toLowerCase()) || [];
+  const membership = groupMap.get(email.toLowerCase()) || [];
   const isUnknown = !contact;
 
   return (
@@ -188,21 +189,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     return map;
   }, [contacts]);
 
-  const emailToGroups = useMemo(() => {
-    const map = new Map<string, string[]>();
-    Object.entries(groups).forEach(([groupName, emails]) => {
-      emails.forEach((email) => {
-        const key = email.toLowerCase();
-        const existing = map.get(key) || [];
-        map.set(key, [...existing, groupName]);
-      });
-    });
-    // Bolt: Sort groups for consistent display and faster sorting
-    for (const groups of map.values()) {
-        groups.sort();
-    }
-    return map;
-  }, [groups]);
+  const { groupMap, groupStringMap } = useGroupMaps(groups);
 
   // Suggestions Logic
   const suggestions = useMemo(() => {
@@ -240,11 +227,9 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
         const dir = sortConfig.direction === 'asc' ? 1 : -1;
 
         if (sortConfig.key === 'groups') {
-             const groupsA = emailToGroups.get(a.email.toLowerCase()) || [];
-             const groupsB = emailToGroups.get(b.email.toLowerCase()) || [];
-             // Bolt: Use pre-sorted arrays
-             const strA = groupsA.join(', ');
-             const strB = groupsB.join(', ');
+             // Bolt: Use pre-calculated joined strings for O(1) access
+             const strA = groupStringMap.get(a.email.toLowerCase()) || '';
+             const strB = groupStringMap.get(b.email.toLowerCase()) || '';
              return strA.localeCompare(strB) * dir;
         }
 
@@ -267,7 +252,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
         return valA.localeCompare(valB) * dir;
     });
-  }, [groups, selectedGroups, manualAdds, manualRemoves, contactMap, sortConfig, emailToGroups]);
+  }, [groups, selectedGroups, manualAdds, manualRemoves, contactMap, sortConfig, groupStringMap]);
 
   const handleSort = (key: SortConfig['key']) => {
        setSortConfig(current => {
@@ -320,10 +305,10 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   const itemData = useMemo(() => ({
     log,
     contactMap,
-    emailToGroups,
+    groupMap,
     onRemoveManual,
     onAddToContacts: handleAddToContacts
-  }), [log, contactMap, emailToGroups, onRemoveManual, handleAddToContacts]);
+  }), [log, contactMap, groupMap, onRemoveManual, handleAddToContacts]);
 
   const handleContactSaved = async (contact: Partial<Contact>) => {
       // Save to backend
