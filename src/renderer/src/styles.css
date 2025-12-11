@@ -159,9 +159,9 @@ body {
 }
 
 .tactile-button {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -172,6 +172,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .tactile-button:hover {

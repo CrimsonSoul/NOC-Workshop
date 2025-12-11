@@ -42,6 +42,20 @@ describe('formatPhoneNumber', () => {
 
     it('returns raw for other formats', () => {
         expect(formatPhoneNumber('123')).toBe('123');
-        expect(formatPhoneNumber('+44 123')).toBe('+44123'); // Sanitized but not formatted
+        // Now formatted as international
+        expect(formatPhoneNumber('+44 123')).toBe('+44 123');
+    });
+
+    it('formats generic international numbers', () => {
+        // 13 chars total, CC=44, Rest=7700900077 -> +44 7700 9000 77
+        // Wait, input +44 7700 900077 -> sanitized +447700900077
+        // format logic: CC=44, Rest=7700900077 (10 digits)
+        // Chunks of 4: 7700 9000 77
+        // Result: +44 7700 9000 77
+        expect(formatPhoneNumber('+44 7700 900077')).toBe('+44 7700 9000 77');
+    });
+
+    it('handles 00 prefix as +', () => {
+        expect(sanitizePhoneNumber('00447700900077')).toBe('+447700900077');
     });
 });
