@@ -8,6 +8,7 @@ const api: BridgeAPI = {
   openContactsFile: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_CONTACTS_FILE),
   importGroupsFile: () => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_GROUPS_FILE),
   importContactsFile: () => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_CONTACTS_FILE),
+  importServersFile: () => ipcRenderer.invoke(IPC_CHANNELS.IMPORT_SERVERS_FILE),
 
   subscribeToData: (callback) => {
     ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_UPDATED);
@@ -59,6 +60,8 @@ const api: BridgeAPI = {
   resetMetrics: () => ipcRenderer.invoke(IPC_CHANNELS.RESET_METRICS),
   addContact: (contact) => ipcRenderer.invoke(IPC_CHANNELS.ADD_CONTACT, contact),
   removeContact: (email) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_CONTACT, email),
+  addServer: (server) => ipcRenderer.invoke(IPC_CHANNELS.ADD_SERVER, server),
+  removeServer: (name) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_SERVER, name),
   addGroup: (groupName) => ipcRenderer.invoke(IPC_CHANNELS.ADD_GROUP, groupName),
   addContactToGroup: (groupName, email) => ipcRenderer.invoke(IPC_CHANNELS.ADD_CONTACT_TO_GROUP, groupName, email),
   removeContactFromGroup: (groupName, email) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_CONTACT_FROM_GROUP, groupName, email),

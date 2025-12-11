@@ -5,6 +5,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { WorldClock } from './components/WorldClock';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { DirectoryTab } from './tabs/DirectoryTab';
+import { ServersTab } from './tabs/ServersTab';
 import { RadarTab } from './tabs/RadarTab';
 import { MetricsTab } from './tabs/MetricsTab';
 import { WindowControls } from './components/WindowControls';
@@ -12,11 +13,11 @@ import { ToastProvider } from './components/Toast';
 import { AppData, Contact } from '@shared/ipc';
 import './styles.css';
 
-type Tab = 'Compose' | 'People' | 'Reports' | 'Live';
+type Tab = 'Compose' | 'People' | 'Servers' | 'Reports' | 'Live';
 
 export function MainApp() {
   const [activeTab, setActiveTab] = useState<Tab>('Compose');
-  const [data, setData] = useState<AppData>({ groups: {}, contacts: [], lastUpdated: 0 });
+  const [data, setData] = useState<AppData>({ groups: {}, contacts: [], servers: [], lastUpdated: 0 });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
@@ -60,6 +61,7 @@ export function MainApp() {
 
   const handleImportGroups = async () => await window.api?.importGroupsFile();
   const handleImportContacts = async () => await window.api?.importContactsFile();
+  const handleImportServers = async () => await window.api?.importServersFile();
 
   useEffect(() => {
     if (!window.api) return;
@@ -128,6 +130,7 @@ export function MainApp() {
              <span className="header-title">
                {activeTab === 'Compose' && 'Data Composition'}
                {activeTab === 'People' && 'Contact Directory'}
+               {activeTab === 'Servers' && 'Infrastructure Servers'}
                {activeTab === 'Reports' && 'Reports'}
                {activeTab === 'Live' && 'Dispatcher Radar'}
              </span>
@@ -166,6 +169,14 @@ export function MainApp() {
               />
             </div>
           )}
+          {activeTab === 'Servers' && (
+            <div className="animate-fade-in" style={{ height: '100%' }}>
+              <ServersTab
+                servers={data.servers}
+                contacts={data.contacts}
+              />
+            </div>
+          )}
           {activeTab === 'Reports' && (
              <div className="animate-fade-in" style={{ height: '100%' }}>
                <MetricsTab />
@@ -191,6 +202,7 @@ export function MainApp() {
         onSync={handleSync}
         onImportGroups={handleImportGroups}
         onImportContacts={handleImportContacts}
+        onImportServers={handleImportServers}
       />
     </div>
   );

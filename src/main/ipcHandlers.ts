@@ -202,6 +202,30 @@ export function setupIpcHandlers(
     return handleMergeImport('contacts', 'Merge Contacts CSV');
   });
 
+  // Server Handlers
+  ipcMain.handle(IPC_CHANNELS.ADD_SERVER, async (_event, server) => {
+    return getFileManager()?.addServer(server) ?? false;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.REMOVE_SERVER, async (_event, name) => {
+    return getFileManager()?.removeServer(name) ?? false;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.IMPORT_SERVERS_FILE, async () => {
+    const mainWindow = getMainWindow();
+    const fileManager = getFileManager();
+    if (!mainWindow) return false;
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Import Servers CSV',
+      filters: [{ name: 'CSV Files', extensions: ['csv'] }],
+      properties: ['openFile']
+    });
+
+    if (canceled || filePaths.length === 0) return false;
+    return fileManager?.importServersWithMapping(filePaths[0]) ?? false;
+  });
+
   // Window Controls
   ipcMain.on(IPC_CHANNELS.WINDOW_MINIMIZE, () => {
     getMainWindow()?.minimize();

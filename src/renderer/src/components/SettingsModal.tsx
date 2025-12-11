@@ -10,6 +10,7 @@ type Props = {
   onSync: () => void;
   onImportGroups: () => Promise<boolean>;
   onImportContacts: () => Promise<boolean>;
+  onImportServers: () => Promise<boolean>;
 };
 
 const DataPathDisplay = () => {
@@ -26,7 +27,8 @@ export const SettingsModal: React.FC<Props> = ({
     isSyncing,
     onSync,
     onImportGroups,
-    onImportContacts
+    onImportContacts,
+    onImportServers
 }) => {
   // Force re-render of path when modal opens or folder changes
   const [pathKey, setPathKey] = useState(0);
@@ -56,6 +58,13 @@ export const SettingsModal: React.FC<Props> = ({
       const success = await onImportContacts();
       if (success) {
           showToast('Contacts imported successfully', 'success');
+      }
+  };
+
+  const handleImportServersClick = async () => {
+      const success = await onImportServers();
+      if (success) {
+          showToast('Servers imported successfully', 'success');
       }
   };
 
@@ -123,6 +132,7 @@ export const SettingsModal: React.FC<Props> = ({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <TactileButton onClick={handleImportGroupsClick}>Import Groups...</TactileButton>
                     <TactileButton onClick={handleImportContactsClick}>Import Contacts...</TactileButton>
+                    <TactileButton onClick={handleImportServersClick} style={{ gridColumn: 'span 2', justifyContent: 'center' }}>Import Servers...</TactileButton>
                 </div>
             </div>
 
