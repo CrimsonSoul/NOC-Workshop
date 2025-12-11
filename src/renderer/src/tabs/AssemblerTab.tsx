@@ -18,7 +18,7 @@ type Props = {
   selectedGroups: string[];
   manualAdds: string[];
   manualRemoves: string[];
-  onToggleGroup: (group: string, active: boolean) => void;
+  onToggleGroup: (group: string) => void;
   onAddManual: (email: string) => void;
   onRemoveManual: (email: string) => void;
   onUndoRemove: () => void;
@@ -355,9 +355,13 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   const sortedGroupKeys = useMemo(() => Object.keys(groups).sort(), [groups]);
 
   // Bolt: Stable callback for toggling groups to prevent SidebarItem re-renders
-  const handleGroupToggle = useCallback((group: string) => {
-      onToggleGroup(group, !selectedGroups.includes(group));
-  }, [onToggleGroup, selectedGroups]);
+  const handleGroupToggle = onToggleGroup;
+
+  // Bolt: Stable callback for context menu to prevent SidebarItem re-renders
+  const handleGroupContextMenu = useCallback((e: React.MouseEvent, group: string) => {
+    e.preventDefault();
+    setGroupContextMenu({ x: e.clientX, y: e.clientY, group });
+  }, []);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '0px', height: '100%', alignItems: 'start' }}>
@@ -470,10 +474,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                     count={groups[g].length}
                     active={isSelected}
                     onClick={handleGroupToggle}
-                    onContextMenu={(e) => {
-                        e.preventDefault();
-                        setGroupContextMenu({ x: e.clientX, y: e.clientY, group: g });
-                    }}
+                    onContextMenu={handleGroupContextMenu}
                 />
               );
             })}

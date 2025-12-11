@@ -6,7 +6,7 @@ type SidebarItemProps = {
   count?: number;
   active: boolean;
   onClick: (label: string) => void;
-  onContextMenu?: (e: React.MouseEvent) => void;
+  onContextMenu?: (e: React.MouseEvent, label: string) => void;
 };
 
 export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu }: SidebarItemProps) => {
@@ -16,10 +16,16 @@ export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu 
     onClick(label);
   };
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (onContextMenu) {
+      onContextMenu(e, label);
+    }
+  };
+
   return (
     <button
       onClick={handleClick}
-      onContextMenu={onContextMenu}
+      onContextMenu={handleContextMenu}
       style={{
         padding: '6px 8px',
         borderRadius: '6px',

@@ -152,7 +152,14 @@ export function MainApp() {
                 selectedGroups={selectedGroups}
                 manualAdds={manualAdds}
                 manualRemoves={manualRemoves}
-                onToggleGroup={(g, active) => { if (active) setSelectedGroups(p => [...p, g]); else setSelectedGroups(p => p.filter(x => x !== g)); }}
+                onToggleGroup={useCallback((group: string) => {
+                  setSelectedGroups(prev => {
+                    if (prev.includes(group)) {
+                      return prev.filter(g => g !== group);
+                    }
+                    return [...prev, group];
+                  });
+                }, [])}
                 onAddManual={(email) => setManualAdds(p => [...p, email])}
                 onRemoveManual={(email) => setManualRemoves(p => [...p, email])}
                 onUndoRemove={handleUndoRemove}
