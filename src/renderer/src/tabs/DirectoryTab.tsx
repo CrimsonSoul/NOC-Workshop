@@ -400,8 +400,9 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
           if (key === 'groups') {
               const groupsA = emailToGroups.get(a.email.toLowerCase()) || [];
               const groupsB = emailToGroups.get(b.email.toLowerCase()) || [];
-              const strA = groupsA.sort().join(', ');
-              const strB = groupsB.sort().join(', ');
+              // Bolt: Prevent mutation of original arrays using toSorted or copy
+              const strA = [...groupsA].sort().join(', ');
+              const strB = [...groupsB].sort().join(', ');
               return strA.localeCompare(strB) * dir;
           }
 

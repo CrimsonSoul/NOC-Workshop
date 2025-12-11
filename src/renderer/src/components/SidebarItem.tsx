@@ -1,20 +1,24 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { getColorForString } from '../utils/colors';
 
 type SidebarItemProps = {
   label: string;
   count?: number;
   active: boolean;
-  onClick: () => void;
+  onClick: (label: string) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 };
 
-export const SidebarItem: React.FC<SidebarItemProps> = ({ label, count, active, onClick, onContextMenu }) => {
+export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu }: SidebarItemProps) => {
   const color = getColorForString(label);
+
+  const handleClick = () => {
+    onClick(label);
+  };
 
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       onContextMenu={onContextMenu}
       style={{
         padding: '6px 8px',
@@ -67,4 +71,6 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ label, count, active, 
       )}
     </button>
   );
-};
+});
+
+SidebarItem.displayName = 'SidebarItem';

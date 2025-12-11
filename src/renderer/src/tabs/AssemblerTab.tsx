@@ -235,8 +235,9 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
         if (sortConfig.key === 'groups') {
              const groupsA = emailToGroups.get(a.email.toLowerCase()) || [];
              const groupsB = emailToGroups.get(b.email.toLowerCase()) || [];
-             const strA = groupsA.sort().join(', ');
-             const strB = groupsB.sort().join(', ');
+             // Bolt: Prevent mutation of original arrays using toSorted or copy
+             const strA = [...groupsA].sort().join(', ');
+             const strB = [...groupsB].sort().join(', ');
              return strA.localeCompare(strB) * dir;
         }
 
@@ -346,6 +347,14 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     }
   };
 
+  // Bolt: Memoize sorted group keys to prevent re-sorting on every render
+  const sortedGroupKeys = useMemo(() => Object.keys(groups).sort(), [groups]);
+
+  // Bolt: Stable callback for toggling groups to prevent SidebarItem re-renders
+  const handleGroupToggle = useCallback((group: string) => {
+      onToggleGroup(group, !selectedGroups.includes(group));
+  }, [onToggleGroup, selectedGroups]);
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '0px', height: '100%', alignItems: 'start' }}>
 
@@ -448,7 +457,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {Object.keys(groups).sort().map(g => {
+            {sortedGroupKeys.map(g => {
               const isSelected = selectedGroups.includes(g);
               return (
                 <SidebarItem
@@ -456,7 +465,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                     label={g}
                     count={groups[g].length}
                     active={isSelected}
-                    onClick={() => onToggleGroup(g, !isSelected)}
+                    onClick={handleGroupToggle}
                     onContextMenu={(e) => {
                         e.preventDefault();
                         setGroupContextMenu({ x: e.clientX, y: e.clientY, group: g });
@@ -464,7 +473,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 />
               );
             })}
-            {Object.keys(groups).length === 0 && (
+            {sortedGroupKeys.length === 0 && (
               <div style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontStyle: 'italic', paddingLeft: '4px' }}>
                 No groups.
               </div>
