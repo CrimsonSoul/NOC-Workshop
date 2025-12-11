@@ -75,12 +75,12 @@ const DraggableHeader = ({ id, children }: { id: string, children: React.ReactNo
 // Row Component
 const ServerRow = memo(({ index, style, data }: ListChildComponentProps<{
   servers: Server[],
-  contacts: Contact[],
+  contactLookup: Map<string, Contact>,
   columns: typeof DEFAULT_WIDTHS,
   columnOrder: (keyof typeof DEFAULT_WIDTHS)[],
   onContextMenu: (e: React.MouseEvent, server: Server) => void
 }>) => {
-  const { servers, contacts, columns, columnOrder, onContextMenu } = data;
+  const { servers, contactLookup, columns, columnOrder, onContextMenu } = data;
   if (index >= servers.length) return null;
 
   const server = servers[index];
@@ -104,12 +104,9 @@ const ServerRow = memo(({ index, style, data }: ListChildComponentProps<{
      // This suggests we should try to replace ALL emails in the string with names.
 
      const parts = val.split(';').map(p => p.trim()).filter(p => p);
-     const resolvedParts = parts.map(part => {
+    const resolvedParts = parts.map(part => {
         const lowerVal = part.toLowerCase();
-        const found = contacts.find(c =>
-             c.email.toLowerCase() === lowerVal ||
-             (c.name && c.name.toLowerCase() === lowerVal)
-        );
+        const found = contactLookup.get(lowerVal);
         return found ? found : { name: part, email: part }; // Return pseudo-contact if not found
      });
 
@@ -245,6 +242,16 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       }
   };
 
+  const contactLookup = useMemo(() => {
+      // Bolt: Pre-compute lookups so we avoid O(n) scans per cell render when resolving owners/contacts
+      const map = new Map<string, Contact>();
+      for (const contact of contacts) {
+          if (contact.email) map.set(contact.email.toLowerCase(), contact);
+          if (contact.name) map.set(contact.name.toLowerCase(), contact);
+      }
+      return map;
+  }, [contacts]);
+
   const filteredServers = useMemo(() => {
     let result = servers;
     if (debouncedSearch) {
@@ -276,11 +283,11 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
 
   const itemData = useMemo(() => ({
     servers: filteredServers,
-    contacts,
+    contactLookup,
     columns: columnWidths,
     columnOrder,
     onContextMenu: handleContextMenu
-  }), [filteredServers, contacts, columnWidths, columnOrder, handleContextMenu]);
+  }), [filteredServers, contactLookup, columnWidths, columnOrder, handleContextMenu]);
 
   const handleDelete = async () => {
       if (contextMenu) {
