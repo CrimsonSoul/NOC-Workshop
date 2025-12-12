@@ -4,7 +4,6 @@ asar: true
 files:
   - dist/**
   - package.json
-  - node_modules/**
   - resources/**
   - "!node_modules/fsevents/**"
   - "!**/*.{md,ts,map}"
@@ -25,3 +24,4 @@ win:
   icon: build/icon.ico
   # Optimizations for faster startup
   requestedExecutionLevel: "asInvoker"
+compression: "store"

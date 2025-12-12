@@ -27,7 +27,6 @@
     "chokidar": "^3.6.0",
     "csv-parse": "^6.1.0",
     "csv-stringify": "^6.6.0",
-    "playwright": "^1.57.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-virtualized-auto-sizer": "^1.0.26",
@@ -48,6 +47,7 @@
     "electron-builder": "^26.0.12",
     "electron-vite": "^2.3.0",
     "jsdom": "^27.3.0",
+    "playwright": "^1.57.0",
     "typescript": "^5.9.3",
     "vite": "^5.3.5",
     "vitest": "^4.0.15"
