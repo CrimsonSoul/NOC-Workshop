@@ -822,11 +822,19 @@ export class FileManager {
           const sourceHeader = sourceData[0].map((h: any) => String(h).toLowerCase().trim());
           const sourceRows = sourceData.slice(1);
 
-          const mapHeader = (candidates: string[]) => sourceHeader.findIndex((h: string) => candidates.includes(h));
-          const srcNameIdx = mapHeader(['name', 'full name', 'contact name']);
-          const srcEmailIdx = mapHeader(['email', 'e-mail', 'mail', 'email address']);
-          const srcPhoneIdx = mapHeader(['phone', 'phone number', 'mobile']);
-          const srcTitleIdx = mapHeader(['title', 'role', 'position', 'job title']);
+          // Use priority-order matching like HeaderMatcher - check each candidate in order
+          const mapHeader = (candidates: string[]) => {
+              for (const candidate of candidates) {
+                  const idx = sourceHeader.indexOf(candidate);
+                  if (idx !== -1) return idx;
+              }
+              return -1;
+          };
+
+          const srcNameIdx = mapHeader(CONTACT_COLUMN_ALIASES.name);
+          const srcEmailIdx = mapHeader(CONTACT_COLUMN_ALIASES.email);
+          const srcPhoneIdx = mapHeader(CONTACT_COLUMN_ALIASES.phone);
+          const srcTitleIdx = mapHeader(CONTACT_COLUMN_ALIASES.title);
 
           if (srcEmailIdx === -1) {
               console.error('[FileManager] Import failed: No email column found.');
@@ -1053,15 +1061,22 @@ export class FileManager {
           const sourceHeader = sourceData[0].map((h: any) => String(h).toLowerCase().trim());
           const sourceRows = sourceData.slice(1);
 
-          const mapHeader = (candidates: string[]) => sourceHeader.findIndex((h: string) => candidates.includes(h));
+          // Use priority-order matching like HeaderMatcher - check each candidate in order
+          const mapHeader = (candidates: string[]) => {
+              for (const candidate of candidates) {
+                  const idx = sourceHeader.indexOf(candidate);
+                  if (idx !== -1) return idx;
+              }
+              return -1;
+          };
 
-          const s_nameIdx = mapHeader(['vm-m', 'server name', 'name', 'vm name']);
-          const s_baIdx = mapHeader(['business area', 'businessarea']);
-          const s_lobIdx = mapHeader(['lob', 'line of business']);
-          const s_commentIdx = mapHeader(['comment', 'comments', 'notes']);
-          const s_ownerIdx = mapHeader(['lob owner', 'owner', 'lobowner']);
-          const s_contactIdx = mapHeader(['it tech support contact', 'it support', 'contact', 'tech support', 'it contact']);
-          const s_osTypeIdx = mapHeader(['server os', 'os type', 'os']);
+          const s_nameIdx = mapHeader(SERVER_COLUMN_ALIASES.name);
+          const s_baIdx = mapHeader(SERVER_COLUMN_ALIASES.businessArea);
+          const s_lobIdx = mapHeader(SERVER_COLUMN_ALIASES.lob);
+          const s_commentIdx = mapHeader(SERVER_COLUMN_ALIASES.comment);
+          const s_ownerIdx = mapHeader(SERVER_COLUMN_ALIASES.owner);
+          const s_contactIdx = mapHeader(SERVER_COLUMN_ALIASES.contact);
+          const s_osTypeIdx = mapHeader(SERVER_COLUMN_ALIASES.os);
 
           if (s_nameIdx === -1) {
               return { success: false, message: 'No "VM-M" or "Server Name" column found in the header.' };
