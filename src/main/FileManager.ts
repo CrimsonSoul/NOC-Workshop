@@ -26,7 +26,13 @@ export class FileManager {
     this.rootDir = rootDir;
     this.bundledDataPath = bundledPath;
 
-    console.log(`[FileManager] Initialized. Watching root: ${this.rootDir}`);
+    console.log(`[FileManager] Initialized. Root: ${this.rootDir}`);
+    // Don't start watching or reading yet - do it lazily after window is shown
+  }
+
+  // Initialize watching and load data (call after window is shown for faster startup)
+  public init() {
+    console.log(`[FileManager] Starting file watching and initial data load...`);
     this.startWatching();
     this.readAndEmit();
   }

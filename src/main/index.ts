@@ -4,7 +4,7 @@ import fs from 'fs';
 import { FileManager } from './FileManager';
 import { BridgeLogger } from './BridgeLogger';
 import { IPC_CHANNELS } from '../shared/ipc';
-import { copyDataFiles, ensureDataFiles, loadConfig, saveConfig } from './dataUtils';
+import { copyDataFiles, ensureDataFiles, ensureDataFilesAsync, loadConfig, loadConfigAsync, saveConfig } from './dataUtils';
 import { validateDataPath } from './pathValidation';
 import { setupIpcHandlers } from './ipcHandlers';
 
@@ -47,6 +47,21 @@ const getBundledDataPath = () => {
     : join(process.cwd(), 'data');
 };
 
+// Async version for non-blocking startup
+async function getDataRootAsync(): Promise<string> {
+  const config = await loadConfigAsync();
+  const bundledPath = getBundledDataPath();
+  if (config.dataRoot) {
+    await ensureDataFilesAsync(config.dataRoot, bundledPath, app.isPackaged);
+    return config.dataRoot;
+  }
+
+  const defaultDataPath = getDefaultDataPath();
+  await ensureDataFilesAsync(defaultDataPath, bundledPath, app.isPackaged);
+  return defaultDataPath;
+}
+
+// Sync version for compatibility (used during path changes)
 function getDataRoot() {
   // Check config first
   const config = loadConfig();
@@ -69,7 +84,7 @@ function getDataRoot() {
 const GROUP_FILES = ['groups.csv'];
 const CONTACT_FILES = ['contacts.csv'];
 
-async function createWindow(dataRoot: string) {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 960,
     height: 1080,
@@ -100,13 +115,29 @@ async function createWindow(dataRoot: string) {
     await mainWindow.loadFile(indexHtml);
   }
 
-  // Show window when ready - improves perceived startup time
+  // Show window immediately when ready - don't wait for data initialization
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
-  });
 
-  fileManager = new FileManager(mainWindow, dataRoot, getBundledDataPath());
-  bridgeLogger = new BridgeLogger(dataRoot);
+    // Initialize data asynchronously AFTER window is shown for much faster startup
+    setImmediate(async () => {
+      try {
+        // Resolve data root in background (fully async, non-blocking)
+        currentDataRoot = await getDataRootAsync();
+
+        // Initialize FileManager and BridgeLogger after data root is known
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          fileManager = new FileManager(mainWindow, currentDataRoot, getBundledDataPath());
+          bridgeLogger = new BridgeLogger(currentDataRoot);
+
+          // Start watching files and load initial data
+          fileManager.init();
+        }
+      } catch (error) {
+        console.error('[Main] Failed to initialize data:', error);
+      }
+    });
+  });
 
   // Security: Restrict WebView navigation
   mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
@@ -207,27 +238,13 @@ app.on('login', (event, _webContents, _request, authInfo, callback) => {
     // Initialize IPC handlers first
     setupIpc();
 
-    // Create window immediately for faster perceived startup
-    // Use a temporary dataRoot that will be updated once ready
-    const tempDataRoot = getDefaultDataPath();
-    await createWindow(tempDataRoot);
-
-    // Initialize data root in background (non-blocking)
-    // This allows the window to show while data loads
-    setImmediate(() => {
-      currentDataRoot = getDataRoot();
-
-      // Reinitialize FileManager with correct data root if it changed
-      if (currentDataRoot !== tempDataRoot && mainWindow && fileManager) {
-        fileManager.destroy();
-        fileManager = new FileManager(mainWindow, currentDataRoot, getBundledDataPath());
-        bridgeLogger = new BridgeLogger(currentDataRoot);
-      }
-    });
+    // Create window immediately for fastest startup
+    // All data initialization happens asynchronously after window is shown
+    await createWindow();
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
-        void createWindow(currentDataRoot);
+        void createWindow();
       }
     });
   });

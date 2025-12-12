@@ -1,10 +1,13 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="256" height="256" rx="64" fill="url(#paint0_linear)"/>
-  <text x="128" y="128" font-family="Inter, sans-serif" font-weight="bold" font-size="140" fill="white" text-anchor="middle" dominant-baseline="central">R</text>
   <defs>
     <linearGradient id="paint0_linear" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
       <stop stop-color="#3B82F6"/>
       <stop offset="1" stop-color="#2563EB"/>
     </linearGradient>
+    <mask id="roundedMask">
+      <rect width="256" height="256" rx="64" fill="white"/>
+    </mask>
   </defs>
+  <rect width="256" height="256" fill="url(#paint0_linear)" mask="url(#roundedMask)"/>
+  <text x="128" y="128" font-family="Inter, sans-serif" font-weight="bold" font-size="140" fill="white" text-anchor="middle" dominant-baseline="central" mask="url(#roundedMask)">R</text>
 </svg>
