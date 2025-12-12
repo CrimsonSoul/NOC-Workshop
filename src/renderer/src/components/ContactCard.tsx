@@ -64,36 +64,60 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
       switch (key) {
           case 'name':
               return (
-                <div key="name" style={{ ...getStyle('name', 1.5), display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Avatar */}
+                <div key="name" style={{ ...getStyle('name', 1.5), display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                    {/* Avatar - Enhanced with subtle gradient */}
                     <div style={{
-                        width: '24px', // Dense avatar
-                        height: '24px',
-                        borderRadius: '6px', // Squircle
-                        background: `rgba(${parseInt(color.slice(1,3), 16)}, ${parseInt(color.slice(3,5), 16)}, ${parseInt(color.slice(5,7), 16)}, 0.2)`,
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: 'var(--radius-md)',
+                        background: `linear-gradient(135deg, ${color}15 0%, ${color}25 100%)`,
+                        border: `1px solid ${color}40`,
                         color: color,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        flexShrink: 0
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        flexShrink: 0,
+                        position: 'relative',
+                        overflow: 'hidden'
                     }}>
-                        {getInitials(name, email)}
+                        {/* Subtle shine effect */}
+                        <div style={{
+                            position: 'absolute',
+                            top: '-50%',
+                            left: '-50%',
+                            width: '200%',
+                            height: '200%',
+                            background: `linear-gradient(135deg, transparent 0%, ${color}10 50%, transparent 100%)`,
+                            pointerEvents: 'none'
+                        }} />
+                        <span style={{ position: 'relative', zIndex: 1 }}>
+                            {getInitials(name, email)}
+                        </span>
                     </div>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        color: 'var(--color-text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        letterSpacing: '-0.01em'
+                    }}>
                         {displayName}
                     </div>
                      {sourceLabel && (
                         <span className="source-label" style={{
                             fontSize: '9px',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            color: 'var(--color-text-secondary)',
-                            padding: '1px 4px',
-                            borderRadius: '3px',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            color: 'var(--color-text-tertiary)',
+                            padding: '2px 6px',
+                            borderRadius: 'var(--radius-sm)',
                             fontWeight: 600,
                             textTransform: 'uppercase',
-                            marginLeft: '8px'
+                            letterSpacing: '0.05em',
+                            border: '1px solid rgba(255, 255, 255, 0.1)'
                         }}>
                             {sourceLabel}
                         </span>
@@ -159,22 +183,28 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         ...style,
         display: 'flex',
         alignItems: 'center',
-        padding: '0 16px', // Side padding
-        background: selected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-        transition: 'background 0.05s',
+        padding: '0 var(--space-4)',
+        background: selected ? 'var(--color-accent-blue-subtle)' : 'transparent',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+        transition: 'all var(--transition-fast)',
         cursor: 'default',
-        gap: '16px' // Spacing between columns
+        gap: 'var(--space-4)',
+        position: 'relative'
       }}
       className={`contact-row ${className || ''}`}
       onMouseEnter={(e) => {
-         if (!selected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-         // Show actions on hover (handled by parent logic typically, or CSS)
+         if (!selected) {
+           e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+           e.currentTarget.style.borderBottomColor = 'rgba(255, 255, 255, 0.08)';
+         }
          const actions = e.currentTarget.querySelector('.row-actions') as HTMLElement;
          if (actions) actions.style.opacity = '1';
       }}
       onMouseLeave={(e) => {
-         if (!selected) e.currentTarget.style.background = 'transparent';
+         if (!selected) {
+           e.currentTarget.style.background = 'transparent';
+           e.currentTarget.style.borderBottomColor = 'rgba(255, 255, 255, 0.04)';
+         }
          const actions = e.currentTarget.querySelector('.row-actions') as HTMLElement;
          if (actions) actions.style.opacity = '0';
       }}

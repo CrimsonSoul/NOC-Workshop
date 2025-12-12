@@ -18,43 +18,72 @@ const SidebarItem = ({
   label: string;
   isActive: boolean;
   onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={`sidebar-item ${isActive ? 'active' : ''}`}
-    title={label}
-    style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '100%',
-      height: '64px',
-      background: 'transparent',
-      border: 'none',
-      cursor: 'pointer',
-      position: 'relative',
-      color: isActive ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
-      transition: 'all var(--transition-fast)'
-    }}
-  >
-    <div style={{ marginBottom: '4px' }}>{icon}</div>
-    <span style={{ fontSize: '10px', fontWeight: 500 }}>{label}</span>
+}) => {
+  const [isHovered, setIsHovered] = React.useState(false);
 
-    {isActive && (
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`sidebar-item ${isActive ? 'active' : ''}`}
+      title={label}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '64px',
+        background: isActive
+          ? 'rgba(59, 130, 246, 0.08)'
+          : isHovered
+          ? 'rgba(255, 255, 255, 0.04)'
+          : 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        position: 'relative',
+        color: isActive ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
+        transition: 'all var(--transition-base)',
+        borderRadius: 'var(--radius-lg)',
+        margin: '0 var(--space-2)',
+        outline: 'none'
+      }}
+    >
       <div style={{
-        position: 'absolute',
-        left: 0,
-        top: '12px',
-        bottom: '12px',
-        width: '3px',
-        background: 'var(--color-accent-blue)',
-        borderRadius: '0 4px 4px 0',
-        boxShadow: '0 0 12px var(--color-accent-blue-dim)'
-      }} />
-    )}
-  </button>
-);
+        marginBottom: 'var(--space-1)',
+        transition: 'transform var(--transition-base)',
+        transform: isActive ? 'scale(1.05)' : isHovered ? 'scale(1.02)' : 'scale(1)'
+      }}>
+        {icon}
+      </div>
+      <span style={{
+        fontSize: '10px',
+        fontWeight: 500,
+        letterSpacing: '0.02em',
+        textTransform: 'uppercase'
+      }}>
+        {label}
+      </span>
+
+      {isActive && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '-2px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            height: '28px',
+            width: '3px',
+            background: 'linear-gradient(180deg, var(--color-accent-blue) 0%, #2563EB 100%)',
+            borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
+            boxShadow: 'var(--shadow-glow-blue)'
+          }}
+        />
+      )}
+    </button>
+  );
+};
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpenSettings }) => {
   return (
@@ -70,23 +99,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
       zIndex: 9002, // Above drag region
       WebkitAppRegion: 'drag' as any
     }}>
-      {/* Brand Icon */}
+      {/* Brand Icon - Enhanced */}
       <div style={{
-        width: '40px',
-        height: '40px',
+        width: '44px',
+        height: '44px',
         background: 'linear-gradient(135deg, var(--color-accent-blue) 0%, #2563EB 100%)',
-        borderRadius: '12px',
-        marginBottom: '24px',
+        borderRadius: 'var(--radius-xl)',
+        marginBottom: 'var(--space-6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: 'white',
-        fontWeight: 'bold',
+        fontWeight: 700,
         fontSize: '20px',
-        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-        WebkitAppRegion: 'no-drag' as any
+        boxShadow: 'var(--shadow-md), var(--shadow-glow-blue)',
+        position: 'relative',
+        overflow: 'hidden',
+        WebkitAppRegion: 'no-drag' as any,
+        border: '1px solid rgba(59, 130, 246, 0.3)'
       }}>
-        R
+        {/* Subtle shine effect */}
+        <div style={{
+          position: 'absolute',
+          top: '-50%',
+          left: '-50%',
+          width: '200%',
+          height: '200%',
+          background: 'linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
+        <span style={{ position: 'relative', zIndex: 1 }}>R</span>
       </div>
 
       <nav style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', WebkitAppRegion: 'no-drag' as any }}>
@@ -155,25 +197,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         />
       </nav>
 
-      {/* Settings / Footer */}
+      {/* Settings / Footer - Enhanced */}
       <button
         onClick={onOpenSettings}
         style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.05)',
-          border: 'none',
+          width: '44px',
+          height: '44px',
+          borderRadius: 'var(--radius-xl)',
+          background: 'rgba(255, 255, 255, 0.04)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           color: 'var(--color-text-secondary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          WebkitAppRegion: 'no-drag' as any
+          transition: 'all var(--transition-base)',
+          WebkitAppRegion: 'no-drag' as any,
+          outline: 'none'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+          e.currentTarget.style.color = 'var(--color-text-primary)';
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          e.currentTarget.style.color = 'var(--color-text-secondary)';
+          e.currentTarget.style.transform = 'scale(1)';
         }}
         title="Settings"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
       </button>
     </div>
   );

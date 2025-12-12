@@ -82,19 +82,20 @@ export const ResizableHeader = ({
                 </span>
             )}
 
-            {/* Resize Handle Area */}
+            {/* Resize Handle Area - Enhanced */}
             <div
                 style={{
                     position: 'absolute',
                     right: 0,
                     top: 0,
                     bottom: 0,
-                    width: '8px', // Wider hit area
+                    width: '12px',
                     cursor: 'col-resize',
                     zIndex: 10,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    transition: 'background var(--transition-fast)'
                 }}
                 onMouseDown={(e) => {
                     e.preventDefault();
@@ -104,14 +105,25 @@ export const ResizableHeader = ({
                     startWidth.current = width;
                     document.body.style.cursor = 'col-resize';
                 }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                }}
+                onMouseLeave={(e) => {
+                    if (!isResizing) {
+                        e.currentTarget.style.background = 'transparent';
+                    }
+                }}
             >
-                {/* Visual Grabber (Attio Style) */}
+                {/* Visual Grabber - Refined Attio Style */}
                 <div style={{
-                    width: '2px',
-                    height: '12px',
-                    background: (isHovered || isResizing) ? 'var(--color-text-tertiary)' : 'transparent',
-                    borderRadius: '1px',
-                    transition: 'background 0.1s ease'
+                    width: '3px',
+                    height: '16px',
+                    background: (isHovered || isResizing)
+                        ? 'linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-text-tertiary) 100%)'
+                        : 'rgba(255, 255, 255, 0.15)',
+                    borderRadius: 'var(--radius-sm)',
+                    transition: 'all var(--transition-base)',
+                    boxShadow: (isHovered || isResizing) ? '0 0 8px rgba(59, 130, 246, 0.3)' : 'none'
                 }} />
             </div>
         </div>

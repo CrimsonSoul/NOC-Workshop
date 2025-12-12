@@ -37,44 +37,82 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, items }
       />
       <div
         ref={menuRef}
-        className="animate-fade-in"
+        className="animate-scale-in"
         style={{
           position: 'fixed',
           top: y,
           left: x,
-          background: '#1E1E21', // Slightly lighter than surface
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '6px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.2)', // Deep shadow + border
+          background: 'var(--color-bg-surface-elevated)',
+          border: 'var(--border-medium)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-xl)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           zIndex: 99999,
-          padding: '4px',
-          minWidth: '160px',
+          padding: 'var(--space-1)',
+          minWidth: '180px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '2px'
+          gap: '1px',
+          overflow: 'hidden'
         }}
         onClick={e => e.stopPropagation()}
       >
+        {/* Subtle gradient accent at top */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)'
+        }} />
+
         {items.map((item, i) => (
           <div
             key={i}
             onClick={() => { item.onClick(); onClose(); }}
             style={{
-              padding: '6px 10px',
+              padding: 'var(--space-2) var(--space-3)',
               cursor: 'pointer',
               fontSize: '13px',
-              color: item.danger ? '#FF5C5C' : 'var(--color-text-primary)', // Attio red is slightly softer
-              borderRadius: '4px',
+              color: item.danger ? 'var(--color-danger)' : 'var(--color-text-primary)',
+              borderRadius: 'var(--radius-md)',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              transition: 'background 0.1s'
+              gap: 'var(--space-2)',
+              transition: 'all var(--transition-fast)',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
+              position: 'relative',
+              overflow: 'hidden'
             }}
-            onMouseEnter={e => e.currentTarget.style.background = item.danger ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.06)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = item.danger ? 'var(--color-danger-subtle)' : 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.transform = 'translateX(2px)';
+              if (item.danger) {
+                e.currentTarget.style.color = 'var(--color-danger-hover)';
+              }
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateX(0)';
+              if (item.danger) {
+                e.currentTarget.style.color = 'var(--color-danger)';
+              }
+            }}
           >
-            {item.icon && <span style={{ opacity: 0.7 }}>{item.icon}</span>}
-            {item.label}
+            {item.icon && (
+              <span style={{
+                opacity: 0.8,
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '14px'
+              }}>
+                {item.icon}
+              </span>
+            )}
+            <span style={{ flex: 1 }}>{item.label}</span>
           </div>
         ))}
       </div>
