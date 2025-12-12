@@ -273,7 +273,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       // Account for actions column (80px) and gap/padding (~32px)
       const availableWidth = listWidth - 80 - 32;
 
-      if (availableWidth <= totalBaseWidth) return baseWidths;
+      if (availableWidth <= 0) return baseWidths;
 
       const scale = availableWidth / totalBaseWidth;
       const scaled = { ...baseWidths };
@@ -308,25 +308,16 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
 
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
       // When user manually resizes, we update the BASE width.
-      // This effectively resets the scaling for that moment, or changes the proportion.
-      // If we are currently scaled, 'width' is the SCALED width. We should convert back to base?
-      // Or just treat the new width as the desired base?
-      // Simpler: Update base width to match what they dragged to (conceptually "locking" it at that size relative to others if we re-scale).
-
-      // Actually, if we are in "auto-fill" mode, dragging one column should probably adjust the others or just update base.
-      // Let's just update base.
-
-      // Reverse scale to save "true" preference?
-      // If scale is 1.5, and I drag to 300px, base should be 200px?
-      // Yes, otherwise next render re-applies scale and it jumps.
+      // We reverse the scale to save "true" preference.
 
       let newBase = width;
       if (listWidth) {
            const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
            const availableWidth = listWidth - 80 - 32;
-           if (availableWidth > totalBaseWidth) {
-               const scale = availableWidth / totalBaseWidth;
-               newBase = width / scale;
+           // Apply reverse scaling logic always since we scale both up and down now
+           if (availableWidth > 0) {
+              const scale = availableWidth / totalBaseWidth;
+              newBase = width / scale;
            }
       }
 

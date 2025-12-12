@@ -16,13 +16,15 @@ const DEBOUNCE_MS = 100;
 export class FileManager {
   private watcher: chokidar.FSWatcher | null = null;
   private rootDir: string;
+  private bundledDataPath: string;
   private mainWindow: BrowserWindow;
   private debounceTimer: NodeJS.Timeout | null = null;
   private isInternalWrite = false;
 
-  constructor(window: BrowserWindow, rootDir: string) {
+  constructor(window: BrowserWindow, rootDir: string, bundledPath: string) {
     this.mainWindow = window;
     this.rootDir = rootDir;
+    this.bundledDataPath = bundledPath;
 
     console.log(`[FileManager] Initialized. Watching root: ${this.rootDir}`);
     this.startWatching();
@@ -100,6 +102,26 @@ export class FileManager {
     } catch (error) {
       console.error('[FileManager] Error reading files:', error);
       this.emitReloadCompleted(false);
+    }
+  }
+
+  private async isDummyData(fileName: string): Promise<boolean> {
+    try {
+      const currentPath = join(this.rootDir, fileName);
+      const bundledPath = join(this.bundledDataPath, fileName);
+
+      if (!existsSync(currentPath) || !existsSync(bundledPath)) return false;
+
+      const currentContent = await fs.readFile(currentPath, 'utf-8');
+      const bundledContent = await fs.readFile(bundledPath, 'utf-8');
+
+      const normCurrent = currentContent.replace(/\r\n/g, '\n').trim();
+      const normBundled = bundledContent.replace(/\r\n/g, '\n').trim();
+
+      return normCurrent === normBundled;
+    } catch (e) {
+      console.error('[FileManager] isDummyData check failed:', e);
+      return false;
     }
   }
 
@@ -625,10 +647,22 @@ export class FileManager {
   public async importGroupsWithMapping(sourcePath: string): Promise<boolean> {
       try {
           const targetPath = join(this.rootDir, GROUP_FILES[0]);
+
+          // Read source first to ensure validity
           const sourceContent = await fs.readFile(sourcePath, 'utf-8');
           const sourceDataRaw = await parseCsvAsync(sourceContent);
           const sourceData = sourceDataRaw.map(r => r.map(c => desanitizeField(c)));
           if (sourceData.length === 0) return false;
+
+          // Check if current groups are dummy data
+          if (await this.isDummyData(GROUP_FILES[0])) {
+             console.log('[FileManager] Detected dummy groups. Clearing before import.');
+             try {
+                await fs.unlink(targetPath);
+             } catch (e) {
+                console.error('[FileManager] Failed to delete dummy groups file:', e);
+             }
+          }
 
           const sourceHeader = sourceData[0].map((h: any) => String(h).trim());
           const sourceRows = sourceData.slice(1);
@@ -710,10 +744,22 @@ export class FileManager {
   public async importContactsWithMapping(sourcePath: string): Promise<boolean> {
       try {
           const targetPath = join(this.rootDir, CONTACT_FILES[0]);
+
+          // Read source first
           const sourceContent = await fs.readFile(sourcePath, 'utf-8');
           const sourceDataRaw = await parseCsvAsync(sourceContent);
           const sourceData = sourceDataRaw.map(r => r.map(c => desanitizeField(c)));
           if (sourceData.length < 2) return false;
+
+          // Check if current contacts are dummy data
+          if (await this.isDummyData(CONTACT_FILES[0])) {
+              console.log('[FileManager] Detected dummy contacts. Clearing before import.');
+              try {
+                  await fs.unlink(targetPath);
+              } catch (e) {
+                  console.error('[FileManager] Failed to delete dummy contacts file:', e);
+              }
+          }
 
           const sourceHeader = sourceData[0].map((h: any) => String(h).toLowerCase().trim());
           const sourceRows = sourceData.slice(1);
@@ -921,9 +967,21 @@ export class FileManager {
   public async importServersWithMapping(sourcePath: string): Promise<{ success: boolean; message?: string }> {
       try {
           const targetPath = join(this.rootDir, SERVER_FILES[0]);
-          const sourceContent = await fs.readFile(sourcePath, 'utf-8');
 
+          // Read source first
+          const sourceContent = await fs.readFile(sourcePath, 'utf-8');
           const lines = sourceContent.split(/\r?\n/);
+          if (lines.length === 0) return { success: false, message: 'Empty source file' };
+
+          // Check if current servers are dummy data
+          if (await this.isDummyData(SERVER_FILES[0])) {
+              console.log('[FileManager] Detected dummy servers. Clearing before import.');
+              try {
+                  await fs.unlink(targetPath);
+              } catch (e) {
+                  console.error('[FileManager] Failed to delete dummy servers file:', e);
+              }
+          }
           let headerLineIndex = -1;
 
           for(let i = 0; i < Math.min(lines.length, 20); i++) {

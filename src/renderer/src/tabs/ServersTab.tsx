@@ -201,7 +201,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       // Let's assume just horizontal padding.
       const availableWidth = listWidth - 32;
 
-      if (availableWidth <= totalBaseWidth) return baseWidths;
+      if (availableWidth <= 0) return baseWidths;
 
       const scale = availableWidth / totalBaseWidth;
       const scaled = { ...baseWidths };
@@ -239,9 +239,10 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       if (listWidth) {
            const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
            const availableWidth = listWidth - 32;
-           if (availableWidth > totalBaseWidth) {
-               const scale = availableWidth / totalBaseWidth;
-               newBase = width / scale;
+           // Apply reverse scaling logic always
+           if (availableWidth > 0) {
+              const scale = availableWidth / totalBaseWidth;
+              newBase = width / scale;
            }
       }
 
