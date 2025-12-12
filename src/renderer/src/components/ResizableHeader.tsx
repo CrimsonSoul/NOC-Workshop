@@ -61,7 +61,8 @@ export const ResizableHeader = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                paddingRight: '16px' // Reserve space for resize handle
             }}
             onClick={() => onSort(sortKey)}
             onMouseEnter={() => setIsHovered(true)}
@@ -77,7 +78,12 @@ export const ResizableHeader = ({
             </span>
 
             {isSorted && (
-                <span style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>
+                <span style={{
+                    fontSize: '10px',
+                    color: 'var(--color-text-primary)',
+                    flexShrink: 0,
+                    marginRight: '2px'
+                }}>
                     {currentSort.direction === 'asc' ? '▲' : '▼'}
                 </span>
             )}
@@ -87,7 +93,7 @@ export const ResizableHeader = ({
                 data-resize-handle="true"
                 style={{
                     position: 'absolute',
-                    right: 0,
+                    right: '-6px', // Center on the edge
                     top: 0,
                     bottom: 0,
                     width: '12px',

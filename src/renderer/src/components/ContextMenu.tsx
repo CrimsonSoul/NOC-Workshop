@@ -10,6 +10,7 @@ type ContextMenuProps = {
     onClick: () => void;
     danger?: boolean;
     icon?: React.ReactNode;
+    disabled?: boolean;
   }[];
 };
 
@@ -71,12 +72,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, items }
         {items.map((item, i) => (
           <div
             key={i}
-            onClick={() => { item.onClick(); onClose(); }}
+            onClick={() => { if (!item.disabled) { item.onClick(); onClose(); } }}
             style={{
               padding: 'var(--space-2) var(--space-3)',
-              cursor: 'pointer',
+              cursor: item.disabled ? 'not-allowed' : 'pointer',
               fontSize: '13px',
-              color: item.danger ? 'var(--color-danger)' : 'var(--color-text-primary)',
+              color: item.disabled ? 'var(--color-text-tertiary)' : (item.danger ? 'var(--color-danger)' : 'var(--color-text-primary)'),
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               alignItems: 'center',
@@ -85,20 +86,25 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, items }
               fontWeight: 500,
               letterSpacing: '-0.01em',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              opacity: item.disabled ? 0.5 : 1
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = item.danger ? 'var(--color-danger-subtle)' : 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.transform = 'translateX(2px)';
-              if (item.danger) {
-                e.currentTarget.style.color = 'var(--color-danger-hover)';
+              if (!item.disabled) {
+                e.currentTarget.style.background = item.danger ? 'var(--color-danger-subtle)' : 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.transform = 'translateX(2px)';
+                if (item.danger) {
+                  e.currentTarget.style.color = 'var(--color-danger-hover)';
+                }
               }
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateX(0)';
-              if (item.danger) {
-                e.currentTarget.style.color = 'var(--color-danger)';
+              if (!item.disabled) {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateX(0)';
+                if (item.danger) {
+                  e.currentTarget.style.color = 'var(--color-danger)';
+                }
               }
             }}
           >

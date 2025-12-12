@@ -38,9 +38,10 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   contactMap: Map<string, Contact>,
   groupMap: Map<string, string[]>,
   onRemoveManual: (email: string) => void,
-  onAddToContacts: (email: string) => void
+  onAddToContacts: (email: string) => void,
+  onContextMenu: (e: React.MouseEvent, email: string, isUnknown: boolean) => void
 }>) => {
-  const { log, contactMap, groupMap, onRemoveManual, onAddToContacts } = data;
+  const { log, contactMap, groupMap, onRemoveManual, onAddToContacts, onContextMenu } = data;
   const { email, source } = log[index];
   const contact = contactMap.get(email.toLowerCase());
   const name = contact ? contact.name : email.split('@')[0];
@@ -50,7 +51,7 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   const isUnknown = !contact;
 
   return (
-    <div style={style}>
+    <div style={style} onContextMenu={(e) => onContextMenu(e, email, isUnknown)}>
       <ContactCard
         key={email}
         name={name}
@@ -60,55 +61,6 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
         groups={membership}
         sourceLabel={source === 'manual' ? 'MANUAL' : undefined}
         style={{ paddingLeft: '32px', paddingRight: '32px', height: '100%' }} // Match toolbar padding
-        action={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {isUnknown && (
-                    <TactileButton
-                        onClick={() => onAddToContacts(email)}
-                        style={{
-                            padding: '2px 8px',
-                            fontSize: '11px',
-                            height: '24px'
-                        }}
-                        title="Add to Contacts"
-                    >
-                        SAVE
-                    </TactileButton>
-                )}
-              <button
-                onClick={() => onRemoveManual(email)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--color-text-tertiary)',
-                  width: '24px',
-                  height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  opacity: 0.7,
-                  transition: 'all 0.2s',
-                  borderRadius: '4px'
-                }}
-                className="hover-bg"
-                title="Remove from List"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#EF4444';
-                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--color-text-tertiary)';
-                  e.currentTarget.style.background = 'transparent';
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-          </div>
-        }
       />
     </div>
   );
@@ -302,13 +254,29 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
       setIsAddContactModalOpen(true);
   }, []);
 
+  const [compositionContextMenu, setCompositionContextMenu] = useState<{ x: number, y: number, email: string, isUnknown: boolean } | null>(null);
+
+  const handleCompositionContextMenu = useCallback((e: React.MouseEvent, email: string, isUnknown: boolean) => {
+    e.preventDefault();
+    setCompositionContextMenu({ x: e.clientX, y: e.clientY, email, isUnknown });
+  }, []);
+
+  useEffect(() => {
+    if (compositionContextMenu) {
+      const handler = () => setCompositionContextMenu(null);
+      window.addEventListener('click', handler);
+      return () => window.removeEventListener('click', handler);
+    }
+  }, [compositionContextMenu]);
+
   const itemData = useMemo(() => ({
     log,
     contactMap,
     groupMap,
     onRemoveManual,
-    onAddToContacts: handleAddToContacts
-  }), [log, contactMap, groupMap, onRemoveManual, handleAddToContacts]);
+    onAddToContacts: handleAddToContacts,
+    onContextMenu: handleCompositionContextMenu
+  }), [log, contactMap, groupMap, onRemoveManual, handleAddToContacts, handleCompositionContextMenu]);
 
   const handleContactSaved = async (contact: Partial<Contact>) => {
       // Save to backend
@@ -527,7 +495,6 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
             <SortableHeader label="Email" sortKey="email" currentSort={sortConfig} onSort={handleSort} flex={1.2} />
             <SortableHeader label="Phone" sortKey="phone" currentSort={sortConfig} onSort={handleSort} flex={1} />
             <SortableHeader label="Groups" sortKey="groups" currentSort={sortConfig} onSort={handleSort} flex={1} />
-            <div style={{ width: '80px', textAlign: 'right' }}>Actions</div>
         </div>
 
         {/* List */}
@@ -746,6 +713,34 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                        onClick: () => setGroupToDelete(groupContextMenu.group),
                        danger: true,
                        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                   }
+               ]}
+           />
+       )}
+
+       {/* Composition List Context Menu */}
+       {compositionContextMenu && (
+           <ContextMenu
+               x={compositionContextMenu.x}
+               y={compositionContextMenu.y}
+               onClose={() => setCompositionContextMenu(null)}
+               items={[
+                   ...(compositionContextMenu.isUnknown ? [{
+                       label: 'Save to Contacts',
+                       onClick: () => {
+                           handleAddToContacts(compositionContextMenu.email);
+                           setCompositionContextMenu(null);
+                       },
+                       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M16 11h6m-3-3v6"></path></svg>
+                   }] : []),
+                   {
+                       label: 'Remove from List',
+                       onClick: () => {
+                           onRemoveManual(compositionContextMenu.email);
+                           setCompositionContextMenu(null);
+                       },
+                       danger: true,
+                       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                    }
                ]}
            />

@@ -211,17 +211,19 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
     >
         {effectiveOrder.map(key => renderCell(key))}
 
-        {/* Column: Actions (Fixed) */}
-        <div className="row-actions" style={{
-            width: '80px',
-            flexShrink: 0,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            opacity: 0, // Hidden by default
-            transition: 'opacity 0.1s'
-        }}>
-            {action}
-        </div>
+        {/* Column: Actions (Fixed) - Only show if action is provided */}
+        {action && (
+          <div className="row-actions" style={{
+              width: '80px',
+              flexShrink: 0,
+              display: 'flex',
+              justifyContent: 'flex-end',
+              opacity: 0, // Hidden by default
+              transition: 'opacity 0.1s'
+          }}>
+              {action}
+          </div>
+        )}
     </div>
   );
 });

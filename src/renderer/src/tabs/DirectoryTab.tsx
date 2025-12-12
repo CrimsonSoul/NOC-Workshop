@@ -186,60 +186,10 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
 }>) => {
   const { filtered, recentlyAdded, onAdd, groups, groupMap, onContextMenu, columnWidths, columnOrder } = data;
 
-  const [showGroups, setShowGroups] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!showGroups) return;
-    const clickHandler = (e: MouseEvent) => {
-       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-          setShowGroups(false);
-       }
-    };
-    document.addEventListener('click', clickHandler);
-    return () => document.removeEventListener('click', clickHandler);
-  }, [showGroups]);
-
   if (index >= filtered.length) return <div style={style} />;
 
   const contact = filtered[index];
-  const added = recentlyAdded.has(contact.email);
   const membership = groupMap.get(contact.email.toLowerCase()) || [];
-
-  const handleAdd = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onAdd(contact);
-  };
-
-  const actionButtons = (
-    <div ref={wrapperRef} style={{ display: 'flex', gap: '8px', position: 'relative', alignItems: 'center' }}>
-      <TactileButton
-        onClick={(e) => { e.stopPropagation(); setShowGroups(!showGroups); }}
-        style={{ padding: '2px 8px', fontSize: '11px', height: '24px' }}
-        active={showGroups}
-      >
-        GROUPS
-      </TactileButton>
-
-      {showGroups && (
-         <GroupSelector contact={contact} groups={groups} onClose={() => setShowGroups(false)} />
-      )}
-
-      <TactileButton
-        onClick={handleAdd}
-        style={{
-          padding: '2px 8px',
-          fontSize: '11px',
-          height: '24px',
-          borderColor: added ? 'var(--color-accent-green)' : undefined,
-          color: added ? 'var(--color-accent-green)' : undefined,
-          background: added ? 'rgba(16, 185, 129, 0.1)' : undefined
-        }}
-      >
-        {added ? 'ADDED' : 'ADD'}
-      </TactileButton>
-    </div>
-  );
 
   return (
     <div
@@ -252,7 +202,6 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
           title={contact.title}
           phone={contact.phone}
           groups={membership}
-          action={actionButtons}
           columnWidths={columnWidths}
           columnOrder={columnOrder}
         />
@@ -286,10 +235,10 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const scaledWidths = useMemo(() => {
       if (!listWidth) return baseWidths;
 
-      // Account for actions column (80px), padding (16px left + 16px right = 32px)
-      // and gaps between columns (5 columns + 1 actions = 6 elements, so 5 gaps * 16px = 80px)
+      // Account for padding (16px left + 16px right = 32px)
+      // and gaps between columns (5 columns = 4 gaps * 16px = 64px)
       // plus ~12px for scrollbar to avoid cutoff
-      const RESERVED_SPACE = 80 + 32 + 80 + 12;
+      const RESERVED_SPACE = 32 + 64 + 12;
 
       return scaleColumns({
           baseWidths,
@@ -325,7 +274,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
       // When user manually resizes, we update the BASE width.
       // We reverse the scale to save "true" preference.
-      const RESERVED_SPACE = 80 + 32 + 80 + 12;
+      const RESERVED_SPACE = 32 + 64 + 12;
 
       let newBase = width;
       if (listWidth) {
@@ -367,6 +316,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const [contextMenu, setContextMenu] = useState<{x: number, y: number, contact: Contact} | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<Contact | null>(null);
+  const [groupSelectorContact, setGroupSelectorContact] = useState<Contact | null>(null);
 
   useEffect(() => {
     setOptimisticAdds([]);
@@ -591,7 +541,6 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
                  ))}
              </SortableContext>
          </DndContext>
-         <div style={{ width: '80px', textAlign: 'right', flexShrink: 0 }}>Actions</div>
       </div>
 
       {/* Virtualized List */}
@@ -664,6 +613,23 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
             onClose={() => setContextMenu(null)}
             items={[
                 {
+                    label: recentlyAdded.has(contextMenu.contact.email) ? 'Added to Assembler' : 'Add to Assembler',
+                    onClick: () => {
+                        handleAddWrapper(contextMenu.contact);
+                        setContextMenu(null);
+                    },
+                    disabled: recentlyAdded.has(contextMenu.contact.email),
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                },
+                {
+                    label: 'Manage Groups',
+                    onClick: () => {
+                        setGroupSelectorContact(contextMenu.contact);
+                        setContextMenu(null);
+                    },
+                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                },
+                {
                     label: 'Edit Contact',
                     onClick: () => setEditingContact(contextMenu.contact),
                     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -676,6 +642,75 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
                 }
             ]}
           />
+      )}
+
+      {groupSelectorContact && (
+          <Modal
+            isOpen={true}
+            onClose={() => setGroupSelectorContact(null)}
+            title="Manage Groups"
+            width="400px"
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
+                Managing groups for <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{groupSelectorContact.name || groupSelectorContact.email}</span>
+              </div>
+              {Object.keys(groups).length === 0 ? (
+                <div style={{ padding: '16px', fontSize: '13px', color: 'var(--color-text-tertiary)', fontStyle: 'italic', textAlign: 'center' }}>
+                  No groups available. Create a group first in the Assembler tab.
+                </div>
+              ) : (
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {Object.keys(groups).sort().map(g => {
+                    const isMember = groups[g].some(e => e.toLowerCase() === groupSelectorContact.email.toLowerCase());
+                    return (
+                      <div
+                        key={g}
+                        onClick={async () => {
+                          if (isMember) {
+                            await window.api?.removeContactFromGroup(g, groupSelectorContact.email);
+                          } else {
+                            await window.api?.addContactToGroup(g, groupSelectorContact.email);
+                          }
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          fontSize: '13px',
+                          color: 'var(--color-text-primary)',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          transition: 'background 0.15s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div style={{
+                          width: '16px',
+                          height: '16px',
+                          borderRadius: '4px',
+                          border: isMember ? 'none' : '2px solid var(--color-text-tertiary)',
+                          background: isMember ? 'var(--color-accent-blue)' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          {isMember && <span style={{ fontSize: '10px', color: '#FFF', fontWeight: 700 }}>✓</span>}
+                        </div>
+                        {g}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px', paddingTop: '12px', borderTop: 'var(--border-subtle)' }}>
+                <TactileButton onClick={() => setGroupSelectorContact(null)}>Close</TactileButton>
+              </div>
+            </div>
+          </Modal>
       )}
     </div>
   );
