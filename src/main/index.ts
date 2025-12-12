@@ -73,7 +73,7 @@ async function createWindow(dataRoot: string) {
     await mainWindow.loadFile(indexHtml);
   }
 
-  fileManager = new FileManager(mainWindow, dataRoot);
+  fileManager = new FileManager(mainWindow, dataRoot, getBundledDataPath());
   bridgeLogger = new BridgeLogger(dataRoot);
 
   // Security: Restrict WebView navigation
@@ -123,7 +123,7 @@ function handleDataPathChange(newPath: string) {
         fileManager.destroy();
         fileManager = null;
     }
-    fileManager = new FileManager(mainWindow, currentDataRoot);
+    fileManager = new FileManager(mainWindow, currentDataRoot, getBundledDataPath());
 
     // BridgeLogger doesn't have a destroy method but it's just a class wrapper usually.
     // If it has state or watchers, we might need to look at it.
