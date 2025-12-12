@@ -15,7 +15,6 @@ export type Server = {
     comment: string;
     owner: string; // Email
     contact: string; // Email
-    osType: string;
     os: string;
     _searchString: string;
     raw: Record<string, any>;

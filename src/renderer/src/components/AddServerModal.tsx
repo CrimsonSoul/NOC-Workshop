@@ -22,7 +22,6 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
     comment: '',
     owner: '',
     contact: '',
-    osType: '',
     os: ''
   });
 
@@ -38,7 +37,6 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
             comment: serverToEdit.comment || '',
             owner: serverToEdit.owner || '',
             contact: serverToEdit.contact || '',
-            osType: serverToEdit.osType || '',
             os: serverToEdit.os || ''
         });
       } else {
@@ -49,7 +47,6 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
             comment: '',
             owner: '',
             contact: '',
-            osType: '',
             os: ''
         });
       }
@@ -123,22 +120,12 @@ export const AddServerModal: React.FC<AddServerModalProps> = ({
             />
         </div>
 
-        <div style={{ display: 'flex', gap: '16px' }}>
-            <Input
-              label="OS"
-              value={formData.osType}
-              onChange={handleChange('osType')}
-              placeholder="e.g. Windows"
-              containerStyle={{ flex: 1 }}
-            />
-            <Input
-              label="Config OS"
-              value={formData.os}
-              onChange={handleChange('os')}
-              placeholder="e.g. Windows Server 2019"
-              containerStyle={{ flex: 1 }}
-            />
-        </div>
+        <Input
+          label="OS"
+          value={formData.os}
+          onChange={handleChange('os')}
+          placeholder="e.g. Windows"
+        />
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
           <TactileButton onClick={handleSubmit} disabled={isSubmitting || !formData.name}>

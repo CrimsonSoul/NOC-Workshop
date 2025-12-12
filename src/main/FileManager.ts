@@ -343,7 +343,7 @@ export class FileManager {
               const comment = getVal(commentIdx);
               const owner = getVal(ownerIdx);
               const contact = getVal(contactIdx);
-              const osType = getVal(osIdx);
+              const os = getVal(osIdx);
 
               const raw: Record<string, string> = {
                   'name': name,
@@ -352,7 +352,7 @@ export class FileManager {
                   'comment': comment,
                   'owner': owner,
                   'it contact': contact,
-                  'os': osType
+                  'os': os
               };
 
               results.push({
@@ -362,12 +362,12 @@ export class FileManager {
                   comment,
                   owner,
                   contact,
-                  osType,
-                  _searchString: `${name} ${businessArea} ${lob} ${owner} ${contact} ${osType} ${comment}`.toLowerCase(),
+                  os,
+                  _searchString: `${name} ${businessArea} ${lob} ${owner} ${contact} ${os} ${comment}`.toLowerCase(),
                   raw
               });
 
-              cleanDataForRewrite.push([name, businessArea, lob, comment, owner, contact, osType]);
+              cleanDataForRewrite.push([name, businessArea, lob, comment, owner, contact, os]);
           }
 
           // Validate servers and emit warnings
@@ -929,7 +929,7 @@ export class FileManager {
           const commentIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.comment, STD_SERVER_HEADERS[3], workingData);
           const ownerIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.owner, STD_SERVER_HEADERS[4], workingData);
           const contactIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.contact, STD_SERVER_HEADERS[5], workingData);
-          const osTypeIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.os, STD_SERVER_HEADERS[6], workingData);
+          const osIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.os, STD_SERVER_HEADERS[6], workingData);
 
           // Update or Add
           let rowIndex = -1;
@@ -950,7 +950,7 @@ export class FileManager {
                setVal(row, commentIdx, server.comment);
                setVal(row, ownerIdx, server.owner);
                setVal(row, contactIdx, server.contact);
-               setVal(row, osTypeIdx, server.osType);
+               setVal(row, osIdx, server.os);
           } else {
                const newRow = new Array(workingHeader.length).fill('');
                setVal(newRow, nameIdx, server.name);
@@ -959,7 +959,7 @@ export class FileManager {
                setVal(newRow, commentIdx, server.comment);
                setVal(newRow, ownerIdx, server.owner);
                setVal(newRow, contactIdx, server.contact);
-               setVal(newRow, osTypeIdx, server.osType);
+               setVal(newRow, osIdx, server.os);
                workingData.push(newRow);
           }
 
@@ -1101,7 +1101,7 @@ export class FileManager {
           const t_commentIdx = ensureTargetCol('Comment');
           const t_ownerIdx = ensureTargetCol('Owner');
           const t_contactIdx = ensureTargetCol('IT Contact');
-          const t_osTypeIdx = ensureTargetCol('OS Type');
+          const t_osIdx = ensureTargetCol('OS');
 
           for (const row of sourceRows) {
               const name = row[s_nameIdx]?.trim();
@@ -1124,7 +1124,7 @@ export class FileManager {
                   if (s_commentIdx !== -1) tRow[t_commentIdx] = getValue(s_commentIdx);
                   if (s_ownerIdx !== -1) tRow[t_ownerIdx] = getValue(s_ownerIdx);
                   if (s_contactIdx !== -1) tRow[t_contactIdx] = getValue(s_contactIdx);
-                  if (s_osTypeIdx !== -1) tRow[t_osTypeIdx] = getValue(s_osTypeIdx);
+                  if (s_osTypeIdx !== -1) tRow[t_osIdx] = getValue(s_osTypeIdx);
               } else {
                   const newRow = new Array(targetData[0].length).fill('');
                   newRow[t_nameIdx] = name;
@@ -1133,7 +1133,7 @@ export class FileManager {
                   newRow[t_commentIdx] = getValue(s_commentIdx);
                   newRow[t_ownerIdx] = getValue(s_ownerIdx);
                   newRow[t_contactIdx] = getValue(s_contactIdx);
-                  newRow[t_osTypeIdx] = getValue(s_osTypeIdx);
+                  newRow[t_osIdx] = getValue(s_osTypeIdx);
                   targetData.push(newRow);
               }
           }
