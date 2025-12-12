@@ -7,7 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Contact, GroupMap } from '@shared/ipc';
 import { useDebounce } from '../hooks/useDebounce';
 import { useGroupMaps } from '../hooks/useGroupMaps';
-import { ContactCard } from '../components/ContactCard'; // This is now the dense row
+import { ContactCard } from '../components/ContactCard';
 import { AddContactModal } from '../components/AddContactModal';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
@@ -19,7 +19,7 @@ import { ResizableHeader } from '../components/ResizableHeader';
 
 type Props = {
   contacts: Contact[];
-  groups: GroupMap; // Need groups to show selector
+  groups: GroupMap;
   onAddToAssembler: (contact: Contact) => void;
 };
 
@@ -32,7 +32,6 @@ const DEFAULT_WIDTHS = {
     groups: 150
 };
 
-// Default Column Order
 const DEFAULT_ORDER: (keyof typeof DEFAULT_WIDTHS)[] = ['name', 'title', 'email', 'phone', 'groups'];
 
 type SortConfig = {
@@ -40,7 +39,6 @@ type SortConfig = {
     direction: 'asc' | 'desc';
 };
 
-// Draggable Header Component
 const DraggableHeader = ({ id, children }: { id: string, children: React.ReactNode }) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
@@ -63,7 +61,6 @@ const DraggableHeader = ({ id, children }: { id: string, children: React.ReactNo
     );
 };
 
-// --- Group Selector Popover ---
 const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups: GroupMap, onClose: () => void }) => {
   const [membership, setMembership] = useState<Record<string, boolean>>({});
 
@@ -77,9 +74,7 @@ const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups:
   }, [contact, groups]);
 
   const toggleGroup = async (group: string, current: boolean) => {
-    // Optimistic update
     setMembership(prev => ({ ...prev, [group]: !current }));
-
     if (current) {
       await window.api?.removeContactFromGroup(group, contact.email);
     } else {
@@ -162,7 +157,6 @@ const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups:
   );
 };
 
-// Extracted Row Component (react-window renderer)
 const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   filtered: Contact[],
   recentlyAdded: Set<string>,
@@ -178,7 +172,6 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
   const [showGroups, setShowGroups] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Close on click outside
   useEffect(() => {
     if (!showGroups) return;
     const clickHandler = (e: MouseEvent) => {
@@ -190,7 +183,6 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
     return () => document.removeEventListener('click', clickHandler);
   }, [showGroups]);
 
-  // Safety check: sometimes virtual list requests index out of bounds during filter changes
   if (index >= filtered.length) return <div style={style} />;
 
   const contact = filtered[index];
@@ -204,14 +196,9 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
 
   const actionButtons = (
     <div ref={wrapperRef} style={{ display: 'flex', gap: '8px', position: 'relative', alignItems: 'center' }}>
-      {/* Group Button */}
       <TactileButton
         onClick={(e) => { e.stopPropagation(); setShowGroups(!showGroups); }}
-        style={{
-          padding: '2px 8px',
-          fontSize: '11px',
-          height: '24px'
-        }}
+        style={{ padding: '2px 8px', fontSize: '11px', height: '24px' }}
         active={showGroups}
       >
         GROUPS
@@ -221,7 +208,6 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
          <GroupSelector contact={contact} groups={groups} onClose={() => setShowGroups(false)} />
       )}
 
-      {/* Add to List Button */}
       <TactileButton
         onClick={handleAdd}
         style={{
@@ -264,23 +250,40 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Sorting
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
 
-  // Column Widths
-  const [columnWidths, setColumnWidths] = useState(() => {
+  // Use state for base widths (pixels), but scale them on render if needed
+  const [baseWidths, setBaseWidths] = useState(() => {
       try {
           const saved = localStorage.getItem('relay-directory-columns');
           const parsed = saved ? JSON.parse(saved) : DEFAULT_WIDTHS;
-          // Ensure new fields exist if loaded from old state
           return { ...DEFAULT_WIDTHS, ...parsed };
       } catch (e) {
-          console.error('Failed to parse column widths:', e);
           return DEFAULT_WIDTHS;
       }
   });
 
-  // Column Order State
+  // Track scaling
+  const [listWidth, setListWidth] = useState(0);
+
+  const scaledWidths = useMemo(() => {
+      if (!listWidth) return baseWidths;
+
+      const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
+      // Account for actions column (80px) and gap/padding (~32px)
+      const availableWidth = listWidth - 80 - 32;
+
+      if (availableWidth <= totalBaseWidth) return baseWidths;
+
+      const scale = availableWidth / totalBaseWidth;
+      const scaled = { ...baseWidths };
+      (Object.keys(scaled) as (keyof typeof DEFAULT_WIDTHS)[]).forEach(k => {
+          scaled[k] = Math.floor(baseWidths[k] * scale);
+      });
+      return scaled;
+  }, [baseWidths, listWidth]);
+
+
   const [columnOrder, setColumnOrder] = useState<(keyof typeof DEFAULT_WIDTHS)[]>(() => {
       try {
           const saved = localStorage.getItem('relay-directory-order');
@@ -304,8 +307,31 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   );
 
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
-      const newWidths = { ...columnWidths, [key]: width };
-      setColumnWidths(newWidths);
+      // When user manually resizes, we update the BASE width.
+      // This effectively resets the scaling for that moment, or changes the proportion.
+      // If we are currently scaled, 'width' is the SCALED width. We should convert back to base?
+      // Or just treat the new width as the desired base?
+      // Simpler: Update base width to match what they dragged to (conceptually "locking" it at that size relative to others if we re-scale).
+
+      // Actually, if we are in "auto-fill" mode, dragging one column should probably adjust the others or just update base.
+      // Let's just update base.
+
+      // Reverse scale to save "true" preference?
+      // If scale is 1.5, and I drag to 300px, base should be 200px?
+      // Yes, otherwise next render re-applies scale and it jumps.
+
+      let newBase = width;
+      if (listWidth) {
+           const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
+           const availableWidth = listWidth - 80 - 32;
+           if (availableWidth > totalBaseWidth) {
+               const scale = availableWidth / totalBaseWidth;
+               newBase = width / scale;
+           }
+      }
+
+      const newWidths = { ...baseWidths, [key]: newBase };
+      setBaseWidths(newWidths);
       localStorage.setItem('relay-directory-columns', JSON.stringify(newWidths));
   };
 
@@ -331,17 +357,14 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       });
   };
 
-  // Optimistic State
   const [optimisticAdds, setOptimisticAdds] = useState<Contact[]>([]);
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, Partial<Contact>>>(new Map());
   const [optimisticDeletes, setOptimisticDeletes] = useState<Set<string>>(new Set());
 
-  // Edit/Delete State
   const [contextMenu, setContextMenu] = useState<{x: number, y: number, contact: Contact} | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<Contact | null>(null);
 
-  // Sync state on real update
   useEffect(() => {
     setOptimisticAdds([]);
     setOptimisticUpdates(new Map());
@@ -370,7 +393,6 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
 
   const { groupMap, groupStringMap } = useGroupMaps(groups);
 
-  // Close context menu on click elsewhere
   useEffect(() => {
       if (contextMenu) {
           const handler = () => setContextMenu(null);
@@ -390,7 +412,6 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
           const dir = sortConfig.direction === 'asc' ? 1 : -1;
 
           if (key === 'groups') {
-              // Bolt: Use pre-calculated joined strings for O(1) access
               const strA = groupStringMap.get(a.email.toLowerCase()) || '';
               const strB = groupStringMap.get(b.email.toLowerCase()) || '';
               return strA.localeCompare(strB) * dir;
@@ -403,7 +424,6 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       });
   }, [effectiveContacts, debouncedSearch, sortConfig, groupStringMap]);
 
-  // Bolt: Memoize callback to prevent itemData change and row re-renders
   const handleAddWrapper = useCallback((contact: Contact) => {
     onAddToAssembler(contact);
     setRecentlyAdded(prev => new Set(prev).add(contact.email));
@@ -417,7 +437,6 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   }, [onAddToAssembler]);
 
   const handleCreateContact = async (contact: Partial<Contact>) => {
-    // Optimistic Add
     const newContact = {
         name: contact.name || '',
         email: contact.email || '',
@@ -432,7 +451,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
 
     const success = await window.api?.addContact(contact);
     if (!success) {
-        setOptimisticAdds(prev => prev.filter(c => c.email !== contact.email)); // Revert
+        setOptimisticAdds(prev => prev.filter(c => c.email !== contact.email));
         showToast('Failed to create contact', 'error');
     }
   };
@@ -474,13 +493,11 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       }
   };
 
-  // Bolt: Memoize context menu handler
   const onContextMenu = useCallback((e: React.MouseEvent, contact: Contact) => {
       e.preventDefault();
       setContextMenu({ x: e.clientX, y: e.clientY, contact });
   }, []);
 
-  // Bolt: Memoize itemData to prevent full list re-render on unrelated state changes
   const itemData = useMemo(() => ({
     filtered,
     recentlyAdded,
@@ -488,11 +505,10 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     groups,
     groupMap,
     onContextMenu,
-    columnWidths,
+    columnWidths: scaledWidths, // Pass scaled widths
     columnOrder
-  }), [filtered, recentlyAdded, handleAddWrapper, groups, groupMap, onContextMenu, columnWidths, columnOrder]);
+  }), [filtered, recentlyAdded, handleAddWrapper, groups, groupMap, onContextMenu, scaledWidths, columnOrder]);
 
-  // Label Map
   const LABELS: Record<keyof typeof DEFAULT_WIDTHS, string> = {
       name: 'Name',
       title: 'Job Title',
@@ -509,7 +525,6 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       overflow: 'hidden',
       background: 'var(--color-bg-app)'
     }}>
-
       {/* Header / Actions */}
       <div style={{
         padding: '12px 16px',
@@ -526,14 +541,12 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
           style={{ width: '300px' }}
         />
-
         {filtered.length > 0 && (
           <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
             {filtered.length} matches
           </div>
         )}
          <div style={{flex:1}}></div>
-
         <ToolbarButton
           label="ADD CONTACT"
           onClick={() => setIsAddModalOpen(true)}
@@ -541,7 +554,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         />
       </div>
 
-      {/* Header Row - Matching ContactCard Columns */}
+      {/* Header Row */}
       <div style={{
         display: 'flex',
         padding: '10px 16px',
@@ -553,7 +566,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         letterSpacing: '0.05em',
         color: 'var(--color-text-tertiary)',
         gap: '16px',
-        overflow: 'hidden' // Hide scroll if headers exceed
+        overflow: 'hidden'
       }}>
          <DndContext
             sensors={sensors}
@@ -565,7 +578,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
                      <DraggableHeader key={key} id={key}>
                          <ResizableHeader
                             label={LABELS[key]}
-                            width={columnWidths[key]}
+                            width={scaledWidths[key]}
                             sortKey={key}
                             currentSort={sortConfig}
                             onSort={handleSort}
@@ -575,18 +588,17 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
                  ))}
              </SortableContext>
          </DndContext>
-
          <div style={{ width: '80px', textAlign: 'right', flexShrink: 0 }}>Actions</div>
       </div>
 
       {/* Virtualized List */}
       <div style={{ flex: 1 }}>
-        <AutoSizer>
+        <AutoSizer onResize={({ width }) => setListWidth(width)}>
           {({ height, width }) => (
             <List
               height={height}
               itemCount={filtered.length}
-              itemSize={50} // Denser row height
+              itemSize={50}
               width={width}
               itemData={itemData}
             >
@@ -616,14 +628,12 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleCreateContact}
       />
-
       <AddContactModal
         isOpen={!!editingContact}
         onClose={() => setEditingContact(null)}
         onSave={handleUpdateContact}
         editContact={editingContact || undefined}
       />
-
       <Modal
         isOpen={!!deleteConfirmation}
         onClose={() => setDeleteConfirmation(null)}
@@ -638,22 +648,12 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
                 This action cannot be undone.
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                <TactileButton
-                    onClick={() => setDeleteConfirmation(null)}
-                >
-                    Cancel
-                </TactileButton>
-                <TactileButton
-                    onClick={handleDeleteContact}
-                    variant="danger"
-                >
-                    Delete Contact
-                </TactileButton>
+                <TactileButton onClick={() => setDeleteConfirmation(null)}>Cancel</TactileButton>
+                <TactileButton onClick={handleDeleteContact} variant="danger">Delete Contact</TactileButton>
             </div>
         </div>
       </Modal>
 
-      {/* Context Menu */}
       {contextMenu && (
           <ContextMenu
             x={contextMenu.x}

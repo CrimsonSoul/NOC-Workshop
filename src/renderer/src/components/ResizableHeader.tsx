@@ -23,6 +23,7 @@ export const ResizableHeader = ({
     onSort: (key: any) => void
 }) => {
     const [isResizing, setIsResizing] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const startX = useRef(0);
     const startWidth = useRef(0);
 
@@ -63,33 +64,56 @@ export const ResizableHeader = ({
                 cursor: 'pointer'
             }}
             onClick={() => onSort(sortKey)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
-            {label}
+            <span style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                flex: 1
+            }}>
+                {label}
+            </span>
+
             {isSorted && (
                 <span style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>
                     {currentSort.direction === 'asc' ? '▲' : '▼'}
                 </span>
             )}
 
+            {/* Resize Handle Area */}
             <div
                 style={{
                     position: 'absolute',
                     right: 0,
                     top: 0,
                     bottom: 0,
-                    width: '4px',
+                    width: '8px', // Wider hit area
                     cursor: 'col-resize',
-                    zIndex: 10
+                    zIndex: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                 }}
                 onMouseDown={(e) => {
                     e.preventDefault();
-                    e.stopPropagation(); // Prevent sort click
+                    e.stopPropagation();
                     setIsResizing(true);
                     startX.current = e.clientX;
                     startWidth.current = width;
                     document.body.style.cursor = 'col-resize';
                 }}
-            />
+            >
+                {/* Visual Grabber (Attio Style) */}
+                <div style={{
+                    width: '2px',
+                    height: '12px',
+                    background: (isHovered || isResizing) ? 'var(--color-text-tertiary)' : 'transparent',
+                    borderRadius: '1px',
+                    transition: 'background 0.1s ease'
+                }} />
+            </div>
         </div>
     );
 };

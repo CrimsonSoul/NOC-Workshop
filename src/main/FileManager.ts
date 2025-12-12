@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { stringify } from 'csv-stringify/sync';
 import { parseCsvAsync, sanitizeField, desanitizeField } from './csvUtils';
+import { cleanAndFormatPhoneNumber } from './phoneUtils';
 
 const GROUP_FILES = ['groups.csv'];
 const CONTACT_FILES = ['contacts.csv'];
@@ -144,6 +145,31 @@ export class FileManager {
         const header = data[0].map((h: any) => desanitizeField(String(h).trim().toLowerCase()));
         const rows = data.slice(1);
 
+        // Identify phone column for cleaning
+        const phoneIdx = header.findIndex(h => ['phone', 'phone number', 'mobile'].includes(h));
+
+        let needsWrite = false;
+
+        // Clean phone numbers in memory if needed
+        if (phoneIdx !== -1) {
+             for (let i = 1; i < data.length; i++) {
+                 const rawPhone = desanitizeField(data[i][phoneIdx]);
+                 if (rawPhone) {
+                     const cleaned = cleanAndFormatPhoneNumber(String(rawPhone));
+                     if (cleaned !== rawPhone) {
+                         data[i][phoneIdx] = cleaned; // We will sanitize on write
+                         needsWrite = true;
+                     }
+                 }
+             }
+        }
+
+        if (needsWrite) {
+             console.log('[FileManager] Detected messy phone numbers. Cleaning and rewriting contacts.csv...');
+             const csvOutput = this.safeStringify(data);
+             this.rewriteFileDetached(path, csvOutput);
+        }
+
         return rows.map((rowValues: any[]) => {
           const row: { [key: string]: string } = {};
           header.forEach((h: string, i: number) => {
@@ -183,21 +209,18 @@ export class FileManager {
 
       try {
           const contents = await fs.readFile(path, 'utf-8');
-
-          // Robust parsing logic:
-          // 1. Scan first 20 lines for "VM-M" (Server Name) to detect header
-          // 2. Parse from that line
-          // 3. Filter garbage rows (empty VM-M)
-          // 4. Rewrite if dirty
-
           const lines = contents.split(/\r?\n/);
+
           let headerLineIndex = 0;
-          let isDirty = false;
+          let foundHeader = false;
+
+          const possibleHeaders = ['VM-M', 'Server Name', 'Name'];
 
           for(let i = 0; i < Math.min(lines.length, 20); i++) {
-              if (lines[i].includes('VM-M')) { // Fast check
+              const line = lines[i].toLowerCase();
+              if (possibleHeaders.some(h => line.includes(h.toLowerCase()))) {
                   headerLineIndex = i;
-                  if (i > 0) isDirty = true; // Skipped lines = dirty
+                  foundHeader = true;
                   break;
               }
           }
@@ -210,29 +233,38 @@ export class FileManager {
           const header = data[0].map((h: any) => desanitizeField(String(h).trim().toLowerCase()));
           const rows = data.slice(1);
 
+          // Standardize Headers
+          const STD_HEADERS = ['Name', 'Business Area', 'LOB', 'Comment', 'Owner', 'IT Contact', 'OS Type'];
+
           const findCol = (candidates: string[]) => {
               return header.findIndex(h => candidates.includes(h));
           };
 
-          const nameIdx = findCol(['vm-m', 'server name', 'name', 'vm name']);
-          const businessAreaIdx = findCol(['business area', 'businessarea']);
+          const nameIdx = findCol(['name', 'vm-m', 'server name', 'vm name']);
+          const baIdx = findCol(['business area', 'businessarea']);
           const lobIdx = findCol(['lob', 'line of business']);
           const commentIdx = findCol(['comment', 'comments', 'notes']);
-          const ownerIdx = findCol(['lob owner', 'owner', 'lobowner']);
-          const contactIdx = findCol(['it tech support contact', 'it support', 'contact', 'tech support']);
-          const osTypeIdx = findCol(['server os', 'os type', 'os']);
+          const ownerIdx = findCol(['owner', 'lob owner', 'lobowner']);
+          const contactIdx = findCol(['it contact', 'it tech support contact', 'it support', 'contact', 'tech support']);
+          const osIdx = findCol(['os type', 'server os', 'os']);
 
           if (nameIdx === -1) {
               console.error('[FileManager] No Name column found in servers.csv');
               return [];
           }
 
-          // Check if we have extra columns (more than the ~8 we need + maybe a few allowed)
-          // If we have > 20 columns, it's definitely the raw export -> trigger rewrite
-          if (header.length > 20) isDirty = true;
+          let needsRewrite = false;
+          if (headerLineIndex > 0) needsRewrite = true;
+
+          const currentHeaderStr = data[0].map((h: string) => String(h).trim()).join(',');
+          const stdHeaderStr = STD_HEADERS.join(',');
+
+          if (currentHeaderStr !== stdHeaderStr) {
+               needsRewrite = true;
+          }
 
           const results: Server[] = [];
-          const cleanDataForRewrite: string[][] = [['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS']];
+          const cleanDataForRewrite: string[][] = [STD_HEADERS];
 
           for(const rowValues of rows) {
               const getVal = (idx: number) => {
@@ -241,26 +273,24 @@ export class FileManager {
               };
 
               const name = getVal(nameIdx);
-              if (!name) {
-                  isDirty = true; // Found an empty row/sub-header -> dirty
-                  continue;
-              }
+              if (!name) continue;
 
-              const businessArea = getVal(businessAreaIdx);
+              const businessArea = getVal(baIdx);
               const lob = getVal(lobIdx);
               const comment = getVal(commentIdx);
               const owner = getVal(ownerIdx);
               const contact = getVal(contactIdx);
-              const osType = getVal(osTypeIdx);
+              const osType = getVal(osIdx);
 
-              const raw: Record<string, string> = {};
-              raw['vm-m'] = name;
-              raw['business area'] = businessArea;
-              raw['lob'] = lob;
-              raw['comment'] = comment;
-              raw['lob owner'] = owner;
-              raw['it tech support contact'] = contact;
-              raw['server os'] = osType;
+              const raw: Record<string, string> = {
+                  'name': name,
+                  'business area': businessArea,
+                  'lob': lob,
+                  'comment': comment,
+                  'owner': owner,
+                  'it contact': contact,
+                  'os type': osType
+              };
 
               results.push({
                   name,
@@ -277,28 +307,10 @@ export class FileManager {
               cleanDataForRewrite.push([name, businessArea, lob, comment, owner, contact, osType]);
           }
 
-          // If file was dirty (metadata lines, extra cols, or sub-headers), rewrite it
-          if (isDirty) {
-              console.log('[FileManager] servers.csv is dirty (raw export detected). Rewriting cleaned version...');
-              // Use safeStringify to sanitize before writing
+          if (needsRewrite) {
+              console.log('[FileManager] servers.csv has old headers or is dirty. Rewriting with standard headers...');
               const csvOutput = this.safeStringify(cleanDataForRewrite);
-              // Write without triggering reload loop?
-              // writeAndEmit triggers reload, but that's fine, the UI will just refresh with clean data.
-              // But we are currently INSIDE readAndEmit -> parseServers.
-              // If we call writeAndEmit, it calls readAndEmit again. Loop risk?
-              // No, because writeAndEmit sets isInternalWrite = true.
-              // However, readAndEmit calls parseServers.
-              // If we await writeAndEmit here, we are recursing.
-              // Better to fire and forget or schedule it?
-              // Actually, we should just write it. The watcher will see it.
-              // But we must suppress the watcher for this write, OR let it reload.
-
-              // We can't await writeAndEmit inside parseServers because parseServers is awaited by readAndEmit.
-              // This would be a deadlock if writeAndEmit also awaits readAndEmit.
-              // Let's modify writeAndEmit or use a direct write.
-
-              // We'll run it detached.
-              this.rewriteServersFile(path, csvOutput).catch(err => console.error('Failed to rewrite servers.csv', err));
+              this.rewriteFileDetached(path, csvOutput);
           }
 
           return results;
@@ -308,13 +320,15 @@ export class FileManager {
       }
   }
 
-  private async rewriteServersFile(path: string, content: string) {
+  private async rewriteFileDetached(path: string, content: string) {
       this.isInternalWrite = true;
       try {
           const tmpPath = `${path}.tmp`;
           await fs.writeFile(tmpPath, content, 'utf-8');
           await fs.rename(tmpPath, path);
-          console.log('[FileManager] servers.csv cleaned and saved.');
+          console.log(`[FileManager] Rewrote ${path}`);
+      } catch (err) {
+          console.error(`[FileManager] Failed to rewrite ${path}`, err);
       } finally {
           setTimeout(() => { this.isInternalWrite = false; }, 1000);
       }
@@ -325,14 +339,11 @@ export class FileManager {
   private async writeAndEmit(path: string, content: string) {
     this.isInternalWrite = true;
     try {
-      // Atomic write: write to .tmp file then rename
       const tmpPath = `${path}.tmp`;
       await fs.writeFile(tmpPath, content, 'utf-8');
       await fs.rename(tmpPath, path);
-
       await this.readAndEmit();
     } finally {
-      // Small delay to ensure chokidar event is ignored
       setTimeout(() => {
         this.isInternalWrite = false;
       }, 500);
@@ -351,7 +362,7 @@ export class FileManager {
       if (!existsSync(path)) return false;
 
       const contents = await fs.readFile(path, 'utf-8');
-      const data = await parseCsvAsync(contents); // Raw data (potentially sanitized on disk)
+      const data = await parseCsvAsync(contents);
 
       if (data.length < 2) return false;
 
@@ -360,26 +371,19 @@ export class FileManager {
 
       if (emailIdx === -1) return false;
 
-      const newData = [data[0]]; // Keep header (already sanitized/raw from disk)
+      const newData = [data[0]];
       let removed = false;
 
-      // Note: data[i][emailIdx] might be sanitized (e.g. '=foo' -> ''=foo')
-      // So we need to compare desanitized values
       for (let i = 1; i < data.length; i++) {
         const val = desanitizeField(data[i][emailIdx]);
         if (val === email) {
           removed = true;
-          // Skip this row (delete)
         } else {
           newData.push(data[i]);
         }
       }
 
       if (removed) {
-        // newData contains raw disk values (already sanitized), so we use standard stringify
-        // Wait, if we mutated it, we might have mixed sanitized and unsanitized.
-        // removeContact doesn't mutate fields, just removes rows.
-        // So existing fields are already sanitized.
         const csvOutput = stringify(newData);
         await this.writeAndEmit(path, csvOutput);
         return true;
@@ -398,46 +402,9 @@ export class FileManager {
       let contents = '';
       if (existsSync(path)) {
         contents = await fs.readFile(path, 'utf-8');
-      } else {
-        contents = '';
       }
 
-      const data = await parseCsvAsync(contents); // Raw data from disk
-
-      // Header is usually row 0. We need to desanitize to find columns.
-      let header: string[] = [];
-      if (data.length > 0) {
-        header = data[0].map(h => desanitizeField(String(h)));
-      } else {
-        header = ['Name', 'Title', 'Email', 'Phone'];
-        // If creating new, we will sanitize later
-        data.push(header); // This puts raw strings in data[0] temporarily
-      }
-
-      const findIdx = (names: string[]) => header.findIndex(h => names.includes(h.toLowerCase()));
-
-      // Re-read header incase we pushed (though we pushed raw)
-      if (data.length > 0) header = data[0].map(h => desanitizeField(String(h)));
-
-      let nameIdx = findIdx(['name', 'full name']);
-      let emailIdx = findIdx(['email', 'e-mail']);
-      let titleIdx = findIdx(['title', 'role', 'position']);
-      let phoneIdx = findIdx(['phone', 'phone number']);
-
-      // Ensure we have columns
-      const ensureCol = (names: string[], defaultName: string) => {
-          const idx = findIdx(names);
-          if (idx === -1) {
-              header.push(defaultName);
-              // Modifying data[0] requires updating the raw array
-              // Since we're adding a safe string 'Name', 'Email', etc., no sanitization needed usually,
-              // but consistency matters.
-              // data[0] currently holds mix of Sanitized (from disk) and Unsanitized (if we pushed above).
-              // Let's standardise: Working entirely with Desanitized data in memory, then Sanitize-All at end.
-              return header.length - 1;
-          }
-          return idx;
-      };
+      const data = await parseCsvAsync(contents);
 
       // Strategy: Convert EVERYTHING to desanitized in memory first.
       const workingData = data.map(row => row.map(cell => desanitizeField(cell)));
@@ -459,10 +426,14 @@ export class FileManager {
            workingData.push(workingHeader);
       }
 
-      nameIdx = ensureColWorking(['name', 'full name'], 'Name');
-      emailIdx = ensureColWorking(['email', 'e-mail'], 'Email');
-      titleIdx = ensureColWorking(['title', 'role', 'position'], 'Title');
-      phoneIdx = ensureColWorking(['phone', 'phone number'], 'Phone');
+      const nameIdx = ensureColWorking(['name', 'full name'], 'Name');
+      const emailIdx = ensureColWorking(['email', 'e-mail'], 'Email');
+      const titleIdx = ensureColWorking(['title', 'role', 'position'], 'Title');
+      const phoneIdx = ensureColWorking(['phone', 'phone number'], 'Phone');
+
+      if (contact.phone) {
+          contact.phone = cleanAndFormatPhoneNumber(contact.phone);
+      }
 
       let rowIndex = -1;
       if (emailIdx !== -1 && contact.email) {
@@ -470,14 +441,11 @@ export class FileManager {
       }
 
       if (rowIndex !== -1) {
-          // Update existing
           const row = workingData[rowIndex];
-          // Use !== undefined so we can clear fields with ""
           if (nameIdx !== -1 && contact.name !== undefined) row[nameIdx] = contact.name;
           if (titleIdx !== -1 && contact.title !== undefined) row[titleIdx] = contact.title;
           if (phoneIdx !== -1 && contact.phone !== undefined) row[phoneIdx] = contact.phone;
       } else {
-          // Add new
           const newRow = new Array(workingHeader.length).fill('');
           const setVal = (idx: number, val?: string) => { if (idx !== -1 && val !== undefined) newRow[idx] = val; };
 
@@ -489,7 +457,6 @@ export class FileManager {
           workingData.push(newRow);
       }
 
-      // Sanitize ALL and Write
       const csvOutput = this.safeStringify(workingData);
       await this.writeAndEmit(path, csvOutput);
       return true;
@@ -508,8 +475,6 @@ export class FileManager {
       }
 
       const data = await parseCsvAsync(contents);
-
-      // Work with desanitized data
       const workingData = data.map(row => row.map(c => desanitizeField(c)));
 
       if (workingData.length === 0) {
@@ -660,10 +625,8 @@ export class FileManager {
   public async importGroupsWithMapping(sourcePath: string): Promise<boolean> {
       try {
           const targetPath = join(this.rootDir, GROUP_FILES[0]);
-
           const sourceContent = await fs.readFile(sourcePath, 'utf-8');
           const sourceDataRaw = await parseCsvAsync(sourceContent);
-          // Source might contain injection attempts, so we desanitize then sanitize our way
           const sourceData = sourceDataRaw.map(r => r.map(c => desanitizeField(c)));
           if (sourceData.length === 0) return false;
 
@@ -683,7 +646,6 @@ export class FileManager {
           }
 
           const targetHeader = targetData[0];
-
           const getTargetGroupIdx = (groupName: string) => {
               let idx = targetHeader.findIndex((h: string) => h === groupName);
               if (idx === -1) {
@@ -739,7 +701,6 @@ export class FileManager {
           const csvOutput = this.safeStringify(targetData);
           await this.writeAndEmit(targetPath, csvOutput);
           return true;
-
       } catch (e) {
           console.error('[FileManager] importGroupsWithMapping error:', e);
           return false;
@@ -749,7 +710,6 @@ export class FileManager {
   public async importContactsWithMapping(sourcePath: string): Promise<boolean> {
       try {
           const targetPath = join(this.rootDir, CONTACT_FILES[0]);
-
           const sourceContent = await fs.readFile(sourcePath, 'utf-8');
           const sourceDataRaw = await parseCsvAsync(sourceContent);
           const sourceData = sourceDataRaw.map(r => r.map(c => desanitizeField(c)));
@@ -804,8 +764,10 @@ export class FileManager {
               if (!email) continue;
 
               const name = srcNameIdx !== -1 ? srcRow[srcNameIdx] : '';
-              const phone = srcPhoneIdx !== -1 ? srcRow[srcPhoneIdx] : '';
               const title = srcTitleIdx !== -1 ? srcRow[srcTitleIdx] : '';
+              let phone = srcPhoneIdx !== -1 ? srcRow[srcPhoneIdx] : '';
+
+              if (phone) phone = cleanAndFormatPhoneNumber(String(phone));
 
               let matchRowIdx = -1;
               for (let i = 1; i < targetData.length; i++) {
@@ -849,37 +811,35 @@ export class FileManager {
 
           const data = await parseCsvAsync(contents);
           const workingData = data.map(row => row.map(cell => desanitizeField(cell)));
-          let workingHeader = workingData.length > 0 ? workingData[0] : [];
 
-          const findIdx = (names: string[]) => workingHeader.findIndex(h => names.includes(h.toLowerCase()));
-          const ensureCol = (names: string[], defaultName: string) => {
-              let idx = findIdx(names);
+          const STD_HEADERS = ['Name', 'Business Area', 'LOB', 'Comment', 'Owner', 'IT Contact', 'OS Type'];
+
+          if (workingData.length === 0) {
+              workingData.push(STD_HEADERS);
+          }
+
+          let workingHeader = workingData[0];
+
+          const ensureCol = (name: string) => {
+              let idx = workingHeader.findIndex(h => h.toLowerCase() === name.toLowerCase());
               if (idx === -1) {
-                  workingHeader.push(defaultName);
+                  workingHeader.push(name);
                   for(let i=1; i<workingData.length; i++) workingData[i].push('');
                   idx = workingHeader.length - 1;
               }
               return idx;
           };
 
-          if (workingData.length === 0) {
-              workingHeader = ['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS'];
-              workingData.push(workingHeader);
-          }
-
-          // Use the EXACT headers requested by the user for new columns, or map to existing if they vary
-          // 'vm-m', 'server name', 'name', 'vm name'
-          const nameIdx = ensureCol(['vm-m', 'server name', 'name', 'vm name'], 'VM-M');
-          const businessAreaIdx = ensureCol(['business area', 'businessarea'], 'Business Area');
-          const lobIdx = ensureCol(['lob', 'line of business'], 'LOB');
-          const commentIdx = ensureCol(['comment', 'comments', 'notes'], 'Comment');
-          const ownerIdx = ensureCol(['lob owner', 'owner', 'lobowner'], 'LOB Owner');
-          const contactIdx = ensureCol(['it tech support contact', 'it support', 'contact', 'tech support'], 'IT Tech Support Contact');
-          const osTypeIdx = ensureCol(['server os', 'os type', 'os'], 'Server OS');
+          const nameIdx = ensureCol('Name');
+          const businessAreaIdx = ensureCol('Business Area');
+          const lobIdx = ensureCol('LOB');
+          const commentIdx = ensureCol('Comment');
+          const ownerIdx = ensureCol('Owner');
+          const contactIdx = ensureCol('IT Contact');
+          const osTypeIdx = ensureCol('OS Type');
 
           // Update or Add
           let rowIndex = -1;
-          // Use name as primary key
           if (server.name) {
               const lowerName = server.name.toLowerCase();
               rowIndex = workingData.findIndex((row, idx) => idx > 0 && row[nameIdx]?.trim().toLowerCase() === lowerName);
@@ -931,7 +891,7 @@ export class FileManager {
           if (workingData.length < 2) return false;
 
           const header = workingData[0].map(h => String(h).toLowerCase());
-          const nameIdx = header.findIndex(h => ['vm-m', 'server name', 'name', 'vm name'].includes(h));
+          const nameIdx = header.findIndex(h => ['name', 'server name', 'vm-m'].includes(h));
 
           if (nameIdx === -1) return false;
 
@@ -963,19 +923,18 @@ export class FileManager {
           const targetPath = join(this.rootDir, SERVER_FILES[0]);
           const sourceContent = await fs.readFile(sourcePath, 'utf-8');
 
-          // Header scan logic similar to parseServers
           const lines = sourceContent.split(/\r?\n/);
           let headerLineIndex = -1;
 
           for(let i = 0; i < Math.min(lines.length, 20); i++) {
-              if (lines[i].toLowerCase().includes('vm-m') || lines[i].toLowerCase().includes('server name')) {
+              if (lines[i].toLowerCase().includes('vm-m') || lines[i].toLowerCase().includes('server name') || lines[i].toLowerCase().includes('name')) {
                   headerLineIndex = i;
                   break;
               }
           }
 
           if (headerLineIndex === -1) {
-              return { success: false, message: 'Could not find "VM-M" or "Server Name" header in the first 20 lines.' };
+              return { success: false, message: 'Could not find "VM-M", "Server Name", or "Name" header in the first 20 lines.' };
           }
 
           const cleanContents = lines.slice(headerLineIndex).join('\n');
@@ -996,54 +955,48 @@ export class FileManager {
           const s_lobIdx = mapHeader(['lob', 'line of business']);
           const s_commentIdx = mapHeader(['comment', 'comments', 'notes']);
           const s_ownerIdx = mapHeader(['lob owner', 'owner', 'lobowner']);
-          const s_contactIdx = mapHeader(['it tech support contact', 'it support', 'contact', 'tech support']);
+          const s_contactIdx = mapHeader(['it tech support contact', 'it support', 'contact', 'tech support', 'it contact']);
           const s_osTypeIdx = mapHeader(['server os', 'os type', 'os']);
 
-          // If no name, abort
           if (s_nameIdx === -1) {
               return { success: false, message: 'No "VM-M" or "Server Name" column found in the header.' };
           }
 
           let targetData: any[][] = [];
+
+          // Load or Init Target with Standard Headers
+          const STD_HEADERS = ['Name', 'Business Area', 'LOB', 'Comment', 'Owner', 'IT Contact', 'OS Type'];
+
           if (existsSync(targetPath)) {
               const existing = await fs.readFile(targetPath, 'utf-8');
-              const existingLines = existing.split(/\r?\n/);
-              // We must use the same header scan logic for reading the EXISTING file too,
-              // otherwise we might append clean data to a dirty file or vice versa.
-              // However, FileManager.parseServers usually rewrites dirty files.
-              // So we can assume if it exists, it's mostly clean, OR we just trust parseCsvAsync.
-              // But if the existing file has a header at line 5, parseCsvAsync(existing) treats line 1 as header.
-              // This is risky.
-              // Better to re-use our parseServers logic or assume standard CSV.
-              // Since we rewrite on parse, it SHOULD be clean.
-              // But let's be safe and try to find header if parse fails or header looks wrong.
-              targetData = (await parseCsvAsync(existing)).map(r => r.map(c => desanitizeField(c)));
+              const dataRaw = await parseCsvAsync(existing);
+              targetData = dataRaw.map(r => r.map(c => desanitizeField(c)));
           }
 
           if (targetData.length === 0) {
-               targetData.push(['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS']);
+               targetData.push(STD_HEADERS);
           }
 
           const targetHeader = targetData[0].map(h => String(h).toLowerCase());
 
-          const ensureTargetCol = (candidates: string[], defaultName: string) => {
-              let idx = targetHeader.findIndex(h => candidates.includes(h));
+          const ensureTargetCol = (name: string) => {
+              let idx = targetHeader.findIndex(h => h === name.toLowerCase());
               if (idx === -1) {
-                  targetHeader.push(defaultName.toLowerCase());
-                  targetData[0].push(defaultName);
+                  targetHeader.push(name.toLowerCase());
+                  targetData[0].push(name); // Use proper case for display
                   for (let i = 1; i < targetData.length; i++) targetData[i].push('');
                   idx = targetHeader.length - 1;
               }
               return idx;
           };
 
-          const t_nameIdx = ensureTargetCol(['vm-m', 'server name', 'name', 'vm name'], 'VM-M');
-          const t_baIdx = ensureTargetCol(['business area', 'businessarea'], 'Business Area');
-          const t_lobIdx = ensureTargetCol(['lob', 'line of business'], 'LOB');
-          const t_commentIdx = ensureTargetCol(['comment', 'comments', 'notes'], 'Comment');
-          const t_ownerIdx = ensureTargetCol(['lob owner', 'owner', 'lobowner'], 'LOB Owner');
-          const t_contactIdx = ensureTargetCol(['it tech support contact', 'it support', 'contact', 'tech support'], 'IT Tech Support Contact');
-          const t_osTypeIdx = ensureTargetCol(['server os', 'os type', 'os'], 'Server OS');
+          const t_nameIdx = ensureTargetCol('Name');
+          const t_baIdx = ensureTargetCol('Business Area');
+          const t_lobIdx = ensureTargetCol('LOB');
+          const t_commentIdx = ensureTargetCol('Comment');
+          const t_ownerIdx = ensureTargetCol('Owner');
+          const t_contactIdx = ensureTargetCol('IT Contact');
+          const t_osTypeIdx = ensureTargetCol('OS Type');
 
           for (const row of sourceRows) {
               const name = row[s_nameIdx]?.trim();
@@ -1096,7 +1049,7 @@ export class FileManager {
   public async cleanupServerContacts() {
       console.log('[FileManager] Starting Server Contact Cleanup...');
       try {
-          const servers = await this.parseServers(); // Reuse robust parsing
+          const servers = await this.parseServers();
           const contacts = await this.parseContacts();
           const path = join(this.rootDir, SERVER_FILES[0]);
 
@@ -1111,31 +1064,17 @@ export class FileManager {
           }
 
           let changed = false;
-          // We need to work with the RAW structure to save it back correctly.
-          // parseServers returns Objects. We need to map them back to CSV rows?
-          // Or we can just modify the file by reading it again.
-          // Since we want to preserve unknown columns, we should read->modify->write like in import.
 
-          // Let's read the file again to get the grid
+          // Re-read file to get grid (since parseServers returns objects)
           const content = await fs.readFile(path, 'utf-8');
-           // Scan for header
-          const lines = content.split(/\r?\n/);
-          let headerLineIndex = 0;
-          for(let i = 0; i < Math.min(lines.length, 20); i++) {
-              if (lines[i].toLowerCase().includes('vm-m')) {
-                  headerLineIndex = i;
-                  break;
-              }
-          }
-          const cleanContent = lines.slice(headerLineIndex).join('\n');
-          const dataRaw = await parseCsvAsync(cleanContent);
+          const dataRaw = await parseCsvAsync(content);
           const data = dataRaw.map(r => r.map(c => desanitizeField(c)));
 
           if (data.length < 2) return;
 
           const header = data[0].map((h: any) => String(h).toLowerCase().trim());
-          const ownerIdx = header.findIndex(h => ['lob owner', 'owner', 'lobowner'].includes(h));
-          const contactIdx = header.findIndex(h => ['it tech support contact', 'it support', 'contact', 'tech support'].includes(h));
+          const ownerIdx = header.findIndex(h => h === 'owner' || h === 'lob owner');
+          const contactIdx = header.findIndex(h => h === 'it contact' || h === 'it tech support contact');
 
           if (ownerIdx === -1 && contactIdx === -1) return;
 
@@ -1145,7 +1084,6 @@ export class FileManager {
               const tryReplace = (idx: number) => {
                   if (idx !== -1 && row[idx]) {
                       const val = String(row[idx]).trim();
-                      // Check if it's an email
                       if (val.includes('@')) {
                           const match = emailToName.get(val.toLowerCase());
                           if (match && match !== val) {

@@ -96,17 +96,11 @@ const ServerRow = memo(({ index, style, data }: ListChildComponentProps<{
 
   const resolveContact = (val: string) => {
      if (!val) return null;
-     // Handle multiple emails separated by ;
-     // If multiple, we just resolve the first one for the avatar/color logic,
-     // or list them.
-     // Requirement: "replacing with name function isn't working for entrys that have multiple emails"
-     // This suggests we should try to replace ALL emails in the string with names.
-
      const parts = val.split(';').map(p => p.trim()).filter(p => p);
     const resolvedParts = parts.map(part => {
         const lowerVal = part.toLowerCase();
         const found = contactLookup.get(lowerVal);
-        return found ? found : { name: part, email: part }; // Return pseudo-contact if not found
+        return found ? found : { name: part, email: part };
      });
 
      return resolvedParts;
@@ -120,9 +114,6 @@ const ServerRow = memo(({ index, style, data }: ListChildComponentProps<{
           const resolvedList = resolveContact(rawVal);
 
           if (resolvedList && resolvedList.length > 0) {
-              // Just use the first one for the avatar logic to keep it clean,
-              // or maybe stack them? For a table row, usually simplest is best.
-              // Let's show the first one's avatar, and list names.
               const primary = resolvedList[0];
               const displayName = primary.name || primary.email; // Fallback
               const avatarLetter = displayName.charAt(0).toUpperCase();
@@ -187,8 +178,8 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | undefined>(undefined);
 
-  // Column Widths State
-  const [columnWidths, setColumnWidths] = useState(() => {
+  // Column Widths State (Base pixels)
+  const [baseWidths, setBaseWidths] = useState(() => {
       try {
           const saved = localStorage.getItem('relay-servers-columns');
           const parsed = saved ? JSON.parse(saved) : DEFAULT_WIDTHS;
@@ -198,12 +189,33 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       }
   });
 
-  // Column Order State
+  const [listWidth, setListWidth] = useState(0);
+
+  const scaledWidths = useMemo(() => {
+      if (!listWidth) return baseWidths;
+
+      const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
+      // Account for actions/gaps if any (none in ServersTab currently besides standard padding? Row has gap 16px. No actions col)
+      // Actually, standard padding: 16px left + 16px right = 32px.
+      // Gap between cols: 0 (cols have paddingRight).
+      // Let's assume just horizontal padding.
+      const availableWidth = listWidth - 32;
+
+      if (availableWidth <= totalBaseWidth) return baseWidths;
+
+      const scale = availableWidth / totalBaseWidth;
+      const scaled = { ...baseWidths };
+      (Object.keys(scaled) as (keyof typeof DEFAULT_WIDTHS)[]).forEach(k => {
+          scaled[k] = Math.floor(baseWidths[k] * scale);
+      });
+      return scaled;
+  }, [baseWidths, listWidth]);
+
+
   const [columnOrder, setColumnOrder] = useState<(keyof typeof DEFAULT_WIDTHS)[]>(() => {
       try {
           const saved = localStorage.getItem('relay-servers-order');
           const parsed = saved ? JSON.parse(saved) : DEFAULT_ORDER;
-          // Ensure all keys exist
           if (Array.isArray(parsed) && parsed.length === DEFAULT_ORDER.length) return parsed;
           return DEFAULT_ORDER;
       } catch {
@@ -214,7 +226,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   const sensors = useSensors(
     useSensor(PointerSensor, {
         activationConstraint: {
-            distance: 8, // Require drag of 8px to start, prevents accidental drags on click
+            distance: 8,
         }
     }),
     useSensor(KeyboardSensor, {
@@ -223,8 +235,18 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   );
 
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
-      const newWidths = { ...columnWidths, [key]: width };
-      setColumnWidths(newWidths);
+      let newBase = width;
+      if (listWidth) {
+           const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
+           const availableWidth = listWidth - 32;
+           if (availableWidth > totalBaseWidth) {
+               const scale = availableWidth / totalBaseWidth;
+               newBase = width / scale;
+           }
+      }
+
+      const newWidths = { ...baseWidths, [key]: newBase };
+      setBaseWidths(newWidths);
       localStorage.setItem('relay-servers-columns', JSON.stringify(newWidths));
   };
 
@@ -242,7 +264,6 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   };
 
   const contactLookup = useMemo(() => {
-      // Bolt: Pre-compute lookups so we avoid O(n) scans per cell render when resolving owners/contacts
       const map = new Map<string, Contact>();
       for (const contact of contacts) {
           if (contact.email) map.set(contact.email.toLowerCase(), contact);
@@ -283,10 +304,10 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   const itemData = useMemo(() => ({
     servers: filteredServers,
     contactLookup,
-    columns: columnWidths,
+    columns: scaledWidths, // Pass scaled
     columnOrder,
     onContextMenu: handleContextMenu
-  }), [filteredServers, contactLookup, columnWidths, columnOrder, handleContextMenu]);
+  }), [filteredServers, contactLookup, scaledWidths, columnOrder, handleContextMenu]);
 
   const handleDelete = async () => {
       if (contextMenu) {
@@ -303,7 +324,6 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       }
   };
 
-  // Close context menu on click elsewhere
   React.useEffect(() => {
       if (contextMenu) {
           const handler = () => setContextMenu(null);
@@ -313,7 +333,6 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       return;
   }, [contextMenu]);
 
-  // Map of Labels
   const LABELS: Record<keyof typeof DEFAULT_WIDTHS, string> = {
       name: 'Name',
       businessArea: 'Business Area',
@@ -384,7 +403,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
                       <DraggableHeader key={key} id={key}>
                           <ResizableHeader
                             label={LABELS[key]}
-                            width={columnWidths[key]}
+                            width={scaledWidths[key]}
                             sortKey={key}
                             currentSort={{ key: sortField, direction: sortOrder }}
                             onSort={handleHeaderSort}
@@ -398,7 +417,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
 
       {/* List */}
       <div style={{ flex: 1 }}>
-        <AutoSizer>
+        <AutoSizer onResize={({ width }) => setListWidth(width)}>
           {({ height, width }) => (
             <List
               height={height}
