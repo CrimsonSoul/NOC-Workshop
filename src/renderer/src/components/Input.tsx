@@ -89,27 +89,30 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
         style={{
           width: '100%',
           background: 'var(--color-bg-surface)',
-          border: '1px solid rgba(255, 255, 255, 0.12)', // Increased visibility (was var(--border-subtle) / 0.08)
-          borderRadius: '6px',
-          padding: '8px 12px',
-          paddingLeft: icon ? '32px' : '12px',
-          paddingRight: hasValue ? '32px' : '12px', // Make room for X
+          border: 'var(--border-medium)',
+          borderRadius: 'var(--radius-md)',
+          padding: 'var(--space-2) var(--space-3)',
+          paddingLeft: icon ? '32px' : 'var(--space-3)',
+          paddingRight: hasValue ? '32px' : 'var(--space-3)',
           fontSize: '13px',
           color: 'var(--color-text-primary)',
           outline: 'none',
           fontFamily: 'var(--font-family-base)',
-          transition: 'all 0.15s ease',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+          transition: 'all var(--transition-base)',
+          boxShadow: 'var(--shadow-xs)',
+          letterSpacing: '-0.01em',
           ...inputStyle
         }}
         onFocus={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-accent-blue)';
-          e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-accent-blue-dim)';
+          e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-accent-blue-dim), var(--shadow-sm)';
+          e.currentTarget.style.background = 'var(--color-bg-surface-elevated)';
           props.onFocus?.(e);
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-          e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+          e.currentTarget.style.borderColor = 'var(--border-medium)';
+          e.currentTarget.style.boxShadow = 'var(--shadow-xs)';
+          e.currentTarget.style.background = 'var(--color-bg-surface)';
           props.onBlur?.(e);
         }}
         {...props}
@@ -125,34 +128,39 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
             onClick={handleClear}
             style={{
                 position: 'absolute',
-                right: '8px',
+                right: 'var(--space-2)',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#A1A1AA', // Force visible color (Text Secondary)
+                color: 'var(--color-text-secondary)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '18px', // Slightly larger hit area
+                width: '18px',
                 height: '18px',
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                zIndex: 50, // Ensure strictly on top
-                transition: 'all 0.1s'
+                borderRadius: 'var(--radius-round)',
+                background: 'rgba(255, 255, 255, 0.08)',
+                zIndex: 50,
+                transition: 'all var(--transition-fast)',
+                border: '1px solid transparent'
             }}
             onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
-                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.color = 'var(--color-text-primary)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
             }}
             onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                e.currentTarget.style.color = '#A1A1AA';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.color = 'var(--color-text-secondary)';
+                e.currentTarget.style.borderColor = 'transparent';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
             }}
             title="Clear"
         >
              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                 <line x1="18" y1="6" x2="6" y2="18"></line>
-                 <line x1="6" y1="6" x2="18" y2="18"></line>
+                 <line x1="18" y1="6" x2="6" y2="18" />
+                 <line x1="6" y1="6" x2="18" y2="18" />
              </svg>
         </div>
       )}
