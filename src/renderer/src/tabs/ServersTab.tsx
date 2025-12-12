@@ -14,6 +14,22 @@ import { ResizableHeader } from '../components/ResizableHeader';
 import { getColorForString } from '../utils/colors';
 import { scaleColumns, reverseScale } from '../utils/columnSizing';
 
+// Custom PointerSensor that ignores resize handles
+class CustomPointerSensor extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: ({ nativeEvent: event }: React.PointerEvent) => {
+        // Ignore if clicking on a resize handle
+        if ((event.target as HTMLElement).closest('[data-resize-handle]')) {
+          return false;
+        }
+        return true;
+      },
+    },
+  ];
+}
+
 interface ServersTabProps {
   servers: Server[];
   contacts: Contact[];
@@ -221,7 +237,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   });
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(CustomPointerSensor, {
         activationConstraint: {
             distance: 8,
         }

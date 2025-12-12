@@ -84,6 +84,7 @@ export const ResizableHeader = ({
 
             {/* Resize Handle Area - Enhanced */}
             <div
+                data-resize-handle="true"
                 style={{
                     position: 'absolute',
                     right: 0,
