@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest, type RadarSnapshot, type MetricsData } from '@shared/ipc';
+import { IPC_CHANNELS, type BridgeAPI, type AppData, type AuthRequest, type RadarSnapshot, type MetricsData, type DataError, type ImportProgress } from '@shared/ipc';
 
 const api: BridgeAPI = {
   openPath: (path) => ipcRenderer.invoke(IPC_CHANNELS.OPEN_PATH, path),
@@ -28,6 +28,20 @@ const api: BridgeAPI = {
     ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_RELOAD_COMPLETED);
     ipcRenderer.on(IPC_CHANNELS.DATA_RELOAD_COMPLETED, (_event, success: boolean) => {
       callback(success);
+    });
+  },
+
+  onDataError: (callback) => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.DATA_ERROR);
+    ipcRenderer.on(IPC_CHANNELS.DATA_ERROR, (_event, error: DataError) => {
+      callback(error);
+    });
+  },
+
+  onImportProgress: (callback) => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.IMPORT_PROGRESS);
+    ipcRenderer.on(IPC_CHANNELS.IMPORT_PROGRESS, (_event, progress: ImportProgress) => {
+      callback(progress);
     });
   },
 

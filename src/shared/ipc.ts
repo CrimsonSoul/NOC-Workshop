@@ -49,6 +49,21 @@ export type RadarSnapshot = {
     lastUpdated: number;
 };
 
+export type DataError = {
+    type: 'validation' | 'parse' | 'write' | 'read';
+    message: string;
+    file?: string;
+    details?: any;
+};
+
+export type ImportProgress = {
+    stage: 'reading' | 'validating' | 'processing' | 'writing' | 'complete';
+    totalRows: number;
+    processedRows: number;
+    percentage: number;
+    message: string;
+};
+
 export type BridgeAPI = {
     openPath: (path: string) => Promise<void>;
     openExternal: (url: string) => Promise<void>;
@@ -60,6 +75,8 @@ export type BridgeAPI = {
     subscribeToData: (callback: (data: AppData) => void) => void;
     onReloadStart: (callback: () => void) => void;
     onReloadComplete: (callback: (success: boolean) => void) => void;
+    onDataError: (callback: (error: DataError) => void) => void;
+    onImportProgress: (callback: (progress: ImportProgress) => void) => void;
     reloadData: () => Promise<void>;
     onAuthRequested: (callback: (request: AuthRequest) => void) => void;
     submitAuth: (username: string, password: string) => void;
@@ -114,6 +131,8 @@ export const IPC_CHANNELS = {
     DATA_RELOAD: 'data:reload',
     DATA_RELOAD_STARTED: 'data:reload-started',
     DATA_RELOAD_COMPLETED: 'data:reload-completed',
+    DATA_ERROR: 'data:error',
+    IMPORT_PROGRESS: 'data:importProgress',
     AUTH_REQUESTED: 'auth:requested',
     AUTH_SUBMIT: 'auth:submit',
     AUTH_CANCEL: 'auth:cancel',

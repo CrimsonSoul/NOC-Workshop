@@ -1,12 +1,15 @@
 import chokidar from 'chokidar';
 import { join } from 'path';
 import { BrowserWindow } from 'electron';
-import { IPC_CHANNELS, type AppData, type Contact, type GroupMap, type Server } from '@shared/ipc';
+import { IPC_CHANNELS, type AppData, type Contact, type GroupMap, type Server, type DataError, type ImportProgress } from '@shared/ipc';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import { stringify } from 'csv-stringify/sync';
-import { parseCsvAsync, sanitizeField, desanitizeField } from './csvUtils';
+import { parseCsvAsync, sanitizeField, desanitizeField, stringifyCsv } from './csvUtils';
 import { cleanAndFormatPhoneNumber } from './phoneUtils';
+import { HeaderMatcher } from './HeaderMatcher';
+import { validateContacts, validateServers } from './csvValidation';
+import { STD_SERVER_HEADERS, STD_CONTACT_HEADERS, SERVER_COLUMN_ALIASES, CONTACT_COLUMN_ALIASES } from '@shared/csvTypes';
 
 const GROUP_FILES = ['groups.csv'];
 const CONTACT_FILES = ['contacts.csv'];
@@ -82,6 +85,19 @@ export class FileManager {
   private emitReloadCompleted(success: boolean) {
     if (!this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send(IPC_CHANNELS.DATA_RELOAD_COMPLETED, success);
+    }
+  }
+
+  private emitError(error: DataError) {
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send(IPC_CHANNELS.DATA_ERROR, error);
+      console.error(`[FileManager] Error: ${error.type} - ${error.message}`, error.details);
+    }
+  }
+
+  private emitProgress(progress: ImportProgress) {
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send(IPC_CHANNELS.IMPORT_PROGRESS, progress);
     }
   }
 
@@ -173,8 +189,9 @@ export class FileManager {
         const header = data[0].map((h: any) => desanitizeField(String(h).trim().toLowerCase()));
         const rows = data.slice(1);
 
-        // Identify phone column for cleaning
-        const phoneIdx = header.findIndex(h => ['phone', 'phone number', 'mobile'].includes(h));
+        // Use HeaderMatcher for flexible column matching
+        const matcher = new HeaderMatcher(header);
+        const phoneIdx = matcher.findColumn(CONTACT_COLUMN_ALIASES.phone);
 
         let needsWrite = false;
 
@@ -194,11 +211,11 @@ export class FileManager {
 
         if (needsWrite) {
              console.log('[FileManager] Detected messy phone numbers. Cleaning and rewriting contacts.csv...');
-             const csvOutput = this.safeStringify(data);
+             const csvOutput = stringifyCsv(data);
              this.rewriteFileDetached(path, csvOutput);
         }
 
-        return rows.map((rowValues: any[]) => {
+        const results = rows.map((rowValues: any[]) => {
           const row: { [key: string]: string } = {};
           header.forEach((h: string, i: number) => {
             row[h] = desanitizeField(rowValues[i]);
@@ -225,8 +242,28 @@ export class FileManager {
             raw: row
           };
         });
+
+        // Validate contacts and emit warnings
+        const validation = validateContacts(results);
+        if (validation.warnings.length > 0) {
+            const error: DataError = {
+                type: 'validation',
+                message: `Found ${validation.warnings.length} validation warnings in contacts.csv`,
+                file: 'contacts.csv',
+                details: validation.warnings
+            };
+            this.emitError(error);
+        }
+
+        return results;
     } catch (e) {
-        console.error('Error parsing contacts:', e);
+        const error: DataError = {
+            type: 'parse',
+            message: 'Error parsing contacts.csv',
+            file: 'contacts.csv',
+            details: e instanceof Error ? e.message : String(e)
+        };
+        this.emitError(error);
         return [];
     }
   }
@@ -240,15 +277,12 @@ export class FileManager {
           const lines = contents.split(/\r?\n/);
 
           let headerLineIndex = 0;
-          let foundHeader = false;
-
           const possibleHeaders = ['VM-M', 'Server Name', 'Name'];
 
           for(let i = 0; i < Math.min(lines.length, 20); i++) {
               const line = lines[i].toLowerCase();
               if (possibleHeaders.some(h => line.includes(h.toLowerCase()))) {
                   headerLineIndex = i;
-                  foundHeader = true;
                   break;
               }
           }
@@ -261,23 +295,24 @@ export class FileManager {
           const header = data[0].map((h: any) => desanitizeField(String(h).trim().toLowerCase()));
           const rows = data.slice(1);
 
-          // Standardize Headers
-          const STD_HEADERS = ['Name', 'Business Area', 'LOB', 'Comment', 'Owner', 'IT Contact', 'OS'];
+          // Use HeaderMatcher for flexible column matching
+          const matcher = new HeaderMatcher(header);
 
-          const findCol = (candidates: string[]) => {
-              return header.findIndex(h => candidates.includes(h));
-          };
-
-          const nameIdx = findCol(['name', 'vm-m', 'server name', 'vm name']);
-          const baIdx = findCol(['business area', 'businessarea']);
-          const lobIdx = findCol(['lob', 'line of business']);
-          const commentIdx = findCol(['comment', 'comments', 'notes']);
-          const ownerIdx = findCol(['owner', 'lob owner', 'lobowner']);
-          const contactIdx = findCol(['it contact', 'it tech support contact', 'it support', 'contact', 'tech support']);
-          const osIdx = findCol(['os type', 'server os', 'os']);
+          const nameIdx = matcher.findColumn(SERVER_COLUMN_ALIASES.name);
+          const baIdx = matcher.findColumn(SERVER_COLUMN_ALIASES.businessArea);
+          const lobIdx = matcher.findColumn(SERVER_COLUMN_ALIASES.lob);
+          const commentIdx = matcher.findColumn(SERVER_COLUMN_ALIASES.comment);
+          const ownerIdx = matcher.findColumn(SERVER_COLUMN_ALIASES.owner);
+          const contactIdx = matcher.findColumn(SERVER_COLUMN_ALIASES.contact);
+          const osIdx = matcher.findColumn(SERVER_COLUMN_ALIASES.os);
 
           if (nameIdx === -1) {
-              console.error('[FileManager] No Name column found in servers.csv');
+              const error: DataError = {
+                  type: 'parse',
+                  message: 'No Name column found in servers.csv',
+                  file: 'servers.csv'
+              };
+              this.emitError(error);
               return [];
           }
 
@@ -285,14 +320,14 @@ export class FileManager {
           if (headerLineIndex > 0) needsRewrite = true;
 
           const currentHeaderStr = data[0].map((h: string) => String(h).trim()).join(',');
-          const stdHeaderStr = STD_HEADERS.join(',');
+          const stdHeaderStr = [...STD_SERVER_HEADERS].join(',');
 
           if (currentHeaderStr !== stdHeaderStr) {
                needsRewrite = true;
           }
 
           const results: Server[] = [];
-          const cleanDataForRewrite: string[][] = [STD_HEADERS];
+          const cleanDataForRewrite: string[][] = [[...STD_SERVER_HEADERS]];
 
           for(const rowValues of rows) {
               const getVal = (idx: number) => {
@@ -335,15 +370,33 @@ export class FileManager {
               cleanDataForRewrite.push([name, businessArea, lob, comment, owner, contact, osType]);
           }
 
+          // Validate servers and emit warnings
+          const validation = validateServers(results);
+          if (validation.warnings.length > 0) {
+              const error: DataError = {
+                  type: 'validation',
+                  message: `Found ${validation.warnings.length} validation warnings in servers.csv`,
+                  file: 'servers.csv',
+                  details: validation.warnings
+              };
+              this.emitError(error);
+          }
+
           if (needsRewrite) {
               console.log('[FileManager] servers.csv has old headers or is dirty. Rewriting with standard headers...');
-              const csvOutput = this.safeStringify(cleanDataForRewrite);
+              const csvOutput = stringifyCsv(cleanDataForRewrite);
               this.rewriteFileDetached(path, csvOutput);
           }
 
           return results;
       } catch (e) {
-          console.error('Error parsing servers:', e);
+          const error: DataError = {
+              type: 'parse',
+              message: 'Error parsing servers.csv',
+              file: 'servers.csv',
+              details: e instanceof Error ? e.message : String(e)
+          };
+          this.emitError(error);
           return [];
       }
   }
@@ -380,8 +433,7 @@ export class FileManager {
 
   // Helper to stringify with sanitization
   private safeStringify(data: any[][]): string {
-      const sanitizedData = data.map(row => row.map(cell => sanitizeField(cell)));
-      return stringify(sanitizedData);
+      return stringifyCsv(data);
   }
 
   public async removeContact(email: string): Promise<boolean> {
@@ -864,31 +916,20 @@ export class FileManager {
           const data = await parseCsvAsync(contents);
           const workingData = data.map(row => row.map(cell => desanitizeField(cell)));
 
-          const STD_HEADERS = ['Name', 'Business Area', 'LOB', 'Comment', 'Owner', 'IT Contact', 'OS'];
-
           if (workingData.length === 0) {
-              workingData.push(STD_HEADERS);
+              workingData.push([...STD_SERVER_HEADERS]);
           }
 
           let workingHeader = workingData[0];
+          const matcher = new HeaderMatcher(workingHeader);
 
-          const ensureCol = (name: string) => {
-              let idx = workingHeader.findIndex(h => h.toLowerCase() === name.toLowerCase());
-              if (idx === -1) {
-                  workingHeader.push(name);
-                  for(let i=1; i<workingData.length; i++) workingData[i].push('');
-                  idx = workingHeader.length - 1;
-              }
-              return idx;
-          };
-
-          const nameIdx = ensureCol('Name');
-          const businessAreaIdx = ensureCol('Business Area');
-          const lobIdx = ensureCol('LOB');
-          const commentIdx = ensureCol('Comment');
-          const ownerIdx = ensureCol('Owner');
-          const contactIdx = ensureCol('IT Contact');
-          const osTypeIdx = ensureCol('OS');
+          const nameIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.name, STD_SERVER_HEADERS[0], workingData);
+          const businessAreaIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.businessArea, STD_SERVER_HEADERS[1], workingData);
+          const lobIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.lob, STD_SERVER_HEADERS[2], workingData);
+          const commentIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.comment, STD_SERVER_HEADERS[3], workingData);
+          const ownerIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.owner, STD_SERVER_HEADERS[4], workingData);
+          const contactIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.contact, STD_SERVER_HEADERS[5], workingData);
+          const osTypeIdx = matcher.ensureColumn(SERVER_COLUMN_ALIASES.os, STD_SERVER_HEADERS[6], workingData);
 
           // Update or Add
           let rowIndex = -1;
