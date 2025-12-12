@@ -8,6 +8,26 @@ import { copyDataFiles, ensureDataFiles, loadConfig, saveConfig } from './dataUt
 import { validateDataPath } from './pathValidation';
 import { setupIpcHandlers } from './ipcHandlers';
 
+// Windows-specific optimizations for faster app launch
+if (process.platform === 'win32') {
+  // Disable V8 code cache - can slow down startup on Windows
+  app.commandLine.appendSwitch('disable-v8-code-cache');
+
+  // Optimize GPU process for faster window creation
+  app.commandLine.appendSwitch('disable-gpu-sandbox');
+  app.commandLine.appendSwitch('disable-software-rasterizer');
+
+  // Disable background throttling for faster startup
+  app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+  app.commandLine.appendSwitch('disable-renderer-backgrounding');
+
+  // Use less memory but faster startup
+  app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
+
+  // Disable unnecessary features for faster launch
+  app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+}
+
 let mainWindow: BrowserWindow | null = null;
 let fileManager: FileManager | null = null;
 let bridgeLogger: BridgeLogger | null = null;
@@ -57,12 +77,19 @@ async function createWindow(dataRoot: string) {
     minHeight: 600,
     backgroundColor: '#0b0d12',
     titleBarStyle: 'hidden',
+    show: false, // Don't show until ready for smoother appearance
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      webviewTag: true
+      webviewTag: true,
+      // Windows-specific optimizations
+      ...(process.platform === 'win32' && {
+        spellcheck: false, // Disable spellcheck for faster startup
+        enableWebSQL: false,
+        v8CacheOptions: 'none' // Disable V8 cache for faster initial load
+      })
     }
   });
 
@@ -72,6 +99,11 @@ async function createWindow(dataRoot: string) {
     const indexHtml = join(__dirname, '../renderer/index.html');
     await mainWindow.loadFile(indexHtml);
   }
+
+  // Show window when ready - improves perceived startup time
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
+  });
 
   fileManager = new FileManager(mainWindow, dataRoot, getBundledDataPath());
   bridgeLogger = new BridgeLogger(dataRoot);

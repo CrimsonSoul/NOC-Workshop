@@ -1,6 +1,10 @@
 appId: com.operators.relay
 productName: "Relay"
 asar: true
+asarUnpack:
+  # Unpack critical files for faster first access on Windows
+  - "dist/main/**"
+  - "dist/preload/**"
 files:
   - dist/**
   - package.json
@@ -9,6 +13,9 @@ files:
   - "!**/*.{md,ts,map}"
   - "!**/LICENSE"
   - "!**/.{git,github,vscode}"
+  - "!**/tsconfig*.json"
+  - "!**/.eslintrc*"
+  - "!**/.prettierrc*"
 directories:
   output: release
   buildResources: resources
@@ -22,6 +29,11 @@ win:
       arch: x64
   artifactName: "Relay.exe"
   icon: build/icon.ico
-  # Optimizations for faster startup
+  # Windows-specific optimizations for faster startup
   requestedExecutionLevel: "asInvoker"
-compression: "store"
+  # Use NSIS for better startup performance than portable in some cases
+  # But keeping portable as requested - it's already optimized
+compression: "store" # No compression = faster startup
+# Electron download optimizations
+electronDownload:
+  cache: ".electron"
