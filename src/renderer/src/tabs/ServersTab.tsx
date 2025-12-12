@@ -29,13 +29,12 @@ const DEFAULT_WIDTHS = {
   comment: 200,
   owner: 200,
   contact: 200,
-  osType: 100,
-  os: 150
+  osType: 100
 };
 
 // Default Column Order
 const DEFAULT_ORDER: (keyof typeof DEFAULT_WIDTHS)[] = [
-    'name', 'businessArea', 'lob', 'comment', 'owner', 'contact', 'osType', 'os'
+    'name', 'businessArea', 'lob', 'comment', 'owner', 'contact', 'osType'
 ];
 
 // OS Formatter
@@ -86,7 +85,7 @@ const ServerRow = memo(({ index, style, data }: ListChildComponentProps<{
   const server = servers[index];
 
   const formatValue = (key: keyof typeof DEFAULT_WIDTHS, val: string | undefined) => {
-      if (key === 'osType' || key === 'os') {
+      if (key === 'osType') {
           return formatOS(val);
       }
       if (!val) return '-';
@@ -253,7 +252,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   }, [contacts]);
 
   const filteredServers = useMemo(() => {
-    let result = servers;
+    let result = [...servers];
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       result = result.filter(s => s._searchString.includes(q));
@@ -322,8 +321,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       comment: 'Comment',
       owner: 'Owner',
       contact: 'IT Contact',
-      osType: 'OS Type',
-      os: 'OS'
+      osType: 'OS Type'
   };
 
 

@@ -221,7 +221,6 @@ export class FileManager {
           const ownerIdx = findCol(['lob owner', 'owner', 'lobowner']);
           const contactIdx = findCol(['it tech support contact', 'it support', 'contact', 'tech support']);
           const osTypeIdx = findCol(['server os', 'os type', 'os']);
-          const osIdx = findCol(['os according to the configuration file', 'config os', 'configuration os']);
 
           if (nameIdx === -1) {
               console.error('[FileManager] No Name column found in servers.csv');
@@ -233,7 +232,7 @@ export class FileManager {
           if (header.length > 20) isDirty = true;
 
           const results: Server[] = [];
-          const cleanDataForRewrite: string[][] = [['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS', 'OS According to the Configuration File']];
+          const cleanDataForRewrite: string[][] = [['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS']];
 
           for(const rowValues of rows) {
               const getVal = (idx: number) => {
@@ -253,7 +252,6 @@ export class FileManager {
               const owner = getVal(ownerIdx);
               const contact = getVal(contactIdx);
               const osType = getVal(osTypeIdx);
-              const os = getVal(osIdx);
 
               const raw: Record<string, string> = {};
               raw['vm-m'] = name;
@@ -263,7 +261,6 @@ export class FileManager {
               raw['lob owner'] = owner;
               raw['it tech support contact'] = contact;
               raw['server os'] = osType;
-              raw['os according to the configuration file'] = os;
 
               results.push({
                   name,
@@ -273,12 +270,11 @@ export class FileManager {
                   owner,
                   contact,
                   osType,
-                  os,
-                  _searchString: `${name} ${businessArea} ${lob} ${owner} ${contact} ${osType} ${os} ${comment}`.toLowerCase(),
+                  _searchString: `${name} ${businessArea} ${lob} ${owner} ${contact} ${osType} ${comment}`.toLowerCase(),
                   raw
               });
 
-              cleanDataForRewrite.push([name, businessArea, lob, comment, owner, contact, osType, os]);
+              cleanDataForRewrite.push([name, businessArea, lob, comment, owner, contact, osType]);
           }
 
           // If file was dirty (metadata lines, extra cols, or sub-headers), rewrite it
@@ -867,7 +863,7 @@ export class FileManager {
           };
 
           if (workingData.length === 0) {
-              workingHeader = ['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS', 'OS According to the Configuration File'];
+              workingHeader = ['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS'];
               workingData.push(workingHeader);
           }
 
@@ -880,7 +876,6 @@ export class FileManager {
           const ownerIdx = ensureCol(['lob owner', 'owner', 'lobowner'], 'LOB Owner');
           const contactIdx = ensureCol(['it tech support contact', 'it support', 'contact', 'tech support'], 'IT Tech Support Contact');
           const osTypeIdx = ensureCol(['server os', 'os type', 'os'], 'Server OS');
-          const osIdx = ensureCol(['os according to the configuration file', 'config os', 'configuration os'], 'OS According to the Configuration File');
 
           // Update or Add
           let rowIndex = -1;
@@ -903,7 +898,6 @@ export class FileManager {
                setVal(row, ownerIdx, server.owner);
                setVal(row, contactIdx, server.contact);
                setVal(row, osTypeIdx, server.osType);
-               setVal(row, osIdx, server.os);
           } else {
                const newRow = new Array(workingHeader.length).fill('');
                setVal(newRow, nameIdx, server.name);
@@ -913,7 +907,6 @@ export class FileManager {
                setVal(newRow, ownerIdx, server.owner);
                setVal(newRow, contactIdx, server.contact);
                setVal(newRow, osTypeIdx, server.osType);
-               setVal(newRow, osIdx, server.os);
                workingData.push(newRow);
           }
 
@@ -1005,7 +998,6 @@ export class FileManager {
           const s_ownerIdx = mapHeader(['lob owner', 'owner', 'lobowner']);
           const s_contactIdx = mapHeader(['it tech support contact', 'it support', 'contact', 'tech support']);
           const s_osTypeIdx = mapHeader(['server os', 'os type', 'os']);
-          const s_osIdx = mapHeader(['os according to the configuration file', 'config os', 'configuration os']);
 
           // If no name, abort
           if (s_nameIdx === -1) {
@@ -1029,7 +1021,7 @@ export class FileManager {
           }
 
           if (targetData.length === 0) {
-               targetData.push(['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS', 'OS According to the Configuration File']);
+               targetData.push(['VM-M', 'Business Area', 'LOB', 'Comment', 'LOB Owner', 'IT Tech Support Contact', 'Server OS']);
           }
 
           const targetHeader = targetData[0].map(h => String(h).toLowerCase());
@@ -1052,7 +1044,6 @@ export class FileManager {
           const t_ownerIdx = ensureTargetCol(['lob owner', 'owner', 'lobowner'], 'LOB Owner');
           const t_contactIdx = ensureTargetCol(['it tech support contact', 'it support', 'contact', 'tech support'], 'IT Tech Support Contact');
           const t_osTypeIdx = ensureTargetCol(['server os', 'os type', 'os'], 'Server OS');
-          const t_osIdx = ensureTargetCol(['os according to the configuration file', 'config os', 'configuration os'], 'OS According to the Configuration File');
 
           for (const row of sourceRows) {
               const name = row[s_nameIdx]?.trim();
@@ -1076,7 +1067,6 @@ export class FileManager {
                   if (s_ownerIdx !== -1) tRow[t_ownerIdx] = getValue(s_ownerIdx);
                   if (s_contactIdx !== -1) tRow[t_contactIdx] = getValue(s_contactIdx);
                   if (s_osTypeIdx !== -1) tRow[t_osTypeIdx] = getValue(s_osTypeIdx);
-                  if (s_osIdx !== -1) tRow[t_osIdx] = getValue(s_osIdx);
               } else {
                   const newRow = new Array(targetData[0].length).fill('');
                   newRow[t_nameIdx] = name;
@@ -1086,7 +1076,6 @@ export class FileManager {
                   newRow[t_ownerIdx] = getValue(s_ownerIdx);
                   newRow[t_contactIdx] = getValue(s_contactIdx);
                   newRow[t_osTypeIdx] = getValue(s_osTypeIdx);
-                  newRow[t_osIdx] = getValue(s_osIdx);
                   targetData.push(newRow);
               }
           }

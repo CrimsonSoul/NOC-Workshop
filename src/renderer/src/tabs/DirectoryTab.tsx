@@ -52,7 +52,8 @@ const DraggableHeader = ({ id, children }: { id: string, children: React.ReactNo
         alignItems: 'center',
         zIndex: isDragging ? 10 : 'auto',
         position: isDragging ? 'relative' : undefined,
-        cursor: 'grab'
+        cursor: 'grab',
+        touchAction: 'none'
     } as React.CSSProperties;
 
     return (

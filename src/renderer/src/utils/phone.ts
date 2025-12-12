@@ -25,48 +25,45 @@ export const sanitizePhoneNumber = (phone: string): string => {
   return hasPlus ? `+${digits}` : digits;
 };
 
+const formatSingleNumber = (clean: string): string => {
+    // 10 digits: XXXXXXXXXX (US Standard simplified)
+    if (/^\d{10}$/.test(clean)) {
+        return clean;
+    }
+
+    // 11 digits starting with 1: XXXXXXXXXX (Strip leading 1)
+    if (/^1\d{10}$/.test(clean)) {
+        return clean.slice(1);
+    }
+
+    // +1 followed by 10 digits: XXXXXXXXXX (Strip +1)
+    if (/^\+1\d{10}$/.test(clean)) {
+        return clean.slice(2);
+    }
+
+    // Generic International: +XXXXXXXXX (No spaces)
+    // Matches + followed by any digits.
+    if (clean.startsWith('+')) {
+        return clean;
+    }
+
+    return clean;
+};
+
 export const formatPhoneNumber = (phone: string): string => {
   if (!phone) return '';
   const clean = sanitizePhoneNumber(phone);
 
-  // 10 digits: (XXX) XXX-XXXX
-  if (/^\d{10}$/.test(clean)) {
-    return `(${clean.slice(0,3)}) ${clean.slice(3,6)}-${clean.slice(6)}`;
+  // Check for "Run-on" numbers (concatenated 10-digit numbers)
+  // e.g. 55555555551111111111 (20 digits) -> split
+  // Logic: multiple of 10 digits, > 10
+  if (/^\d+$/.test(clean) && clean.length > 10 && clean.length % 10 === 0) {
+      const parts: string[] = [];
+      for (let i = 0; i < clean.length; i += 10) {
+          parts.push(clean.slice(i, i + 10));
+      }
+      return parts.map(formatSingleNumber).join(', ');
   }
 
-  // 11 digits starting with 1: +1 (XXX) XXX-XXXX
-  if (/^1\d{10}$/.test(clean)) {
-    return `+1 (${clean.slice(1,4)}) ${clean.slice(4,7)}-${clean.slice(7)}`;
-  }
-
-  // +1 followed by 10 digits: +1 (XXX) XXX-XXXX
-  if (/^\+1\d{10}$/.test(clean)) {
-     const nums = clean.slice(2);
-     return `+1 (${nums.slice(0,3)}) ${nums.slice(3,6)}-${nums.slice(6)}`;
-  }
-
-  // Generic +1 fallback (e.g. extensions or partials)
-  if (clean.startsWith('+1') && clean.length > 2) {
-     const nums = clean.slice(2);
-     if (nums.length <= 3) return `+1 (${nums})`;
-     if (nums.length <= 6) return `+1 (${nums.slice(0,3)}) ${nums.slice(3)}`;
-     // +1 (555) 123-4567...
-     return `+1 (${nums.slice(0,3)}) ${nums.slice(3,6)}-${nums.slice(6)}`;
-  }
-
-  // Generic International: +XX ...
-  // Matches +XX followed by any digits.
-  // We use a heuristic of 2-digit country code and 4-digit chunks.
-  const intlMatch = clean.match(/^\+(\d{2})(\d+)/);
-  if (intlMatch) {
-      const cc = intlMatch[1];
-      const rest = intlMatch[2];
-      // Format rest in chunks of 4
-      const chunks = rest.match(/.{1,4}/g)?.join(' ') || rest;
-      return `+${cc} ${chunks}`;
-  }
-
-  // Fallback: return the cleaned number
-  // If it's a raw number but didn't match 10 digits (e.g. 7 digits), returns clean.
-  return clean;
+  return formatSingleNumber(clean);
 };
