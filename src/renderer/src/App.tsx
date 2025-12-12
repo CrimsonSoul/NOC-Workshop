@@ -1,17 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { SettingsMenu } from './components/SettingsMenu';
-import { SettingsModal } from './components/SettingsModal';
 import { WorldClock } from './components/WorldClock';
 import { AssemblerTab } from './tabs/AssemblerTab';
-import { DirectoryTab } from './tabs/DirectoryTab';
-import { ServersTab } from './tabs/ServersTab';
-import { RadarTab } from './tabs/RadarTab';
-import { MetricsTab } from './tabs/MetricsTab';
 import { WindowControls } from './components/WindowControls';
 import { ToastProvider } from './components/Toast';
 import { AppData, Contact } from '@shared/ipc';
+import { TabFallback } from './components/TabFallback';
 import './styles.css';
+
+// Lazy load non-default tabs and settings modal to optimize initial bundle size
+const DirectoryTab = lazy(() => import('./tabs/DirectoryTab').then(m => ({ default: m.DirectoryTab })));
+const ServersTab = lazy(() => import('./tabs/ServersTab').then(m => ({ default: m.ServersTab })));
+const RadarTab = lazy(() => import('./tabs/RadarTab').then(m => ({ default: m.RadarTab })));
+const MetricsTab = lazy(() => import('./tabs/MetricsTab').then(m => ({ default: m.MetricsTab })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 
 type Tab = 'Compose' | 'People' | 'Servers' | 'Reports' | 'Live';
 
@@ -182,29 +184,37 @@ export function MainApp() {
           )}
           {activeTab === 'People' && (
              <div className="animate-fade-in" style={{ height: '100%' }}>
-              <DirectoryTab
-                contacts={data.contacts}
-                groups={data.groups}
-                onAddToAssembler={handleAddToAssembler}
-              />
+              <Suspense fallback={<TabFallback />}>
+                <DirectoryTab
+                  contacts={data.contacts}
+                  groups={data.groups}
+                  onAddToAssembler={handleAddToAssembler}
+                />
+              </Suspense>
             </div>
           )}
           {activeTab === 'Servers' && (
             <div className="animate-fade-in" style={{ height: '100%' }}>
-              <ServersTab
-                servers={data.servers}
-                contacts={data.contacts}
-              />
+              <Suspense fallback={<TabFallback />}>
+                <ServersTab
+                  servers={data.servers}
+                  contacts={data.contacts}
+                />
+              </Suspense>
             </div>
           )}
           {activeTab === 'Reports' && (
              <div className="animate-fade-in" style={{ height: '100%' }}>
-               <MetricsTab />
+               <Suspense fallback={<TabFallback />}>
+                 <MetricsTab />
+               </Suspense>
              </div>
           )}
           {activeTab === 'Live' && (
             <div className="animate-fade-in" style={{ height: '100%' }}>
-              <RadarTab />
+              <Suspense fallback={<TabFallback />}>
+                <RadarTab />
+              </Suspense>
             </div>
           )}
         </div>
@@ -215,15 +225,19 @@ export function MainApp() {
           <WindowControls />
       </div>
 
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        isSyncing={isReloading}
-        onSync={handleSync}
-        onImportGroups={handleImportGroups}
-        onImportContacts={handleImportContacts}
-        onImportServers={handleImportServers}
-      />
+      <Suspense fallback={null}>
+        {settingsOpen && (
+          <SettingsModal
+            isOpen={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            isSyncing={isReloading}
+            onSync={handleSync}
+            onImportGroups={handleImportGroups}
+            onImportContacts={handleImportContacts}
+            onImportServers={handleImportServers}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
