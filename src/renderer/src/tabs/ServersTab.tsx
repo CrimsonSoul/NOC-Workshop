@@ -12,6 +12,7 @@ import { AddServerModal } from '../components/AddServerModal';
 import { ToolbarButton } from '../components/ToolbarButton';
 import { ResizableHeader } from '../components/ResizableHeader';
 import { getColorForString } from '../utils/colors';
+import { scaleColumns, reverseScale } from '../utils/columnSizing';
 
 interface ServersTabProps {
   servers: Server[];
@@ -194,21 +195,15 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   const scaledWidths = useMemo(() => {
       if (!listWidth) return baseWidths;
 
-      const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
-      // Account for actions/gaps if any (none in ServersTab currently besides standard padding? Row has gap 16px. No actions col)
-      // Actually, standard padding: 16px left + 16px right = 32px.
-      // Gap between cols: 0 (cols have paddingRight).
-      // Let's assume just horizontal padding.
-      const availableWidth = listWidth - 32;
+      // Account for horizontal padding (16px left + 16px right = 32px)
+      const RESERVED_SPACE = 32;
 
-      if (availableWidth <= 0) return baseWidths;
-
-      const scale = availableWidth / totalBaseWidth;
-      const scaled = { ...baseWidths };
-      (Object.keys(scaled) as (keyof typeof DEFAULT_WIDTHS)[]).forEach(k => {
-          scaled[k] = Math.floor(baseWidths[k] * scale);
-      });
-      return scaled;
+      return scaleColumns({
+          baseWidths,
+          availableWidth: listWidth,
+          minColumnWidth: 50,
+          reservedSpace: RESERVED_SPACE
+      }) as typeof DEFAULT_WIDTHS;
   }, [baseWidths, listWidth]);
 
 
@@ -235,15 +230,12 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   );
 
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
+      const RESERVED_SPACE = 32;
+
       let newBase = width;
       if (listWidth) {
            const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
-           const availableWidth = listWidth - 32;
-           // Apply reverse scaling logic always
-           if (availableWidth > 0) {
-              const scale = availableWidth / totalBaseWidth;
-              newBase = width / scale;
-           }
+           newBase = reverseScale(width, listWidth, totalBaseWidth, RESERVED_SPACE);
       }
 
       const newWidths = { ...baseWidths, [key]: newBase };

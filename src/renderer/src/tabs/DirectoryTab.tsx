@@ -16,6 +16,7 @@ import { Input } from '../components/Input';
 import { TactileButton } from '../components/TactileButton';
 import { ContextMenu } from '../components/ContextMenu';
 import { ResizableHeader } from '../components/ResizableHeader';
+import { scaleColumns, reverseScale } from '../utils/columnSizing';
 
 type Props = {
   contacts: Contact[];
@@ -269,18 +270,15 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const scaledWidths = useMemo(() => {
       if (!listWidth) return baseWidths;
 
-      const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
       // Account for actions column (80px) and gap/padding (~32px)
-      const availableWidth = listWidth - 80 - 32;
+      const RESERVED_SPACE = 80 + 32;
 
-      if (availableWidth <= 0) return baseWidths;
-
-      const scale = availableWidth / totalBaseWidth;
-      const scaled = { ...baseWidths };
-      (Object.keys(scaled) as (keyof typeof DEFAULT_WIDTHS)[]).forEach(k => {
-          scaled[k] = Math.floor(baseWidths[k] * scale);
-      });
-      return scaled;
+      return scaleColumns({
+          baseWidths,
+          availableWidth: listWidth,
+          minColumnWidth: 50,
+          reservedSpace: RESERVED_SPACE
+      }) as typeof DEFAULT_WIDTHS;
   }, [baseWidths, listWidth]);
 
 
@@ -309,16 +307,12 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
       // When user manually resizes, we update the BASE width.
       // We reverse the scale to save "true" preference.
+      const RESERVED_SPACE = 80 + 32;
 
       let newBase = width;
       if (listWidth) {
            const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
-           const availableWidth = listWidth - 80 - 32;
-           // Apply reverse scaling logic always since we scale both up and down now
-           if (availableWidth > 0) {
-              const scale = availableWidth / totalBaseWidth;
-              newBase = width / scale;
-           }
+           newBase = reverseScale(width, listWidth, totalBaseWidth, RESERVED_SPACE);
       }
 
       const newWidths = { ...baseWidths, [key]: newBase };
