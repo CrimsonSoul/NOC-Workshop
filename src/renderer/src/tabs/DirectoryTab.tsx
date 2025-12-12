@@ -272,7 +272,8 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
 
       // Account for actions column (80px), padding (16px left + 16px right = 32px)
       // and gaps between columns (5 columns + 1 actions = 6 elements, so 5 gaps * 16px = 80px)
-      const RESERVED_SPACE = 80 + 32 + 80;
+      // plus ~12px for scrollbar to avoid cutoff
+      const RESERVED_SPACE = 80 + 32 + 80 + 12;
 
       return scaleColumns({
           baseWidths,
@@ -308,7 +309,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
       // When user manually resizes, we update the BASE width.
       // We reverse the scale to save "true" preference.
-      const RESERVED_SPACE = 80 + 32 + 80;
+      const RESERVED_SPACE = 80 + 32 + 80 + 12;
 
       let newBase = width;
       if (listWidth) {

@@ -197,7 +197,8 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
 
       // Account for horizontal padding (16px left + 16px right = 32px)
       // and gaps between columns (7 columns = 6 gaps * 16px = 96px)
-      const RESERVED_SPACE = 32 + 96;
+      // plus ~12px for scrollbar
+      const RESERVED_SPACE = 32 + 96 + 12;
 
       return scaleColumns({
           baseWidths,
@@ -231,7 +232,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   );
 
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
-      const RESERVED_SPACE = 32 + 96;
+      const RESERVED_SPACE = 32 + 96 + 12;
 
       let newBase = width;
       if (listWidth) {
