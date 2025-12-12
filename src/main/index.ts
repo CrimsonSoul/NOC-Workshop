@@ -172,9 +172,26 @@ app.on('login', (event, _webContents, _request, authInfo, callback) => {
 });
 
   app.whenReady().then(async () => {
-    currentDataRoot = getDataRoot();
+    // Initialize IPC handlers first
     setupIpc();
-    await createWindow(currentDataRoot);
+
+    // Create window immediately for faster perceived startup
+    // Use a temporary dataRoot that will be updated once ready
+    const tempDataRoot = getDefaultDataPath();
+    await createWindow(tempDataRoot);
+
+    // Initialize data root in background (non-blocking)
+    // This allows the window to show while data loads
+    setImmediate(() => {
+      currentDataRoot = getDataRoot();
+
+      // Reinitialize FileManager with correct data root if it changed
+      if (currentDataRoot !== tempDataRoot && mainWindow && fileManager) {
+        fileManager.destroy();
+        fileManager = new FileManager(mainWindow, currentDataRoot, getBundledDataPath());
+        bridgeLogger = new BridgeLogger(currentDataRoot);
+      }
+    });
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {

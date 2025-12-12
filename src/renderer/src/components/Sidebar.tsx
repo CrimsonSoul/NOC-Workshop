@@ -33,7 +33,7 @@ const SidebarItem = ({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '100%',
+        width: 'calc(100% - 16px)',
         height: '64px',
         background: isActive
           ? 'rgba(59, 130, 246, 0.08)'

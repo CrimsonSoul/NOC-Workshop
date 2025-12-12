@@ -196,7 +196,8 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       if (!listWidth) return baseWidths;
 
       // Account for horizontal padding (16px left + 16px right = 32px)
-      const RESERVED_SPACE = 32;
+      // and gaps between columns (7 columns = 6 gaps * 16px = 96px)
+      const RESERVED_SPACE = 32 + 96;
 
       return scaleColumns({
           baseWidths,
@@ -230,7 +231,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   );
 
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
-      const RESERVED_SPACE = 32;
+      const RESERVED_SPACE = 32 + 96;
 
       let newBase = width;
       if (listWidth) {

@@ -7,6 +7,9 @@ files:
   - node_modules/**
   - resources/**
   - "!node_modules/fsevents/**"
+  - "!**/*.{md,ts,map}"
+  - "!**/LICENSE"
+  - "!**/.{git,github,vscode}"
 directories:
   output: release
   buildResources: resources
@@ -20,3 +23,5 @@ win:
       arch: x64
   artifactName: "Relay.exe"
   icon: build/icon.ico
+  # Optimizations for faster startup
+  requestedExecutionLevel: "asInvoker"

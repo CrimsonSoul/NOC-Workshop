@@ -270,8 +270,9 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const scaledWidths = useMemo(() => {
       if (!listWidth) return baseWidths;
 
-      // Account for actions column (80px) and gap/padding (~32px)
-      const RESERVED_SPACE = 80 + 32;
+      // Account for actions column (80px), padding (16px left + 16px right = 32px)
+      // and gaps between columns (5 columns + 1 actions = 6 elements, so 5 gaps * 16px = 80px)
+      const RESERVED_SPACE = 80 + 32 + 80;
 
       return scaleColumns({
           baseWidths,
@@ -307,7 +308,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
       // When user manually resizes, we update the BASE width.
       // We reverse the scale to save "true" preference.
-      const RESERVED_SPACE = 80 + 32;
+      const RESERVED_SPACE = 80 + 32 + 80;
 
       let newBase = width;
       if (listWidth) {
