@@ -13,9 +13,14 @@ export class HeaderMatcher {
 
   /**
    * Find column index by checking multiple possible aliases (case-insensitive)
+   * Checks aliases in priority order - returns first match
    */
   findColumn(aliases: string[]): number {
-    return this.lowerHeaders.findIndex(h => aliases.includes(h));
+    for (const alias of aliases) {
+      const idx = this.lowerHeaders.indexOf(alias);
+      if (idx !== -1) return idx;
+    }
+    return -1;
   }
 
   /**
