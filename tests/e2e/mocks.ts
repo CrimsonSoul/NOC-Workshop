@@ -11,19 +11,20 @@ export const MOCK_DATA: AppData = {
       name: 'John Doe',
       email: 'john.doe@agency.net',
       phone: '555-0100',
-      department: 'Ops',
-      _searchString: 'john doe ops',
+      title: 'Officer',
+      _searchString: 'john doe officer',
       raw: {}
     },
     {
       name: 'Jane Smith',
       email: 'jane.smith@agency.net',
       phone: '555-0101',
-      department: 'Intel',
-      _searchString: 'jane smith intel',
+      title: 'Analyst',
+      _searchString: 'jane smith analyst',
       raw: {}
     }
   ],
+  servers: [],
   lastUpdated: Date.now()
 };
 
@@ -42,6 +43,9 @@ export async function injectMockApi(page: Page) {
       openExternal: async () => {},
       openGroupsFile: async () => {},
       openContactsFile: async () => {},
+      importGroupsFile: async () => true,
+      importContactsFile: async () => true,
+      importServersFile: async () => true,
       subscribeToData: (callback) => {
         // Immediately callback with data
         callback(data.mockData);
@@ -73,13 +77,23 @@ export async function injectMockApi(page: Page) {
         bridgesLast1y: 1000,
         topGroups: []
       }),
+      resetMetrics: async () => true,
       addContact: async () => true,
+      removeContact: async () => true,
+      addServer: async () => true,
+      removeServer: async () => true,
       addGroup: async () => true,
       addContactToGroup: async () => true,
       removeContactFromGroup: async () => true,
       importContactsWithMapping: async () => true,
       changeDataFolder: async () => true,
-      getDataPath: async () => '/mock/data/path'
+      resetDataFolder: async () => true,
+      getDataPath: async () => '/mock/data/path',
+      removeGroup: async () => true,
+      renameGroup: async () => true,
+      windowMinimize: () => {},
+      windowMaximize: () => {},
+      windowClose: () => {}
     };
 
     // Expose it as window.api

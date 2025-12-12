@@ -15,6 +15,7 @@
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit",
     "build:renderer": "vite build --config vite.renderer.config.ts",
+    "dev:test": "vite --config vite.renderer.config.ts --port 4173",
     "preview:renderer": "npm run build:renderer && vite preview --config vite.renderer.config.ts --host --port 4173",
     "test": "playwright test",
     "test:unit": "vitest run",

@@ -8,23 +8,30 @@ test.describe('Application Shell', () => {
     await page.goto('/');
   });
 
-  test('navigates between tabs', async ({ page }) => {
+  test('navigates between tabs and visual check', async ({ page }) => {
     const composeTab = page.locator('button.sidebar-item', { hasText: 'Compose' });
     const peopleTab = page.locator('button.sidebar-item', { hasText: 'People' });
     const liveTab = page.locator('button.sidebar-item', { hasText: 'Live' });
 
     // Check initial state (Compose)
     await expect(composeTab).toHaveClass(/active/);
-
-    // Update locator for Groups title
     await expect(page.getByText('GROUPS', { exact: true })).toBeVisible();
+
+    // Visual test for Compose tab
+    // Masking the clock in the header as it changes
+    await expect(page).toHaveScreenshot('compose-tab.png', {
+      mask: [page.locator('.clock')]
+    });
 
     // Navigate to People (formerly Directory)
     await peopleTab.click();
     await expect(peopleTab).toHaveClass(/active/);
-
-    // Update locator for People search input
     await expect(page.getByPlaceholder('Search people...')).toBeVisible();
+
+    // Visual test for People tab
+    await expect(page).toHaveScreenshot('people-tab.png', {
+      mask: [page.locator('.clock')]
+    });
 
     // Navigate to Live (formerly Radar)
     await liveTab.click();
@@ -43,35 +50,41 @@ test.describe('Application Shell', () => {
     // Verify logs populated
     await expect(page.getByText('alpha1@agency.net')).toBeVisible();
     await expect(page.getByText('alpha2@agency.net')).toBeVisible();
-    // Update text matcher for Log count - case insensitive
-    // Replaced "2 recipients selected" with check for badge count
+
+    // Check badge count
     await expect(page.locator('h2:has-text("Composition") + span')).toHaveText('2');
 
     // Manual Entry
     const adhocEmail = 'adhoc@agency.net';
-    // Update placeholder matcher
     await page.getByPlaceholder('Add by email...').fill(adhocEmail);
     await page.getByPlaceholder('Add by email...').press('Enter');
 
     // Verify ad-hoc added immediately to the list
-    // Use locator to specifically target the row, avoiding conflict with toast message
     const adhocRow = page.locator('.contact-row', { has: page.getByText(adhocEmail) });
     await expect(adhocRow).toBeVisible();
 
-    // The mock data doesn't include this email, so the app will trigger the Add Contact Modal ONLY if we click SAVE.
-    // Locate the row and find the SAVE button.
-    // Hover to reveal actions if necessary, though click might work directly if it's just CSS opacity
+    // Visual check for selection state
+    await expect(page).toHaveScreenshot('compose-selection.png', {
+      mask: [page.locator('.clock')]
+    });
+
+    // Trigger Add Contact Modal
     await adhocRow.hover();
     await adhocRow.getByRole('button', { name: 'SAVE' }).click();
 
-    await expect(page.getByRole('dialog')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    // Visual check for Modal
+    await expect(dialog).toHaveScreenshot('add-contact-modal.png');
+
     await page.getByPlaceholder('e.g. Alice Smith').fill('Adhoc User');
     await page.getByRole('button', { name: 'Create Contact', exact: true }).click();
 
-    // Verify "MANUAL" tag is present (using scoped class to avoid strict mode violation)
+    // Verify "MANUAL" tag is present
     await expect(adhocRow.locator('.source-label')).toHaveText('MANUAL');
 
-    // Replaced "3 recipients selected" with check for badge count
+    // Check badge count
     await expect(page.locator('h2:has-text("Composition") + span')).toHaveText('3');
 
     // Reset
@@ -96,7 +109,7 @@ test.describe('Application Shell', () => {
     await expect(page.getByText('Jane Smith')).toBeVisible();
     await expect(page.getByText('John Doe')).not.toBeVisible();
 
-    // Add to assembler - "ADD" button (case sensitive, matching UI)
+    // Add to assembler
     await page.getByRole('button', { name: 'ADD', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Added' })).toBeVisible();
 
