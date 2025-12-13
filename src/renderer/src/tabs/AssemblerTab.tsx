@@ -60,7 +60,7 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
         phone={phone}
         groups={membership}
         sourceLabel={source === 'manual' ? 'MANUAL' : undefined}
-        style={{ paddingLeft: '32px', paddingRight: '32px', height: '100%' }} // Match toolbar padding
+        style={{ paddingLeft: '20px', paddingRight: '20px', height: '100%' }} // Match toolbar padding
       />
     </div>
   );
@@ -320,14 +320,14 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   }, []);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '0px', height: '100%', alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '0px', height: '100%', alignItems: 'start' }}>
 
-      {/* Sidebar Controls - Clean, no glass panel wrapper */}
+      {/* Sidebar Controls - Compact */}
       <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '24px',
-          padding: '24px',
+          gap: '16px',
+          padding: '14px',
           borderRight: 'var(--border-subtle)',
           height: '100%',
           overflowY: 'auto'
@@ -335,7 +335,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
         {/* Quick Add */}
         <div ref={suggestionWrapperRef} style={{ position: 'relative' }}>
-             <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginBottom: '8px', paddingLeft: '4px' }}>QUICK ADD</div>
+             <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-text-tertiary)', marginBottom: '6px', paddingLeft: '4px' }}>QUICK ADD</div>
              <Input
                 placeholder="Add by email..."
                 value={adhocInput}
@@ -359,10 +359,10 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                      top: '100%',
                      left: 0,
                      right: 0,
-                     marginTop: '4px',
+                     marginTop: '3px',
                      background: 'var(--color-bg-surface)',
                      border: 'var(--border-subtle)',
-                     borderRadius: '6px',
+                     borderRadius: '5px',
                      zIndex: 100,
                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                      overflow: 'hidden'
@@ -372,27 +372,27 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                             key={c.email}
                             onClick={() => handleQuickAdd(c.email)}
                             style={{
-                                padding: '8px 12px',
+                                padding: '6px 10px',
                                 cursor: 'pointer',
-                                fontSize: '13px',
+                                fontSize: '12px',
                                 color: 'var(--color-text-primary)',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px'
+                                gap: '6px'
                             }}
                             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                          >
                              <div style={{
-                                 width: '18px', height: '18px', borderRadius: '4px',
+                                 width: '16px', height: '16px', borderRadius: '3px',
                                  background: 'rgba(59, 130, 246, 0.2)', color: '#3B82F6',
-                                 fontSize: '9px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                 fontSize: '8px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center'
                              }}>
                                  {c.name ? c.name[0].toUpperCase() : c.email[0].toUpperCase()}
                              </div>
                              <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                  {c.name || c.email}
-                                 {c.name && <span style={{ color: 'var(--color-text-tertiary)', marginLeft: '6px', fontSize: '11px' }}>{c.email}</span>}
+                                 {c.name && <span style={{ color: 'var(--color-text-tertiary)', marginLeft: '4px', fontSize: '10px' }}>{c.email}</span>}
                              </div>
                          </div>
                      ))}
@@ -401,9 +401,9 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
         </div>
 
         {/* Groups Selection */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)' }}>GROUPS</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', padding: '0 4px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-text-tertiary)' }}>GROUPS</div>
             <TactileButton
                onClick={() => setIsGroupModalOpen(true)}
                style={{
@@ -451,22 +451,22 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
         background: 'var(--color-bg-app)', // Seamless with sidebar
       }}>
 
-        {/* Toolbar */}
+        {/* Toolbar - Compact */}
         <div style={{
-          padding: '16px 32px',
+          padding: '10px 20px',
           borderBottom: 'var(--border-subtle)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-             <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>Composition</h2>
-             <span style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+             <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>Composition</h2>
+             <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '10px' }}>
                 {log.length}
              </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             {manualRemoves.length > 0 && (
                <ToolbarButton label="UNDO" onClick={onUndoRemove} />
             )}
@@ -476,19 +476,19 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
           </div>
         </div>
 
-        {/* Header Row */}
+        {/* Header Row - Compact */}
         <div style={{
             display: 'flex',
-            padding: '10px 32px', // Match side padding of content
+            padding: '8px 20px', // Match side padding of content
             borderBottom: 'var(--border-subtle)',
             background: 'rgba(255,255,255,0.02)',
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             color: 'var(--color-text-tertiary)',
-            gap: '16px',
-            paddingRight: '48px' // Account for scrollbar/padding
+            gap: '14px',
+            paddingRight: '36px' // Account for scrollbar/padding
         }}>
             <SortableHeader label="Name" sortKey="name" currentSort={sortConfig} onSort={handleSort} flex={1.5} paddingLeft="40px" />
             <SortableHeader label="Job Title" sortKey="title" currentSort={sortConfig} onSort={handleSort} flex={1} />
@@ -522,7 +522,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 <List
                   height={height}
                   itemCount={log.length}
-                  itemSize={50}
+                  itemSize={40}
                   width={width}
                   itemData={itemData}
                 >

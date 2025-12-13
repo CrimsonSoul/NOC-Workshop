@@ -472,13 +472,13 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       overflow: 'hidden',
       background: 'var(--color-bg-app)'
     }}>
-      {/* Header / Actions */}
+      {/* Header / Actions - Compact */}
       <div style={{
-        padding: '12px 16px',
+        padding: '8px 14px',
         borderBottom: 'var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
-        gap: '12px'
+        gap: '10px'
       }}>
         <Input
           placeholder="Search people..."
@@ -501,18 +501,18 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         />
       </div>
 
-      {/* Header Row */}
+      {/* Header Row - Compact */}
       <div style={{
         display: 'flex',
-        padding: '10px 16px',
+        padding: '8px 14px',
         borderBottom: 'var(--border-subtle)',
         background: 'rgba(255,255,255,0.02)',
-        fontSize: '11px',
+        fontSize: '10px',
         fontWeight: 600,
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
         color: 'var(--color-text-tertiary)',
-        gap: '16px',
+        gap: '14px',
         overflow: 'hidden'
       }}>
          <DndContext
@@ -537,14 +537,14 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
          </DndContext>
       </div>
 
-      {/* Virtualized List */}
+      {/* Virtualized List - Compact */}
       <div style={{ flex: 1 }}>
         <AutoSizer onResize={({ width }) => setListWidth(width)}>
           {({ height, width }) => (
             <List
               height={height}
               itemCount={filtered.length}
-              itemSize={50}
+              itemSize={40}
               width={width}
               itemData={itemData}
             >

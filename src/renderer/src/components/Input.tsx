@@ -72,7 +72,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
       {icon && (
         <div style={{
           position: 'absolute',
-          left: '10px',
+          left: '8px',
           top: '50%',
           transform: 'translateY(-50%)',
           color: 'var(--color-text-tertiary)',
@@ -91,10 +91,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
           background: 'var(--color-bg-surface)',
           border: 'var(--border-medium)',
           borderRadius: 'var(--radius-md)',
-          padding: 'var(--space-2) var(--space-3)',
-          paddingLeft: icon ? '32px' : 'var(--space-3)',
-          paddingRight: hasValue ? '32px' : 'var(--space-3)',
-          fontSize: '13px',
+          padding: '5px 10px',
+          paddingLeft: icon ? '28px' : '10px',
+          paddingRight: hasValue ? '28px' : '10px',
+          fontSize: '12px',
           color: 'var(--color-text-primary)',
           outline: 'none',
           fontFamily: 'var(--font-family-base)',

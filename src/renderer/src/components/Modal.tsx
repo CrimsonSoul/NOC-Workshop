@@ -62,9 +62,9 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
           opacity: 0.5
         }} />
 
-        {/* Header */}
+        {/* Header - Compact */}
         <div style={{
-          padding: 'var(--space-4) var(--space-6)',
+          padding: 'var(--space-3) var(--space-4)',
           borderBottom: 'var(--border-subtle)',
           display: 'flex',
           justifyContent: 'space-between',
@@ -74,7 +74,7 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
         }}>
           <h2 style={{
             margin: 0,
-            fontSize: '15px',
+            fontSize: '14px',
             fontWeight: 600,
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.01em'
@@ -114,9 +114,9 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
           </button>
         </div>
 
-        {/* Content */}
+        {/* Content - Compact */}
         <div style={{
-          padding: 'var(--space-6)',
+          padding: 'var(--space-4)',
           overflowY: 'auto',
           flex: 1,
           overscrollBehavior: 'contain'
