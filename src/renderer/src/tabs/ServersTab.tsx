@@ -200,7 +200,14 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       try {
           const saved = localStorage.getItem('relay-servers-columns');
           const parsed = saved ? JSON.parse(saved) : DEFAULT_WIDTHS;
-          return { ...DEFAULT_WIDTHS, ...parsed };
+          const validKeys = Object.keys(DEFAULT_WIDTHS);
+          const filteredParsed: any = {};
+          if (parsed && typeof parsed === 'object') {
+              for (const key of validKeys) {
+                  if (parsed[key]) filteredParsed[key] = parsed[key];
+              }
+          }
+          return { ...DEFAULT_WIDTHS, ...filteredParsed };
       } catch (e) {
           return DEFAULT_WIDTHS;
       }
@@ -229,7 +236,11 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       try {
           const saved = localStorage.getItem('relay-servers-order');
           const parsed = saved ? JSON.parse(saved) : DEFAULT_ORDER;
-          if (Array.isArray(parsed) && parsed.length === DEFAULT_ORDER.length) return parsed;
+          if (Array.isArray(parsed) && parsed.length === DEFAULT_ORDER.length) {
+              const validKeys = Object.keys(DEFAULT_WIDTHS);
+              const isValid = parsed.every(k => validKeys.includes(k));
+              if (isValid) return parsed;
+          }
           return DEFAULT_ORDER;
       } catch {
           return DEFAULT_ORDER;
