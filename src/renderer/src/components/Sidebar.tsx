@@ -33,8 +33,8 @@ const SidebarItem = ({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        width: 'calc(100% - 16px)',
-        height: '64px',
+        width: 'calc(100% - 12px)',
+        height: '52px',
         background: isActive
           ? 'rgba(59, 130, 246, 0.08)'
           : isHovered
@@ -46,19 +46,19 @@ const SidebarItem = ({
         color: isActive ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
         transition: 'all var(--transition-base)',
         borderRadius: 'var(--radius-lg)',
-        margin: '0 var(--space-2)',
+        margin: '0 6px',
         outline: 'none'
       }}
     >
       <div style={{
-        marginBottom: 'var(--space-1)',
+        marginBottom: '2px',
         transition: 'transform var(--transition-base)',
         transform: isActive ? 'scale(1.05)' : isHovered ? 'scale(1.02)' : 'scale(1)'
       }}>
         {icon}
       </div>
       <span style={{
-        fontSize: '10px',
+        fontSize: '9px',
         fontWeight: 500,
         letterSpacing: '0.02em',
         textTransform: 'uppercase'
@@ -73,8 +73,8 @@ const SidebarItem = ({
             left: '-2px',
             top: '50%',
             transform: 'translateY(-50%)',
-            height: '28px',
-            width: '3px',
+            height: '24px',
+            width: '2px',
             background: 'linear-gradient(180deg, var(--color-accent-blue) 0%, #2563EB 100%)',
             borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
             boxShadow: 'var(--shadow-glow-blue)'
@@ -94,24 +94,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      paddingTop: '16px',
-      paddingBottom: '16px',
+      paddingTop: '10px',
+      paddingBottom: '10px',
       zIndex: 9002, // Above drag region
       WebkitAppRegion: 'drag' as any
     }}>
-      {/* Brand Icon - Enhanced */}
+      {/* Brand Icon - Compact */}
       <div style={{
-        width: '44px',
-        height: '44px',
+        width: '36px',
+        height: '36px',
         background: 'linear-gradient(135deg, var(--color-accent-blue) 0%, #2563EB 100%)',
-        borderRadius: 'var(--radius-xl)',
-        marginBottom: 'var(--space-6)',
+        borderRadius: 'var(--radius-lg)',
+        marginBottom: '16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: 'white',
         fontWeight: 700,
-        fontSize: '20px',
+        fontSize: '16px',
         boxShadow: 'var(--shadow-md), var(--shadow-glow-blue)',
         position: 'relative',
         overflow: 'hidden',
@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         <span style={{ position: 'relative', zIndex: 1 }}>R</span>
       </div>
 
-      <nav style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: '8px', WebkitAppRegion: 'no-drag' as any }}>
+      <nav style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: '2px', WebkitAppRegion: 'no-drag' as any }}>
         <SidebarItem
           label="Compose"
           isActive={activeTab === 'Compose'}
@@ -197,13 +197,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         />
       </nav>
 
-      {/* Settings / Footer - Enhanced */}
+      {/* Settings / Footer - Compact */}
       <button
         onClick={onOpenSettings}
         style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: 'var(--radius-xl)',
+          width: '36px',
+          height: '36px',
+          borderRadius: 'var(--radius-lg)',
           background: 'rgba(255, 255, 255, 0.04)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           color: 'var(--color-text-secondary)',
@@ -229,7 +229,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         }}
         title="Settings"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>

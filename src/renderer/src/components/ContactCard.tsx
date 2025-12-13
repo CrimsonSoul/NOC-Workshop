@@ -64,19 +64,19 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
       switch (key) {
           case 'name':
               return (
-                <div key="name" style={{ ...getStyle('name', 1.5), display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                    {/* Avatar - Enhanced with subtle gradient */}
+                <div key="name" style={{ ...getStyle('name', 1.5), display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Avatar - Compact */}
                     <div style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: 'var(--radius-md)',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: 'var(--radius-sm)',
                         background: `linear-gradient(135deg, ${color}15 0%, ${color}25 100%)`,
                         border: `1px solid ${color}40`,
                         color: color,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '11px',
+                        fontSize: '10px',
                         fontWeight: 600,
                         flexShrink: 0,
                         position: 'relative',
@@ -97,7 +97,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
                         </span>
                     </div>
                     <div style={{
-                        fontSize: '13px',
+                        fontSize: '12px',
                         fontWeight: 500,
                         color: 'var(--color-text-primary)',
                         whiteSpace: 'nowrap',
@@ -109,10 +109,10 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
                     </div>
                      {sourceLabel && (
                         <span className="source-label" style={{
-                            fontSize: '9px',
+                            fontSize: '8px',
                             background: 'rgba(255, 255, 255, 0.08)',
                             color: 'var(--color-text-tertiary)',
-                            padding: '2px 6px',
+                            padding: '1px 5px',
                             borderRadius: 'var(--radius-sm)',
                             fontWeight: 600,
                             textTransform: 'uppercase',
@@ -126,35 +126,35 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
               );
           case 'title':
               return (
-                <div key="title" style={{ ...getStyle('title', 1), fontSize: '13px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div key="title" style={{ ...getStyle('title', 1), fontSize: '12px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {title || '-'}
                 </div>
               );
           case 'email':
               return (
-                <div key="email" style={{ ...getStyle('email', 1.2), fontSize: '13px', color: 'var(--color-text-primary)', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div key="email" style={{ ...getStyle('email', 1.2), fontSize: '12px', color: 'var(--color-text-primary)', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {email}
                 </div>
               );
           case 'phone':
               return (
-                <div key="phone" style={{ ...getStyle('phone', 1), fontSize: '13px', color: 'var(--color-text-primary)', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div key="phone" style={{ ...getStyle('phone', 1), fontSize: '12px', color: 'var(--color-text-primary)', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {formattedPhone || '-'}
                 </div>
               );
           case 'groups':
               return (
-                <div key="groups" style={{ ...getStyle('groups', 1), display: 'flex', gap: '4px', overflow: 'hidden' }}>
+                <div key="groups" style={{ ...getStyle('groups', 1), display: 'flex', gap: '3px', overflow: 'hidden' }}>
                     {groups.slice(0, 2).map(g => {
                          const c = getColorForString(g);
                          return (
                              <span key={g} style={{
-                                 fontSize: '11px',
+                                 fontSize: '10px',
                                  color: c.text,
                                  background: c.bg,
                                  border: `1px solid ${c.border}`,
-                                 padding: '1px 6px',
-                                 borderRadius: '4px',
+                                 padding: '1px 5px',
+                                 borderRadius: '3px',
                                  whiteSpace: 'nowrap'
                              }}>
                                  {g}
@@ -162,7 +162,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
                          )
                     })}
                     {groups.length > 2 && (
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', padding: '1px 4px' }}>+{groups.length - 2}</span>
+                        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', padding: '1px 3px' }}>+{groups.length - 2}</span>
                     )}
                 </div>
               );
@@ -183,12 +183,12 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         ...style,
         display: 'flex',
         alignItems: 'center',
-        padding: '0 var(--space-4)',
+        padding: '0 var(--space-3)',
         background: selected ? 'var(--color-accent-blue-subtle)' : 'transparent',
         borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
         transition: 'all var(--transition-fast)',
         cursor: 'default',
-        gap: 'var(--space-4)',
+        gap: 'var(--space-3)',
         position: 'relative'
       }}
       className={`contact-row ${className || ''}`}

@@ -27,15 +27,15 @@ export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu 
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       style={{
-        padding: '6px 8px',
-        borderRadius: '6px',
+        padding: '5px 7px',
+        borderRadius: '5px',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         background: active ? 'rgba(255,255,255,0.06)' : 'transparent',
         color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-        fontSize: '13px',
+        fontSize: '12px',
         fontWeight: 500,
         transition: 'all 0.1s ease',
         userSelect: 'none',
@@ -58,10 +58,10 @@ export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu 
         }
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
         <div style={{
-           width: '8px',
-           height: '8px',
+           width: '6px',
+           height: '6px',
            borderRadius: '2px',
            background: active ? color.fill : 'transparent',
            border: `1px solid ${active ? color.fill : color.border}`
@@ -71,7 +71,7 @@ export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu 
         </span>
       </div>
       {count !== undefined && (
-        <span style={{ fontSize: '11px', opacity: 0.5, marginLeft: '8px' }}>
+        <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: '6px' }}>
             {count}
         </span>
       )}
