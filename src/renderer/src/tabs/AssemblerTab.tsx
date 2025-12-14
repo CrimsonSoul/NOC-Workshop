@@ -134,6 +134,13 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
 
+  // Group Sidebar Resize State
+  const [groupSidebarWidth, setGroupSidebarWidth] = useState(170);
+  const [isResizingGroupSidebar, setIsResizingGroupSidebar] = useState(false);
+  const [isHoveringGrabber, setIsHoveringGrabber] = useState(false);
+  const resizeStartX = useRef(0);
+  const resizeStartWidth = useRef(0);
+
   // Optimized contact lookup map
   const contactMap = useMemo(() => {
     const map = new Map<string, Contact>();
@@ -163,6 +170,30 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Handle group sidebar resizing
+  useEffect(() => {
+      if (!isResizingGroupSidebar) return;
+
+      const onMouseMove = (e: MouseEvent) => {
+          const diff = e.clientX - resizeStartX.current;
+          const newWidth = Math.max(120, Math.min(400, resizeStartWidth.current + diff));
+          setGroupSidebarWidth(newWidth);
+      };
+
+      const onMouseUp = () => {
+          setIsResizingGroupSidebar(false);
+          document.body.style.cursor = 'default';
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+
+      return () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+      };
+  }, [isResizingGroupSidebar]);
 
   const log = useMemo(() => {
     const fromGroups = selectedGroups.flatMap(g => groups[g] || []);
@@ -320,7 +351,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
   }, []);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', gap: '0px', height: '100%', alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: `${groupSidebarWidth}px 1fr`, gap: '0px', height: '100%', alignItems: 'start' }}>
 
       {/* Sidebar Controls - Compact */}
       <div style={{
@@ -330,7 +361,8 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
           padding: '12px',
           borderRight: 'var(--border-subtle)',
           height: '100%',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          position: 'relative'
       }}>
 
         {/* Quick Add */}
@@ -441,6 +473,54 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
               </div>
             )}
           </div>
+        </div>
+
+        {/* Resize Handle / Grabber */}
+        <div
+            data-resize-handle="true"
+            style={{
+                position: 'absolute',
+                right: '-6px',
+                top: 0,
+                bottom: 0,
+                width: '12px',
+                cursor: 'col-resize',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background var(--transition-fast)'
+            }}
+            onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsResizingGroupSidebar(true);
+                resizeStartX.current = e.clientX;
+                resizeStartWidth.current = groupSidebarWidth;
+                document.body.style.cursor = 'col-resize';
+            }}
+            onMouseEnter={(e) => {
+                setIsHoveringGrabber(true);
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+            }}
+            onMouseLeave={(e) => {
+                if (!isResizingGroupSidebar) {
+                    setIsHoveringGrabber(false);
+                    e.currentTarget.style.background = 'transparent';
+                }
+            }}
+        >
+            {/* Visual Grabber - Matching ResizableHeader Style */}
+            <div style={{
+                width: '3px',
+                height: '16px',
+                background: (isHoveringGrabber || isResizingGroupSidebar)
+                    ? 'linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-text-tertiary) 100%)'
+                    : 'rgba(255, 255, 255, 0.15)',
+                borderRadius: 'var(--radius-sm)',
+                transition: 'all var(--transition-base)',
+                boxShadow: (isHoveringGrabber || isResizingGroupSidebar) ? '0 0 8px rgba(59, 130, 246, 0.3)' : 'none'
+            }} />
         </div>
       </div>
 

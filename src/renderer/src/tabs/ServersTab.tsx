@@ -47,7 +47,7 @@ const DEFAULT_WIDTHS = {
   comment: 200,
   owner: 200,
   contact: 200,
-  os: 100
+  os: 60
 };
 
 // Default Column Order
@@ -413,6 +413,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
                             currentSort={{ key: sortField, direction: sortOrder }}
                             onSort={handleHeaderSort}
                             onResize={w => handleResize(key, w)}
+                            minWidth={key === 'os' ? 30 : 50}
                           />
                       </DraggableHeader>
                   ))}

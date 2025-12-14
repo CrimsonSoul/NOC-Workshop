@@ -33,7 +33,7 @@ const SidebarItem = ({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        width: 'calc(100% - 8px)',
+        width: 'calc(100% - 16px)',
         height: '48px',
         background: isActive
           ? 'rgba(59, 130, 246, 0.08)'
@@ -46,7 +46,7 @@ const SidebarItem = ({
         color: isActive ? 'var(--color-accent-blue)' : 'var(--color-text-secondary)',
         transition: 'all var(--transition-base)',
         borderRadius: 'var(--radius-lg)',
-        margin: '0 4px',
+        margin: '0 8px',
         outline: 'none'
       }}
     >
