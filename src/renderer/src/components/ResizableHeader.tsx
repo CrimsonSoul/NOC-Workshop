@@ -127,7 +127,7 @@ export const ResizableHeader = ({
                     height: '16px',
                     background: (isHovered || isResizing)
                         ? 'linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-text-tertiary) 100%)'
-                        : 'rgba(255, 255, 255, 0.15)',
+                        : 'transparent',
                     borderRadius: 'var(--radius-sm)',
                     transition: 'all var(--transition-base)',
                     boxShadow: (isHovered || isResizing) ? '0 0 8px rgba(59, 130, 246, 0.3)' : 'none'
