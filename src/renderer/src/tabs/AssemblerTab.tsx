@@ -516,7 +516,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 height: '16px',
                 background: (isHoveringGrabber || isResizingGroupSidebar)
                     ? 'linear-gradient(180deg, var(--color-accent-blue) 0%, var(--color-text-tertiary) 100%)'
-                    : 'rgba(255, 255, 255, 0.15)',
+                    : 'transparent',
                 borderRadius: 'var(--radius-sm)',
                 transition: 'all var(--transition-base)',
                 boxShadow: (isHoveringGrabber || isResizingGroupSidebar) ? '0 0 8px rgba(59, 130, 246, 0.3)' : 'none'

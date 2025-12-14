@@ -47,7 +47,8 @@ const SidebarItem = ({
         transition: 'all var(--transition-base)',
         borderRadius: 'var(--radius-lg)',
         margin: '0 8px',
-        outline: 'none'
+        outline: 'none',
+        overflow: 'hidden'
       }}
     >
       <div style={{

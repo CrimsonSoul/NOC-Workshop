@@ -43,7 +43,8 @@ export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu 
         width: '100%',
         fontFamily: 'inherit',
         textAlign: 'left',
-        outline: 'none'
+        outline: 'none',
+        overflow: 'hidden'
       }}
       onMouseEnter={(e) => {
         if (!active) {
