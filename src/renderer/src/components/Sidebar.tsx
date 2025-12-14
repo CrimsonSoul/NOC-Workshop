@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '2px',
+        gap: '6px',
         WebkitAppRegion: 'no-drag' as any
       }}>
         <SidebarButton
