@@ -101,34 +101,41 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
     }}>
       {/* Brand Icon - Compact */}
       <div style={{
-        width: '32px',
-        height: '32px',
-        background: 'linear-gradient(135deg, var(--color-accent-blue) 0%, #2563EB 100%)',
-        borderRadius: 'var(--radius-lg)',
-        marginBottom: '14px',
+        width: 'calc(100% - 16px)',
+        margin: '0 8px 14px 8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'white',
-        fontWeight: 700,
-        fontSize: '14px',
-        boxShadow: 'var(--shadow-md), var(--shadow-glow-blue)',
-        position: 'relative',
-        overflow: 'hidden',
-        WebkitAppRegion: 'no-drag' as any,
-        border: '1px solid rgba(59, 130, 246, 0.3)'
+        WebkitAppRegion: 'no-drag' as any
       }}>
-        {/* Subtle shine effect */}
         <div style={{
-          position: 'absolute',
-          top: '-50%',
-          left: '-50%',
-          width: '200%',
-          height: '200%',
-          background: 'linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)',
-          pointerEvents: 'none'
-        }} />
-        <span style={{ position: 'relative', zIndex: 1 }}>R</span>
+          width: '32px',
+          height: '32px',
+          background: 'linear-gradient(135deg, var(--color-accent-blue) 0%, #2563EB 100%)',
+          borderRadius: 'var(--radius-lg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: 700,
+          fontSize: '14px',
+          boxShadow: 'var(--shadow-md), var(--shadow-glow-blue)',
+          position: 'relative',
+          overflow: 'hidden',
+          border: '1px solid rgba(59, 130, 246, 0.3)'
+        }}>
+          {/* Subtle shine effect */}
+          <div style={{
+            position: 'absolute',
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background: 'linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%)',
+            pointerEvents: 'none'
+          }} />
+          <span style={{ position: 'relative', zIndex: 1 }}>R</span>
+        </div>
       </div>
 
       <nav style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: '2px', WebkitAppRegion: 'no-drag' as any }}>
