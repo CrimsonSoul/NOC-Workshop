@@ -6,25 +6,52 @@ import { ValidationError, ValidationResult } from '@shared/csvTypes';
 import type { Contact, Server } from '@shared/ipc';
 
 /**
- * Validate email format
+ * Validate email format using RFC 5322 compliant regex
+ * This validates:
+ * - Local part: letters, digits, dots (not consecutive/leading/trailing), and special chars
+ * - Domain: valid hostname with TLD at least 2 characters
+ * - Max length 254 characters (RFC 5321)
  */
 export function isValidEmail(email: string): boolean {
   if (!email || !email.trim()) return false;
 
-  // Basic email regex - more permissive to handle various formats
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+  const trimmed = email.trim();
+
+  // RFC 5321 max length
+  if (trimmed.length > 254) return false;
+
+  // RFC 5322 compliant regex (simplified but robust)
+  // - Local part: alphanumeric, dots (not consecutive), and common special chars
+  // - Must have @ separating local and domain
+  // - Domain: valid hostname labels with at least 2-char TLD
+  const emailRegex =
+    /^(?!.*\.\.)(?!\.)[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(?<!\.)@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+
+  return emailRegex.test(trimmed);
 }
 
 /**
- * Validate phone number format (very permissive - just check if it has digits)
+ * Validate phone number format
+ * Requirements:
+ * - Must contain at least 7 digits (minimum for valid phone)
+ * - Max 15 digits (E.164 standard)
+ * - Only allows: digits, +, -, (), spaces, dots, x/ext for extensions
  */
 export function isValidPhone(phone: string): boolean {
   if (!phone || !phone.trim()) return true; // Phone is optional
 
-  // Check if it contains at least some digits
-  const hasDigits = /\d/.test(phone);
-  return hasDigits;
+  const trimmed = phone.trim();
+
+  // Only allow valid phone characters: digits, +, -, (), spaces, dots, and extension markers
+  const validCharsRegex = /^[0-9+\-().\s]+(?:\s*(?:x|ext\.?)\s*\d+)?$/i;
+  if (!validCharsRegex.test(trimmed)) return false;
+
+  // Extract just digits to count them
+  const digits = trimmed.replace(/\D/g, '');
+
+  // Must have at least 7 digits (minimum for most phone systems)
+  // and max 15 digits (E.164 international standard)
+  return digits.length >= 7 && digits.length <= 15;
 }
 
 /**

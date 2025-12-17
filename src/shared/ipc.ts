@@ -30,6 +30,8 @@ export type AppData = {
 export type AuthRequest = {
     host: string;
     isProxy: boolean;
+    nonce: string; // One-time token for secure auth response
+    hasCachedCredentials?: boolean; // Whether credentials are available from cache
 };
 
 export type RadarCounters = {
@@ -78,8 +80,9 @@ export type BridgeAPI = {
     onImportProgress: (callback: (progress: ImportProgress) => void) => void;
     reloadData: () => Promise<void>;
     onAuthRequested: (callback: (request: AuthRequest) => void) => void;
-    submitAuth: (username: string, password: string) => void;
-    cancelAuth: () => void;
+    submitAuth: (nonce: string, username: string, password: string, remember?: boolean) => Promise<boolean>;
+    cancelAuth: (nonce: string) => void;
+    useCachedAuth: (nonce: string) => Promise<boolean>;
     subscribeToRadar: (callback: (data: RadarSnapshot) => void) => void;
     logBridge: (groups: string[]) => void;
     getMetrics: () => Promise<MetricsData>;
@@ -135,6 +138,7 @@ export const IPC_CHANNELS = {
     AUTH_REQUESTED: 'auth:requested',
     AUTH_SUBMIT: 'auth:submit',
     AUTH_CANCEL: 'auth:cancel',
+    AUTH_USE_CACHED: 'auth:useCached',
     RADAR_DATA: 'radar:data',
     LOG_BRIDGE: 'metrics:logBridge',
     GET_METRICS: 'metrics:get',

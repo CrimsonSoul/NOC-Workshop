@@ -1,10 +1,30 @@
 import { ipcMain, dialog, shell } from 'electron';
 import { BrowserWindow } from 'electron';
-import { join, relative, isAbsolute } from 'path';
+import { join, relative, isAbsolute, resolve, normalize } from 'path';
 import fs from 'fs';
 import { IPC_CHANNELS } from '../shared/ipc';
 import { FileManager } from './FileManager';
 import { BridgeLogger } from './BridgeLogger';
+
+/**
+ * Check if a path is a Windows UNC path (\\server\share)
+ */
+function isUncPath(path: string): boolean {
+  return /^[/\\]{2}[^/\\]+[/\\]+[^/\\]+/.test(path);
+}
+
+/**
+ * Safely resolve a path to its real location, following symlinks
+ * Returns null if the path doesn't exist or can't be resolved
+ */
+function safeRealPath(path: string): string | null {
+  try {
+    return fs.realpathSync(path);
+  } catch {
+    // Path doesn't exist or can't be resolved
+    return null;
+  }
+}
 
 export function setupIpcHandlers(
   getMainWindow: () => BrowserWindow | null,
@@ -48,17 +68,55 @@ export function setupIpcHandlers(
     }
   });
 
-  // Helper for path validation
-  const validatePath = (requestedPath: string) => {
+  // Helper for hardened path validation
+  // Protects against: symlink attacks, path traversal, UNC path escapes
+  const validatePath = (requestedPath: string): boolean => {
     const root = getDataRoot();
     if (!requestedPath || !root) return false;
 
-    // Resolve absolute path
-    const absPath = isAbsolute(requestedPath) ? requestedPath : join(root, requestedPath);
+    // Block UNC paths entirely (Windows network paths like \\server\share)
+    if (isUncPath(requestedPath)) {
+      console.warn(`[Security] Blocked UNC path: ${requestedPath}`);
+      return false;
+    }
 
-    // Check if it is inside root
+    // Normalize and resolve the path to handle ../ sequences
+    const normalizedPath = normalize(requestedPath);
+
+    // Block if normalization reveals UNC path
+    if (isUncPath(normalizedPath)) {
+      console.warn(`[Security] Blocked normalized UNC path: ${normalizedPath}`);
+      return false;
+    }
+
+    // Resolve to absolute path
+    const absPath = resolve(root, normalizedPath);
+
+    // First check: simple path containment
     const rel = relative(root, absPath);
-    return !rel.startsWith('..') && !isAbsolute(rel);
+    if (rel.startsWith('..') || isAbsolute(rel)) {
+      return false;
+    }
+
+    // Second check: resolve symlinks if path exists
+    // This prevents symlink-based escapes from the data root
+    const realRoot = safeRealPath(root);
+    if (!realRoot) {
+      console.warn(`[Security] Could not resolve real path for root: ${root}`);
+      return false;
+    }
+
+    // If the path exists, verify its real location
+    const realPath = safeRealPath(absPath);
+    if (realPath) {
+      const realRel = relative(realRoot, realPath);
+      if (realRel.startsWith('..') || isAbsolute(realRel)) {
+        console.warn(`[Security] Path escapes root via symlink: ${requestedPath} -> ${realPath}`);
+        return false;
+      }
+    }
+
+    return true;
   };
 
   // FS IPCs

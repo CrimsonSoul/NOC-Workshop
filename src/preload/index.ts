@@ -54,12 +54,16 @@ const api: BridgeAPI = {
     });
   },
 
-  submitAuth: (username, password) => {
-    ipcRenderer.send(IPC_CHANNELS.AUTH_SUBMIT, { username, password });
+  submitAuth: (nonce, username, password, remember) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_SUBMIT, { nonce, username, password, remember });
   },
 
-  cancelAuth: () => {
-    ipcRenderer.send(IPC_CHANNELS.AUTH_CANCEL);
+  cancelAuth: (nonce) => {
+    ipcRenderer.send(IPC_CHANNELS.AUTH_CANCEL, { nonce });
+  },
+
+  useCachedAuth: (nonce) => {
+    return ipcRenderer.invoke(IPC_CHANNELS.AUTH_USE_CACHED, { nonce });
   },
 
   subscribeToRadar: (callback) => {

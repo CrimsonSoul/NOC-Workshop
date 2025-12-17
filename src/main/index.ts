@@ -7,6 +7,14 @@ import { IPC_CHANNELS } from '../shared/ipc';
 import { copyDataFiles, ensureDataFiles, ensureDataFilesAsync, loadConfig, loadConfigAsync, saveConfig } from './dataUtils';
 import { validateDataPath } from './pathValidation';
 import { setupIpcHandlers } from './ipcHandlers';
+import {
+  generateAuthNonce,
+  registerAuthRequest,
+  consumeAuthRequest,
+  cancelAuthRequest,
+  cacheCredentials,
+  getCachedCredentials
+} from './credentialManager';
 
 // Windows-specific optimizations for faster app launch
 if (process.platform === 'win32') {
@@ -32,9 +40,6 @@ let mainWindow: BrowserWindow | null = null;
 let fileManager: FileManager | null = null;
 let bridgeLogger: BridgeLogger | null = null;
 let currentDataRoot: string = '';
-
-// Auth State
-let authCallback: ((username: string, password: string) => void) | null = null;
 
 // Helpers
 const getDefaultDataPath = () => {
@@ -207,29 +212,65 @@ function setupIpc() {
     getDefaultDataPath
   );
 
-  ipcMain.on(IPC_CHANNELS.AUTH_SUBMIT, (_event, { username, password }) => {
-    if (authCallback) {
-      authCallback(username, password);
-      authCallback = null;
+  // Secure auth handlers using nonce-based validation
+  ipcMain.handle(IPC_CHANNELS.AUTH_SUBMIT, async (_event, { nonce, username, password, remember }) => {
+    const authRequest = consumeAuthRequest(nonce);
+    if (!authRequest) {
+      console.warn('[Auth] Invalid or expired auth nonce');
+      return false;
     }
+
+    // Optionally cache credentials using safeStorage encryption
+    if (remember) {
+      cacheCredentials(authRequest.host, username, password);
+    }
+
+    // Execute the auth callback
+    authRequest.callback(username, password);
+    return true;
   });
 
-  ipcMain.on(IPC_CHANNELS.AUTH_CANCEL, () => {
-    authCallback = null;
+  ipcMain.handle(IPC_CHANNELS.AUTH_USE_CACHED, async (_event, { nonce }) => {
+    const authRequest = consumeAuthRequest(nonce);
+    if (!authRequest) {
+      console.warn('[Auth] Invalid or expired auth nonce for cached auth');
+      return false;
+    }
+
+    const cached = getCachedCredentials(authRequest.host);
+    if (!cached) {
+      console.warn('[Auth] No cached credentials for host:', authRequest.host);
+      return false;
+    }
+
+    authRequest.callback(cached.username, cached.password);
+    return true;
+  });
+
+  ipcMain.on(IPC_CHANNELS.AUTH_CANCEL, (_event, { nonce }) => {
+    cancelAuthRequest(nonce);
   });
 }
 
-// Auth Interception
+// Auth Interception with secure nonce-based handling
 app.on('login', (event, _webContents, _request, authInfo, callback) => {
   event.preventDefault(); // Stop default browser popup
 
-  // Store callback to use later
-  authCallback = callback;
+  // Generate secure nonce for this auth request
+  const nonce = generateAuthNonce();
+
+  // Register the callback with nonce validation
+  registerAuthRequest(nonce, authInfo.host, callback);
+
+  // Check if we have cached credentials for this host
+  const cachedCreds = getCachedCredentials(authInfo.host);
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(IPC_CHANNELS.AUTH_REQUESTED, {
       host: authInfo.host,
-      isProxy: authInfo.isProxy
+      isProxy: authInfo.isProxy,
+      nonce,
+      hasCachedCredentials: cachedCreds !== null
     });
   }
 });
