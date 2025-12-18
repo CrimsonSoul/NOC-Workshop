@@ -7,6 +7,7 @@ import { ToastProvider, useToast } from './components/Toast';
 import { AppData, Contact, DataError } from '@shared/ipc';
 import { TabFallback } from './components/TabFallback';
 import './styles.css';
+import { DUMMY_DATA } from './dummyData';
 
 // Error Boundary to prevent full app crashes from component errors
 interface ErrorBoundaryProps {
@@ -95,7 +96,7 @@ const WeatherTab = lazy(() => import('./tabs/WeatherTab').then(m => ({ default: 
 const MetricsTab = lazy(() => import('./tabs/MetricsTab').then(m => ({ default: m.MetricsTab })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 
-type Tab = 'Compose' | 'People' | 'Servers' | 'Reports' | 'Live' | 'Weather';
+type Tab = 'Compose' | 'People' | 'Servers' | 'Reports' | 'Radar' | 'Weather';
 
 // Format data errors for user-friendly display
 function formatDataError(error: DataError): string {
@@ -118,10 +119,41 @@ function formatDataError(error: DataError): string {
   }
 }
 
+
+interface WeatherData {
+  current_weather: {
+    temperature: number;
+    windspeed: number;
+    winddirection: number;
+    weathercode: number;
+    time: string;
+  };
+  hourly: {
+    time: string[];
+    temperature_2m: number[];
+    weathercode: number[];
+    precipitation_probability: number[];
+  };
+  daily: {
+    time: string[];
+    weathercode: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    wind_speed_10m_max: number[];
+    precipitation_probability_max: number[];
+  };
+}
+
+interface Location {
+  latitude: number;
+  longitude: number;
+  name?: string;
+}
+
 export function MainApp() {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>('Compose');
-  const [data, setData] = useState<AppData>({ groups: {}, contacts: [], servers: [], lastUpdated: 0 });
+  const [data, setData] = useState<AppData>(DUMMY_DATA);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
   const [manualRemoves, setManualRemoves] = useState<string[]>([]);
@@ -130,8 +162,88 @@ export function MainApp() {
   const reloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isReloadingRef = useRef(isReloading);
 
+  // Weather State (Lifted)
+  const [weatherLocation, setWeatherLocation] = useState<Location | null>(null);
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [weatherAlerts, setWeatherAlerts] = useState<any[]>([]);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [lastAlertIds, setLastAlertIds] = useState<Set<string>>(new Set());
+
+  // Restore Weather Location
+  useEffect(() => {
+    const saved = localStorage.getItem('weather_location');
+    if (saved) {
+      try {
+        setWeatherLocation(JSON.parse(saved));
+      } catch { }
+    }
+  }, []);
+
+  const fetchWeather = useCallback(async (lat: number, lon: number, silent = false) => {
+    if (!silent) setWeatherLoading(true);
+    try {
+      const [wData, aData] = await Promise.all([
+        window.api.getWeather(lat, lon),
+        window.api.getWeatherAlerts(lat, lon).catch(() => [])
+      ]);
+      setWeatherData(wData);
+      setWeatherAlerts(aData);
+
+      // Handle Realtime Alerts
+      if (aData.length > 0) {
+        // Find new alerts we haven't shown yet
+        const newAlerts = aData.filter((a: any) => !lastAlertIds.has(a.id));
+        if (newAlerts.length > 0) {
+          // Toast the most severe one to avoid spam
+          const severe = newAlerts.find((a: any) => a.severity === 'Extreme' || a.severity === 'Severe') || newAlerts[0];
+          showToast(`Weather Alert: ${severe.event}`, 'error');
+
+          // Update known IDs
+          setLastAlertIds(prev => {
+            const next = new Set(prev);
+            newAlerts.forEach((a: any) => next.add(a.id));
+            return next;
+          });
+        }
+      }
+
+    } catch (err) {
+      console.error('Weather fetch failed', err);
+    } finally {
+      if (!silent) setWeatherLoading(false);
+    }
+  }, [lastAlertIds, showToast]);
+
+  // Weather Polling (Every 15 mins) & Tab Switch Refresh
+  useEffect(() => {
+    if (!weatherLocation) return;
+
+    // Fetch immediately if switching to tab or initial load
+    if (activeTab === 'Weather') {
+      fetchWeather(weatherLocation.latitude, weatherLocation.longitude, !!weatherData); // Silent if we already have data
+    } else {
+      // If we are not on the tab, but location is set, we might want to poll for alerts 
+      // We'll rely on the interval for background updates
+    }
+
+    // Poll every 15 minutes
+    const interval = setInterval(() => {
+      fetchWeather(weatherLocation.latitude, weatherLocation.longitude, true);
+    }, 15 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [weatherLocation, activeTab, fetchWeather]); // Re-run when tab changes or location changes
+
+
   // Sync ref
   useEffect(() => { isReloadingRef.current = isReloading; }, [isReloading]);
+
+  // Set platform class on body for CSS targeting
+  useEffect(() => {
+    const platform = window.api?.platform || (navigator.platform.toLowerCase().includes('mac') ? 'darwin' : 'win32');
+    document.body.classList.add(`platform-${platform}`);
+    console.log(`[App] Platform detected: ${platform}`);
+  }, []);
 
   const settleReloadIndicator = useCallback(() => {
     // Always clear, respecting minimum display time if a start time exists
@@ -149,17 +261,18 @@ export function MainApp() {
     }, delay);
   }, []);
 
+
   // Safety timeout to prevent stuck syncing state
   useEffect(() => {
     if (isReloading) {
-        const safety = setTimeout(() => {
-            if (isReloadingRef.current) {
-                console.warn('[App] Force clearing stuck sync indicator after timeout');
-                setIsReloading(false);
-                reloadStartRef.current = null;
-            }
-        }, 5000);
-        return () => clearTimeout(safety);
+      const safety = setTimeout(() => {
+        if (isReloadingRef.current) {
+          console.warn('[App] Force clearing stuck sync indicator after timeout');
+          setIsReloading(false);
+          reloadStartRef.current = null;
+        }
+      }, 5000);
+      return () => clearTimeout(safety);
     }
   }, [isReloading]);
 
@@ -241,11 +354,11 @@ export function MainApp() {
       <Sidebar
         activeTab={activeTab}
         onTabChange={(tab: any) => {
-            if (isReloading) return; // Prevent tab switch during reload
-            setActiveTab(tab);
+          if (isReloading) return; // Prevent tab switch during reload
+          setActiveTab(tab);
         }}
         onOpenSettings={() => {
-            setSettingsOpen(true);
+          setSettingsOpen(true);
         }}
       />
 
@@ -253,24 +366,24 @@ export function MainApp() {
       <main className="main-content">
         {/* Breadcrumb / Header Area */}
         <header className="app-header">
-           <div className="header-title-container">
-             <span className="header-breadcrumb">
-               Relay / {activeTab}
-             </span>
-             <span className="header-title">
-               {activeTab === 'Compose' && 'Data Composition'}
-               {activeTab === 'People' && 'Contact Directory'}
-               {activeTab === 'Servers' && 'Infrastructure Servers'}
-               {activeTab === 'Reports' && 'Reports'}
-               {activeTab === 'Live' && 'Dispatcher Radar'}
-               {activeTab === 'Weather' && 'Weather & Radar'}
-             </span>
-           </div>
+          <div className="header-title-container">
+            <span className="header-breadcrumb">
+              Relay / {activeTab}
+            </span>
+            <span className="header-title">
+              {activeTab === 'Compose' && 'Data Composition'}
+              {activeTab === 'People' && 'Contact Directory'}
+              {activeTab === 'Servers' && 'Infrastructure Servers'}
+              {activeTab === 'Reports' && 'Reports'}
+              {activeTab === 'Radar' && 'Dispatcher Radar'}
+              {activeTab === 'Weather' && 'Weather & Radar'}
+            </span>
+          </div>
 
-           {/* Actions Area */}
-           <div className="header-actions">
-              <WorldClock />
-           </div>
+          {/* Actions Area */}
+          <div className="header-actions">
+            <WorldClock />
+          </div>
         </header>
 
         {/* Content View */}
@@ -292,7 +405,7 @@ export function MainApp() {
             </div>
           )}
           {activeTab === 'People' && (
-             <div className="animate-fade-in" style={{ height: '100%' }}>
+            <div className="animate-fade-in" style={{ height: '100%' }}>
               <Suspense fallback={<TabFallback />}>
                 <DirectoryTab
                   contacts={data.contacts}
@@ -305,7 +418,15 @@ export function MainApp() {
           {activeTab === 'Weather' && (
             <div className="animate-fade-in" style={{ height: '100%' }}>
               <Suspense fallback={<TabFallback />}>
-                <WeatherTab />
+                {/* @ts-ignore - props mismatch until WeatherTab is updated */}
+                <WeatherTab
+                  weather={weatherData}
+                  alerts={weatherAlerts}
+                  location={weatherLocation}
+                  loading={weatherLoading}
+                  onLocationChange={setWeatherLocation}
+                  onManualRefresh={(lat: number, lon: number) => fetchWeather(lat, lon)}
+                />
               </Suspense>
             </div>
           )}
@@ -320,13 +441,13 @@ export function MainApp() {
             </div>
           )}
           {activeTab === 'Reports' && (
-             <div className="animate-fade-in" style={{ height: '100%' }}>
-               <Suspense fallback={<TabFallback />}>
-                 <MetricsTab />
-               </Suspense>
-             </div>
+            <div className="animate-fade-in" style={{ height: '100%' }}>
+              <Suspense fallback={<TabFallback />}>
+                <MetricsTab />
+              </Suspense>
+            </div>
           )}
-          {activeTab === 'Live' && (
+          {activeTab === 'Radar' && (
             <div className="animate-fade-in" style={{ height: '100%' }}>
               <Suspense fallback={<TabFallback />}>
                 <RadarTab />
@@ -338,7 +459,7 @@ export function MainApp() {
 
       {/* Window Controls - Top Right */}
       <div className="window-controls-container">
-          <WindowControls />
+        <WindowControls />
       </div>
 
       <Suspense fallback={null}>
@@ -359,11 +480,11 @@ export function MainApp() {
 }
 
 export default function App() {
-    return (
-        <ErrorBoundary>
-            <ToastProvider>
-                <MainApp />
-            </ToastProvider>
-        </ErrorBoundary>
-    );
+  return (
+    <ErrorBoundary>
+      <ToastProvider>
+        <MainApp />
+      </ToastProvider>
+    </ErrorBoundary>
+  );
 }

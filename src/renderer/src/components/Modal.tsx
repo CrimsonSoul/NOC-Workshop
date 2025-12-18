@@ -65,7 +65,7 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
         ref={focusTrapRef}
         className="animate-scale-in"
         style={{
-          background: 'var(--color-bg-surface)',
+          background: 'var(--color-bg-surface-opaque)',
           border: 'var(--border-medium)',
           borderRadius: 'var(--radius-xl)',
           width: width,
@@ -108,7 +108,7 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, children, title, width
             id="modal-title"
             style={{
               margin: 0,
-              fontSize: '14px',
+              fontSize: '18px',
               fontWeight: 600,
               color: 'var(--color-text-primary)',
               letterSpacing: '-0.01em'

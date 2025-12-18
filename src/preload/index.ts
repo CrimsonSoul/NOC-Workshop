@@ -94,7 +94,8 @@ const api: BridgeAPI = {
   renameGroup: (oldName, newName) => ipcRenderer.invoke(IPC_CHANNELS.RENAME_GROUP, oldName, newName),
   windowMinimize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
   windowMaximize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
-  windowClose: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE)
+  windowClose: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE),
+  platform: process.platform
 };
 
 contextBridge.exposeInMainWorld('api', api);

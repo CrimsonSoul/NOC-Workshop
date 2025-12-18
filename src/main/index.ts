@@ -92,12 +92,16 @@ const CONTACT_FILES = ['contacts.csv'];
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 960,
-    height: 1080,
-    minWidth: 800,
+    height: 800,
+    minWidth: 400,
     minHeight: 600,
-    backgroundColor: '#0b0d12',
+    center: true,
+    backgroundColor: '#00000000',
+    vibrancy: process.platform === 'darwin' ? 'under-window' : undefined,
+    backgroundMaterial: process.platform === 'win32' ? 'acrylic' : undefined,
     titleBarStyle: 'hidden',
-    show: false, // Don't show until ready for smoother appearance
+    trafficLightPosition: { x: 12, y: 12 },
+    show: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
@@ -123,6 +127,7 @@ async function createWindow() {
   // Show window immediately when ready - don't wait for data initialization
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
+    mainWindow?.focus();
 
     // Initialize data asynchronously AFTER window is shown for much faster startup
     setImmediate(async () => {
@@ -146,18 +151,18 @@ async function createWindow() {
 
   // Security: Restrict WebView navigation
   mainWindow.webContents.on('will-attach-webview', (event, webPreferences, params) => {
-      // Strip away preload scripts if they are not ours
-      delete webPreferences.preload;
+    // Strip away preload scripts if they are not ours
+    delete webPreferences.preload;
 
-      // Disable Node integration in WebView (it should be off by default but explicit is good)
-      webPreferences.nodeIntegration = false;
-      webPreferences.contextIsolation = true;
+    // Disable Node integration in WebView (it should be off by default but explicit is good)
+    webPreferences.nodeIntegration = false;
+    webPreferences.contextIsolation = true;
 
-      // Verify URL (Basic check)
-      if (params.src && !params.src.startsWith('http')) {
-          console.warn(`[Security] Blocked WebView navigation to non-http URL: ${params.src}`);
-          event.preventDefault();
-      }
+    // Verify URL (Basic check)
+    if (params.src && !params.src.startsWith('http')) {
+      console.warn(`[Security] Blocked WebView navigation to non-http URL: ${params.src}`);
+      event.preventDefault();
+    }
   });
 
   mainWindow.on('closed', () => {
@@ -168,38 +173,38 @@ async function createWindow() {
 }
 
 function handleDataPathChange(newPath: string) {
-    if (!mainWindow) return;
+  if (!mainWindow) return;
 
-    // 0. Validate Path
-    const validation = validateDataPath(newPath);
-    if (!validation.success) {
-      throw new Error(validation.error || 'Invalid data path');
-    }
+  // 0. Validate Path
+  const validation = validateDataPath(newPath);
+  if (!validation.success) {
+    throw new Error(validation.error || 'Invalid data path');
+  }
 
-    // 1. Ensure files exist in new location (copy from OLD location if missing)
-    copyDataFiles(currentDataRoot, newPath, getBundledDataPath());
+  // 1. Ensure files exist in new location (copy from OLD location if missing)
+  copyDataFiles(currentDataRoot, newPath, getBundledDataPath());
 
-    // As a fallback, hydrate from bundled defaults so empty/reset folders still work
-    ensureDataFiles(newPath, getBundledDataPath(), app.isPackaged);
+  // As a fallback, hydrate from bundled defaults so empty/reset folders still work
+  ensureDataFiles(newPath, getBundledDataPath(), app.isPackaged);
 
-    // 2. Update Config
-    saveConfig({ dataRoot: newPath });
-    currentDataRoot = newPath;
+  // 2. Update Config
+  saveConfig({ dataRoot: newPath });
+  currentDataRoot = newPath;
 
-    // 3. Hot Swap FileManager and Logger
-    if (fileManager) {
-        fileManager.destroy();
-        fileManager = null;
-    }
-    fileManager = new FileManager(mainWindow, currentDataRoot, getBundledDataPath());
+  // 3. Hot Swap FileManager and Logger
+  if (fileManager) {
+    fileManager.destroy();
+    fileManager = null;
+  }
+  fileManager = new FileManager(mainWindow, currentDataRoot, getBundledDataPath());
 
-    // BridgeLogger doesn't have a destroy method but it's just a class wrapper usually.
-    // If it has state or watchers, we might need to look at it.
-    // Assuming simple instantiation for now.
-    bridgeLogger = new BridgeLogger(currentDataRoot);
+  // BridgeLogger doesn't have a destroy method but it's just a class wrapper usually.
+  // If it has state or watchers, we might need to look at it.
+  // Assuming simple instantiation for now.
+  bridgeLogger = new BridgeLogger(currentDataRoot);
 
-    // 4. Force read to update UI
-    fileManager.readAndEmit();
+  // 4. Force read to update UI
+  fileManager.readAndEmit();
 }
 
 function setupIpc() {
@@ -275,52 +280,52 @@ app.on('login', (event, _webContents, _request, authInfo, callback) => {
   }
 });
 
-  app.whenReady().then(async () => {
-    // Permission handling for Geolocation - apply to all sessions
-    const setupPermissions = (sess: Electron.Session) => {
-      sess.setPermissionRequestHandler((_webContents, permission, callback) => {
-        // Allow geolocation for weather features
-        if (permission === 'geolocation') {
-          callback(true);
-          return;
-        }
-        // Allow media for potential future features
-        if (permission === 'media') {
-          callback(true);
-          return;
-        }
-        callback(false);
-      });
-
-      // Also handle permission checks (for cached permissions)
-      sess.setPermissionCheckHandler((_webContents, permission) => {
-        if (permission === 'geolocation' || permission === 'media') {
-          return true;
-        }
-        return false;
-      });
-    };
-
-    // Setup permissions for default session
-    setupPermissions(session.defaultSession);
-
-    // Setup permissions for NWS radar webview partition
-    const nwsRadarSession = session.fromPartition('persist:nwsradar');
-    setupPermissions(nwsRadarSession);
-
-    // Initialize IPC handlers first
-    setupIpc();
-
-    // Create window immediately for fastest startup
-    // All data initialization happens asynchronously after window is shown
-    await createWindow();
-
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        void createWindow();
+app.whenReady().then(async () => {
+  // Permission handling for Geolocation - apply to all sessions
+  const setupPermissions = (sess: Electron.Session) => {
+    sess.setPermissionRequestHandler((_webContents, permission, callback) => {
+      // Allow geolocation for weather features
+      if (permission === 'geolocation') {
+        callback(true);
+        return;
       }
+      // Allow media for potential future features
+      if (permission === 'media') {
+        callback(true);
+        return;
+      }
+      callback(false);
     });
+
+    // Also handle permission checks (for cached permissions)
+    sess.setPermissionCheckHandler((_webContents, permission) => {
+      if (permission === 'geolocation' || permission === 'media') {
+        return true;
+      }
+      return false;
+    });
+  };
+
+  // Setup permissions for default session
+  setupPermissions(session.defaultSession);
+
+  // Setup permissions for NWS radar webview partition
+  const nwsRadarSession = session.fromPartition('persist:nwsradar');
+  setupPermissions(nwsRadarSession);
+
+  // Initialize IPC handlers first
+  setupIpc();
+
+  // Create window immediately for fastest startup
+  // All data initialization happens asynchronously after window is shown
+  await createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      void createWindow();
+    }
   });
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

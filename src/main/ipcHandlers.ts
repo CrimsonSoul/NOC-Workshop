@@ -133,8 +133,8 @@ export function setupIpcHandlers(
     const root = getDataRoot();
     const candidates = ['groups.csv'];
     for (const file of candidates) {
-        const fullPath = join(root, file);
-        if (fs.existsSync(fullPath)) return fullPath;
+      const fullPath = join(root, file);
+      if (fs.existsSync(fullPath)) return fullPath;
     }
     return join(root, candidates[0]);
   };
@@ -143,8 +143,8 @@ export function setupIpcHandlers(
     const root = getDataRoot();
     const candidates = ['contacts.csv'];
     for (const file of candidates) {
-        const fullPath = join(root, file);
-        if (fs.existsSync(fullPath)) return fullPath;
+      const fullPath = join(root, file);
+      if (fs.existsSync(fullPath)) return fullPath;
     }
     return join(root, candidates[0]);
   };
@@ -179,9 +179,9 @@ export function setupIpcHandlers(
     if (canceled || filePaths.length === 0) return false;
 
     if (type === 'contacts') {
-        return fileManager?.importContactsWithMapping(filePaths[0]) ?? false;
+      return fileManager?.importContactsWithMapping(filePaths[0]) ?? false;
     } else {
-        return fileManager?.importGroupsWithMapping(filePaths[0]) ?? false;
+      return fileManager?.importGroupsWithMapping(filePaths[0]) ?? false;
     }
   };
 
@@ -244,7 +244,7 @@ export function setupIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_WEATHER, async (_event, lat, lon) => {
     try {
       const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&forecast_days=16`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability&daily=weathercode,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_probability_max&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&forecast_days=16`
       );
       if (!res.ok) throw new Error('Failed to fetch weather data');
       return await res.json();
@@ -284,7 +284,7 @@ export function setupIpcHandlers(
         throw new Error('Failed to get location info from NWS');
       }
 
-      const pointData = await pointRes.json();
+      const pointData: any = await pointRes.json();
       const countyZone = pointData.properties?.county;
       const forecastZone = pointData.properties?.forecastZone;
 
@@ -298,7 +298,7 @@ export function setupIpcHandlers(
         throw new Error('Failed to fetch weather alerts');
       }
 
-      const alertData = await alertRes.json();
+      const alertData: any = await alertRes.json();
       const features = alertData.features || [];
 
       // Map to our WeatherAlert type

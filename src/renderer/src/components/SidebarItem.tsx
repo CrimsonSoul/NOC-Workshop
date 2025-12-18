@@ -27,16 +27,13 @@ export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu 
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       style={{
-        padding: '5px 7px',
-        borderRadius: '5px',
+        padding: '4px 8px',
+        borderRadius: '6px',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         background: active ? 'rgba(255,255,255,0.06)' : 'transparent',
-        color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-        fontSize: '12px',
-        fontWeight: 500,
         transition: 'all 0.1s ease',
         userSelect: 'none',
         border: 'none',
@@ -44,38 +41,52 @@ export const SidebarItem = memo(({ label, count, active, onClick, onContextMenu 
         fontFamily: 'inherit',
         textAlign: 'left',
         outline: 'none',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        minHeight: '32px'
       }}
       onMouseEnter={(e) => {
         if (!active) {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-            e.currentTarget.style.color = 'var(--color-text-primary)';
+          e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
         }
       }}
       onMouseLeave={(e) => {
         if (!active) {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = 'var(--color-text-secondary)';
+          e.currentTarget.style.background = 'transparent';
         }
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-        <div style={{
-           width: '6px',
-           height: '6px',
-           borderRadius: '2px',
-           background: active ? color.fill : 'transparent',
-           border: `1px solid ${active ? color.fill : color.border}`
-        }} />
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', overflow: 'hidden' }}>
+        <span style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '12px',
+          color: color.text,
+          background: color.bg,
+          border: `1px solid ${color.border}`,
+          padding: '2px 8px',
+          borderRadius: '12px',
+          fontWeight: 600,
+          maxWidth: '100%',
+          overflow: 'hidden'
+        }}>
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {label}
+          </span>
+          {count !== undefined && (
+            <span style={{
+              opacity: 0.8,
+              fontSize: '11px',
+              fontWeight: 500,
+              borderLeft: `1px solid ${color.border}`,
+              paddingLeft: '6px',
+              flexShrink: 0
+            }}>
+              {count}
+            </span>
+          )}
         </span>
       </div>
-      {count !== undefined && (
-        <span style={{ fontSize: '10px', opacity: 0.5, marginLeft: '6px' }}>
-            {count}
-        </span>
-      )}
     </button>
   );
 });

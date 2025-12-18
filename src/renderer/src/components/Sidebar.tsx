@@ -1,6 +1,6 @@
 import React from 'react';
 
-type Tab = 'Compose' | 'People' | 'Reports' | 'Live' | 'Servers' | 'Weather';
+type Tab = 'Compose' | 'People' | 'Reports' | 'Radar' | 'Servers' | 'Weather';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -31,19 +31,19 @@ const SidebarButton = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '32px',
-        height: '32px',
+        width: '40px',
+        height: '40px',
         background: isActive
-          ? 'rgba(59, 130, 246, 0.15)'
+          ? 'var(--color-accent-blue)'
           : isHovered
-          ? 'rgba(255, 255, 255, 0.06)'
-          : 'transparent',
+            ? 'var(--color-accent-blue)'
+            : 'rgba(255, 255, 255, 0.03)',
         border: 'none',
         cursor: 'pointer',
         position: 'relative',
-        color: isActive ? 'var(--color-accent-blue)' : isHovered ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
-        transition: 'all 0.15s ease',
-        borderRadius: '6px',
+        color: isActive || isHovered ? 'white' : 'var(--color-text-tertiary)',
+        transition: 'all 0.2s ease',
+        borderRadius: isActive || isHovered ? '12px' : '20px',
         outline: 'none'
       }}
     >
@@ -54,13 +54,13 @@ const SidebarButton = ({
         <div
           style={{
             position: 'absolute',
-            left: '-6px',
+            left: '-12px',
             top: '50%',
             transform: 'translateY(-50%)',
-            height: '16px',
-            width: '2px',
-            background: 'var(--color-accent-blue)',
-            borderRadius: '0 1px 1px 0'
+            height: '24px',
+            width: '4px',
+            background: 'white',
+            borderRadius: '0 4px 4px 0'
           }}
         />
       )}
@@ -71,35 +71,45 @@ const SidebarButton = ({
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpenSettings }) => {
   return (
     <div style={{
-      width: '48px',
-      background: 'var(--color-bg-sidebar)',
-      borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+      width: window.api?.platform === 'darwin' ? '72px' : 'var(--sidebar-width-collapsed)',
+      background: 'transparent',
+      borderRight: 'none',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      paddingTop: '12px',
-      paddingBottom: '12px',
-      gap: '4px',
+      paddingTop: window.api?.platform === 'darwin' ? '35px' : '16px',
+      paddingBottom: '16px',
+      gap: '8px',
       zIndex: 9002,
       WebkitAppRegion: 'drag' as any
     }}>
-      {/* App Icon */}
+      {/* App Icon - Restored and pushed down on macOS */}
       <div style={{
-        width: '28px',
-        height: '28px',
+        width: '40px',
+        height: '40px',
         background: 'linear-gradient(135deg, var(--color-accent-blue) 0%, #2563EB 100%)',
-        borderRadius: '6px',
+        borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: 'white',
         fontWeight: 600,
-        fontSize: '13px',
-        marginBottom: '12px',
-        WebkitAppRegion: 'no-drag' as any
+        fontSize: '16px',
+        WebkitAppRegion: 'no-drag' as any,
+        cursor: 'pointer',
+        transition: 'border-radius 0.2s ease'
       }}>
         R
       </div>
+
+      {/* Separator */}
+      <div style={{
+        width: '32px',
+        height: '2px',
+        background: 'rgba(255, 255, 255, 0.08)',
+        borderRadius: '1px',
+        flexShrink: 0
+      }} />
 
       {/* Navigation */}
       <nav style={{
@@ -107,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '6px',
+        gap: '8px',
         WebkitAppRegion: 'no-drag' as any
       }}>
         <SidebarButton
@@ -115,8 +125,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
           isActive={activeTab === 'Compose'}
           onClick={() => onTabChange('Compose')}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="#60A5FA" />
             </svg>
           }
         />
@@ -125,11 +135,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
           isActive={activeTab === 'People'}
           onClick={() => onTabChange('People')}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#34D399" />
+              <circle cx="9" cy="7" r="4" stroke="#34D399" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           }
         />
@@ -138,11 +148,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
           isActive={activeTab === 'Servers'}
           onClick={() => onTabChange('Servers')}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
-              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
-              <line x1="6" y1="6" x2="6.01" y2="6"/>
-              <line x1="6" y1="18" x2="6.01" y2="18"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" stroke="#4ADE80" strokeWidth="3" />
+              <line x1="6" y1="18" x2="6.01" y2="18" stroke="#4ADE80" strokeWidth="3" />
             </svg>
           }
         />
@@ -151,53 +161,58 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
           isActive={activeTab === 'Reports'}
           onClick={() => onTabChange('Reports')}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 20V10" />
-              <path d="M12 20V4" />
+              <path d="M12 20V4" stroke="#A78BFA" />
               <path d="M6 20v-6" />
             </svg>
           }
         />
         <SidebarButton
-          label="Live"
-          isActive={activeTab === 'Live'}
-          onClick={() => onTabChange('Live')}
+          label="Radar"
+          isActive={activeTab === 'Radar'}
+          onClick={() => onTabChange('Radar')}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a10 10 0 0 1 8.66 5" stroke="none" />
+              <path d="M12 12L12 2A10 10 0 0 1 20.66 7L12 12Z" fill="#4ADE80" stroke="none" opacity="0.4" />
+              <circle cx="12" cy="12" r="2" fill="#4ADE80" stroke="none" />
+              <circle cx="16" cy="6" r="1.5" fill="#4ADE80" stroke="none" />
             </svg>
           }
         />
-      </nav>
-
-      {/* Settings */}
-      <div style={{ WebkitAppRegion: 'no-drag' as any }}>
         <SidebarButton
           label="Weather"
           isActive={activeTab === 'Weather'}
           onClick={() => onTabChange('Weather')}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17.5 19c0-1.7-1.3-3-3-3h-11c-1.7 0-3 1.3-3 3 .6 0 1.1.5 1.1 1.1 0 .6-.5 1.1-1.1 1.1v.8h17v-.8c-.6 0-1.1-.5-1.1-1.1 0-.6.5-1.1 1.1-1.1z"/>
-              <path d="M6 16v-2a6 6 0 1 1 12 0v2"/>
-              <path d="M12 9V3"/>
-              <path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v2" stroke="#FDB813" />
+              <path d="m4.93 4.93 1.41 1.41" stroke="#FDB813" />
+              <path d="M20 12h2" stroke="#FDB813" />
+              <path d="m19.07 4.93-1.41 1.41" stroke="#FDB813" />
+              <path d="M15.947 12.65a4 4 0 0 0-5.925-4.128" stroke="#FDB813" />
+              <path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z" />
             </svg>
           }
         />
-        <div style={{ height: '4px' }} />
+      </nav>
+
+      {/* Settings section */}
+      <div style={{ WebkitAppRegion: 'no-drag' as any, display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <SidebarButton
           label="Settings"
           isActive={false}
           onClick={onOpenSettings}
           icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           }
         />
       </div>
-    </div>
+    </div >
   );
 };

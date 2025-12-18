@@ -24,15 +24,15 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
   useEffect(() => {
     if (isOpen) {
       if (editContact) {
-          setName(editContact.name);
-          setEmail(editContact.email);
-          setPhone(editContact.phone);
-          setTitle(editContact.title);
+        setName(editContact.name);
+        setEmail(editContact.email);
+        setPhone(editContact.phone);
+        setTitle(editContact.title);
       } else {
-          setName('');
-          setEmail(initialEmail);
-          setPhone('');
-          setTitle('');
+        setName('');
+        setEmail(initialEmail);
+        setPhone('');
+        setTitle('');
       }
       setIsSubmitting(false);
     }
@@ -54,14 +54,14 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
 
   const labelStyle: React.CSSProperties = {
     display: 'block',
-    fontSize: '12px',
+    fontSize: '14px',
     fontWeight: 500,
     color: 'var(--color-text-secondary)',
     marginBottom: '6px'
   };
 
   const fieldStyle: React.CSSProperties = {
-      marginBottom: '16px'
+    marginBottom: '16px'
   }
 
   return (
@@ -69,45 +69,45 @@ export const AddContactModal: React.FC<Props> = ({ isOpen, onClose, onSave, init
       <form onSubmit={handleSubmit}>
 
         <div style={fieldStyle}>
-            <label style={labelStyle}>Full Name <span style={{color: '#EF4444'}}>*</span></label>
-            <Input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. Alice Smith"
-              required
-              autoFocus
-            />
+          <label style={labelStyle}>Full Name <span style={{ color: '#EF4444' }}>*</span></label>
+          <Input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="e.g. Alice Smith"
+            required
+            autoFocus
+          />
         </div>
 
         <div style={fieldStyle}>
-            <label style={labelStyle}>Email Address <span style={{color: '#EF4444'}}>*</span></label>
-            <Input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="alice@example.com"
-              required
-            />
+          <label style={labelStyle}>Email Address <span style={{ color: '#EF4444' }}>*</span></label>
+          <Input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="alice@example.com"
+            required
+          />
         </div>
 
         <div style={fieldStyle}>
-            <label style={labelStyle}>Job Title</label>
-            <Input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Marketing Director"
-            />
+          <label style={labelStyle}>Job Title</label>
+          <Input
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="e.g. Marketing Director"
+          />
         </div>
 
         <div style={fieldStyle}>
-            <label style={labelStyle}>Phone Number</label>
-            <Input
-              type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              onBlur={handlePhoneBlur}
-              placeholder="e.g. (555) 123-4567"
-            />
+          <label style={labelStyle}>Phone Number</label>
+          <Input
+            type="tel"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            onBlur={handlePhoneBlur}
+            placeholder="e.g. (555) 123-4567"
+          />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>

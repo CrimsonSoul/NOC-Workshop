@@ -28,7 +28,7 @@ export const ToolbarButton = ({ onClick, label, icon, primary = false, active = 
             onClick={handleClick}
             style={{
                 position: 'relative',
-                padding: '4px 10px',
+                padding: '6px 12px',
                 borderRadius: 'var(--radius-pill)',
                 border: primary ? 'none' : 'var(--border-medium)',
                 background: primary
@@ -38,8 +38,8 @@ export const ToolbarButton = ({ onClick, label, icon, primary = false, active = 
                     ? '#FFFFFF'
                     : (isSuccess ? 'var(--color-accent-green)' : (active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)')),
                 borderColor: !primary && isSuccess ? 'var(--color-accent-green)' : (primary ? 'transparent' : 'var(--border-medium)'),
-                fontSize: '10px',
-                fontWeight: 500,
+                fontSize: '12px',
+                fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.03em',
                 cursor: 'pointer',
@@ -47,7 +47,7 @@ export const ToolbarButton = ({ onClick, label, icon, primary = false, active = 
                 outline: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '6px',
                 boxShadow: primary ? (isSuccess ? 'var(--shadow-sm), 0 0 20px rgba(16, 185, 129, 0.3)' : 'var(--shadow-sm), var(--shadow-glow-blue)') : 'none',
                 overflow: 'hidden'
             }}

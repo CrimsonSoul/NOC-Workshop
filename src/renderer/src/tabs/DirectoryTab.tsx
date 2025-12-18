@@ -43,40 +43,40 @@ type Props = {
 
 // Default Column Widths (px)
 const DEFAULT_WIDTHS = {
-    name: 250,
-    title: 150,
-    email: 200,
-    phone: 150,
-    groups: 150
+  name: 250,
+  title: 150,
+  email: 200,
+  phone: 150,
+  groups: 150
 };
 
 const DEFAULT_ORDER: (keyof typeof DEFAULT_WIDTHS)[] = ['name', 'title', 'email', 'phone', 'groups'];
 
 type SortConfig = {
-    key: keyof typeof DEFAULT_WIDTHS;
-    direction: 'asc' | 'desc';
+  key: keyof typeof DEFAULT_WIDTHS;
+  direction: 'asc' | 'desc';
 };
 
 const DraggableHeader = ({ id, children }: { id: string, children: React.ReactNode }) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-        display: 'flex',
-        alignItems: 'center',
-        zIndex: isDragging ? 10 : 'auto',
-        position: isDragging ? 'relative' : undefined,
-        cursor: 'grab',
-        touchAction: 'none'
-    } as React.CSSProperties;
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    display: 'flex',
+    alignItems: 'center',
+    zIndex: isDragging ? 10 : 'auto',
+    position: isDragging ? 'relative' : undefined,
+    cursor: 'grab',
+    touchAction: 'none'
+  } as React.CSSProperties;
 
-    return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            {children}
-        </div>
-    );
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
 };
 
 const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups: GroupMap, onClose: () => void }) => {
@@ -121,63 +121,63 @@ const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups:
       padding: '8px',
       marginTop: '4px'
     }} onClick={e => e.stopPropagation()}>
-       <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', padding: '4px 8px', marginBottom: '4px' }}>
-          ADD TO GROUP
-       </div>
-       <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-          {Object.keys(groups).map(g => (
-            <div key={g}
-              onClick={() => toggleGroup(g, membership[g])}
-              style={{
-                padding: '6px 8px',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              <div style={{
-                width: '14px',
-                height: '14px',
-                borderRadius: '3px',
-                border: membership[g] ? 'none' : '1px solid var(--color-text-tertiary)',
-                background: membership[g] ? 'var(--color-accent-blue)' : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                 {membership[g] && <span style={{fontSize: '10px', color: '#FFF'}}>✓</span>}
-              </div>
-              {g}
+      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-tertiary)', padding: '4px 8px', marginBottom: '4px' }}>
+        ADD TO GROUP
+      </div>
+      <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+        {Object.keys(groups).map(g => (
+          <div key={g}
+            onClick={() => toggleGroup(g, membership[g])}
+            style={{
+              padding: '6px 8px',
+              fontSize: '14px',
+              color: 'var(--color-text-primary)',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <div style={{
+              width: '14px',
+              height: '14px',
+              borderRadius: '3px',
+              border: membership[g] ? 'none' : '1px solid var(--color-text-tertiary)',
+              background: membership[g] ? 'var(--color-accent-blue)' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {membership[g] && <span style={{ fontSize: '10px', color: '#FFF' }}>✓</span>}
             </div>
-          ))}
-          {Object.keys(groups).length === 0 && (
-             <div style={{ padding: '8px', fontSize: '12px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
-               No groups available
-             </div>
-          )}
-       </div>
-       <div style={{ borderTop: 'var(--border-subtle)', marginTop: '8px', paddingTop: '8px' }}>
-         <div
-           onClick={onClose}
-           style={{
-             fontSize: '12px',
-             color: 'var(--color-text-secondary)',
-             textAlign: 'center',
-             cursor: 'pointer',
-             padding: '4px'
-           }}
-           onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text-primary)'}
-           onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}
-         >
-           Close
-         </div>
-       </div>
+            {g}
+          </div>
+        ))}
+        {Object.keys(groups).length === 0 && (
+          <div style={{ padding: '8px', fontSize: '12px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+            No groups available
+          </div>
+        )}
+      </div>
+      <div style={{ borderTop: 'var(--border-subtle)', marginTop: '8px', paddingTop: '8px' }}>
+        <div
+          onClick={onClose}
+          style={{
+            fontSize: '12px',
+            color: 'var(--color-text-secondary)',
+            textAlign: 'center',
+            cursor: 'pointer',
+            padding: '4px'
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+        >
+          Close
+        </div>
+      </div>
     </div>
   );
 };
@@ -204,29 +204,27 @@ const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
 
   return (
     <div
-        style={{
-          ...style,
-          outline: isFocused ? '2px solid var(--color-accent-blue)' : 'none',
-          outlineOffset: '-2px',
-          background: isFocused ? 'rgba(59, 130, 246, 0.1)' : undefined
-        }}
-        onContextMenu={(e) => onContextMenu(e, contact)}
-        onClick={() => onRowClick(index)}
-        data-row-index={index}
-        role="row"
-        aria-selected={isFocused}
-        tabIndex={isFocused ? 0 : -1}
+      style={{
+        ...style,
+        outline: isFocused ? '2px solid var(--color-accent-blue)' : 'none',
+        outlineOffset: '-2px',
+        background: isFocused ? 'rgba(59, 130, 246, 0.1)' : undefined
+      }}
+      onContextMenu={(e) => onContextMenu(e, contact)}
+      onClick={() => onRowClick(index)}
+      data-row-index={index}
+      role="row"
+      aria-selected={isFocused}
+      tabIndex={isFocused ? 0 : -1}
     >
-        <ContactCard
-          name={contact.name}
-          email={contact.email}
-          title={contact.title}
-          phone={contact.phone}
-          groups={membership}
-          columnWidths={columnWidths}
-          columnOrder={columnOrder}
-          selected={isFocused}
-        />
+      <ContactCard
+        name={contact.name}
+        email={contact.email}
+        title={contact.title}
+        phone={contact.phone}
+        groups={membership}
+        selected={isFocused}
+      />
     </div>
   );
 });
@@ -257,19 +255,19 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const [listWidth, setListWidth] = useState(0);
 
   const scaledWidths = useMemo(() => {
-      if (!listWidth) return baseWidths;
+    if (!listWidth) return baseWidths;
 
-      // Account for padding (16px left + 16px right = 32px)
-      // and gaps between columns (5 columns = 4 gaps * 16px = 64px)
-      // plus ~12px for scrollbar to avoid cutoff
-      const RESERVED_SPACE = 32 + 64 + 12;
+    // Account for padding (16px left + 16px right = 32px)
+    // and gaps between columns (5 columns = 4 gaps * 16px = 64px)
+    // plus ~12px for scrollbar to avoid cutoff
+    const RESERVED_SPACE = 32 + 64 + 12;
 
-      return scaleColumns({
-          baseWidths,
-          availableWidth: listWidth,
-          minColumnWidth: 50,
-          reservedSpace: RESERVED_SPACE
-      }) as typeof DEFAULT_WIDTHS;
+    return scaleColumns({
+      baseWidths,
+      availableWidth: listWidth,
+      minColumnWidth: 50,
+      reservedSpace: RESERVED_SPACE
+    }) as typeof DEFAULT_WIDTHS;
   }, [baseWidths, listWidth]);
 
 
@@ -282,9 +280,9 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
 
   const sensors = useSensors(
     useSensor(CustomPointerSensor, {
-        activationConstraint: {
-            distance: 8,
-        }
+      activationConstraint: {
+        distance: 8,
+      }
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -292,48 +290,48 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   );
 
   const handleResize = (key: keyof typeof DEFAULT_WIDTHS, width: number) => {
-      // When user manually resizes, we update the BASE width.
-      // We reverse the scale to save "true" preference.
-      const RESERVED_SPACE = 32 + 64 + 12;
+    // When user manually resizes, we update the BASE width.
+    // We reverse the scale to save "true" preference.
+    const RESERVED_SPACE = 32 + 64 + 12;
 
-      let newBase = width;
-      if (listWidth) {
-           const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
-           newBase = reverseScale(width, listWidth, totalBaseWidth, RESERVED_SPACE);
-      }
+    let newBase = width;
+    if (listWidth) {
+      const totalBaseWidth = Object.values(baseWidths).reduce((a, b) => (a as number) + (b as number), 0) as number;
+      newBase = reverseScale(width, listWidth, totalBaseWidth, RESERVED_SPACE);
+    }
 
-      const newWidths = { ...baseWidths, [key]: newBase };
-      setBaseWidths(newWidths);
-      saveColumnWidths('relay-directory-columns', newWidths);
+    const newWidths = { ...baseWidths, [key]: newBase };
+    setBaseWidths(newWidths);
+    saveColumnWidths('relay-directory-columns', newWidths);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (over && active.id !== over.id) {
-          setColumnOrder((items) => {
-              const oldIndex = items.indexOf(active.id as keyof typeof DEFAULT_WIDTHS);
-              const newIndex = items.indexOf(over.id as keyof typeof DEFAULT_WIDTHS);
-              const newOrder = arrayMove(items, oldIndex, newIndex);
-              saveColumnOrder('relay-directory-order', newOrder);
-              return newOrder;
-          });
-      }
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setColumnOrder((items) => {
+        const oldIndex = items.indexOf(active.id as keyof typeof DEFAULT_WIDTHS);
+        const newIndex = items.indexOf(over.id as keyof typeof DEFAULT_WIDTHS);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+        saveColumnOrder('relay-directory-order', newOrder);
+        return newOrder;
+      });
+    }
   };
 
   const handleSort = (key: keyof typeof DEFAULT_WIDTHS) => {
-      setSortConfig(current => {
-          if (current.key === key) {
-              return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
-          }
-          return { key, direction: 'asc' };
-      });
+    setSortConfig(current => {
+      if (current.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
   };
 
   const [optimisticAdds, setOptimisticAdds] = useState<Contact[]>([]);
   const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, Partial<Contact>>>(new Map());
   const [optimisticDeletes, setOptimisticDeletes] = useState<Set<string>>(new Set());
 
-  const [contextMenu, setContextMenu] = useState<{x: number, y: number, contact: Contact} | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, contact: Contact } | null>(null);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<Contact | null>(null);
   const [groupSelectorContact, setGroupSelectorContact] = useState<Contact | null>(null);
@@ -345,56 +343,56 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   }, [contacts]);
 
   const effectiveContacts = useMemo(() => {
-      let result = [...contacts];
-      result = result.filter(c => !optimisticDeletes.has(c.email));
-      result = result.map(c => {
-          const update = optimisticUpdates.get(c.email);
-          if (update) return { ...c, ...update };
-          return c;
-      });
-      result = [...optimisticAdds, ...result];
-      const seen = new Set();
-      const deduped: Contact[] = [];
-      for (const c of result) {
-          if (!seen.has(c.email)) {
-              seen.add(c.email);
-              deduped.push(c);
-          }
+    let result = [...contacts];
+    result = result.filter(c => !optimisticDeletes.has(c.email));
+    result = result.map(c => {
+      const update = optimisticUpdates.get(c.email);
+      if (update) return { ...c, ...update };
+      return c;
+    });
+    result = [...optimisticAdds, ...result];
+    const seen = new Set();
+    const deduped: Contact[] = [];
+    for (const c of result) {
+      if (!seen.has(c.email)) {
+        seen.add(c.email);
+        deduped.push(c);
       }
-      return deduped;
+    }
+    return deduped;
   }, [contacts, optimisticAdds, optimisticUpdates, optimisticDeletes]);
 
   const { groupMap, groupStringMap } = useGroupMaps(groups);
 
   useEffect(() => {
-      if (contextMenu) {
-          const handler = () => setContextMenu(null);
-          window.addEventListener('click', handler);
-          return () => window.removeEventListener('click', handler);
-      }
-      return;
+    if (contextMenu) {
+      const handler = () => setContextMenu(null);
+      window.addEventListener('click', handler);
+      return () => window.removeEventListener('click', handler);
+    }
+    return;
   }, [contextMenu]);
 
   const filtered = useMemo(() => {
-      let res = effectiveContacts.filter(c =>
-        !debouncedSearch || c._searchString.includes(debouncedSearch.toLowerCase())
-      );
+    let res = effectiveContacts.filter(c =>
+      !debouncedSearch || c._searchString.includes(debouncedSearch.toLowerCase())
+    );
 
-      return res.sort((a, b) => {
-          const key = sortConfig.key;
-          const dir = sortConfig.direction === 'asc' ? 1 : -1;
+    return res.sort((a, b) => {
+      const key = sortConfig.key;
+      const dir = sortConfig.direction === 'asc' ? 1 : -1;
 
-          if (key === 'groups') {
-              const strA = groupStringMap.get(a.email.toLowerCase()) || '';
-              const strB = groupStringMap.get(b.email.toLowerCase()) || '';
-              return strA.localeCompare(strB) * dir;
-          }
+      if (key === 'groups') {
+        const strA = groupStringMap.get(a.email.toLowerCase()) || '';
+        const strB = groupStringMap.get(b.email.toLowerCase()) || '';
+        return strA.localeCompare(strB) * dir;
+      }
 
-          const valA = (a[key as keyof Contact] || '').toString().toLowerCase();
-          const valB = (b[key as keyof Contact] || '').toString().toLowerCase();
+      const valA = (a[key as keyof Contact] || '').toString().toLowerCase();
+      const valB = (b[key as keyof Contact] || '').toString().toLowerCase();
 
-          return valA.localeCompare(valB) * dir;
-      });
+      return valA.localeCompare(valB) * dir;
+    });
   }, [effectiveContacts, debouncedSearch, sortConfig, groupStringMap]);
 
   const handleAddWrapper = useCallback((contact: Contact) => {
@@ -411,12 +409,12 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
 
   const handleCreateContact = async (contact: Partial<Contact>) => {
     const newContact = {
-        name: contact.name || '',
-        email: contact.email || '',
-        phone: contact.phone || '',
-        title: contact.title || '',
-        _searchString: (contact.name + contact.email + contact.title + contact.phone).toLowerCase(),
-        avatar: undefined
+      name: contact.name || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      title: contact.title || '',
+      _searchString: (contact.name + contact.email + contact.title + contact.phone).toLowerCase(),
+      avatar: undefined
     } as Contact;
 
     setOptimisticAdds(prev => [newContact, ...prev]);
@@ -425,8 +423,8 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     try {
       const success = await window.api?.addContact(contact);
       if (!success) {
-          setOptimisticAdds(prev => prev.filter(c => c.email !== contact.email));
-          showToast('Failed to create contact: Unable to save to file', 'error');
+        setOptimisticAdds(prev => prev.filter(c => c.email !== contact.email));
+        showToast('Failed to create contact: Unable to save to file', 'error');
       }
     } catch (error) {
       setOptimisticAdds(prev => prev.filter(c => c.email !== contact.email));
@@ -437,69 +435,69 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   };
 
   const handleUpdateContact = async (updated: Partial<Contact>) => {
-      if (updated.email) {
-          setOptimisticUpdates(prev => new Map(prev).set(updated.email!, updated));
-      }
-      setEditingContact(null);
+    if (updated.email) {
+      setOptimisticUpdates(prev => new Map(prev).set(updated.email!, updated));
+    }
+    setEditingContact(null);
 
-      try {
-        const success = await window.api?.addContact(updated);
-        if (!success) {
-            if (updated.email) {
-               setOptimisticUpdates(prev => {
-                   const next = new Map(prev);
-                   next.delete(updated.email!);
-                   return next;
-               });
-            }
-            showToast('Failed to update contact: Unable to save changes', 'error');
-        }
-      } catch (error) {
+    try {
+      const success = await window.api?.addContact(updated);
+      if (!success) {
         if (updated.email) {
-           setOptimisticUpdates(prev => {
-               const next = new Map(prev);
-               next.delete(updated.email!);
-               return next;
-           });
+          setOptimisticUpdates(prev => {
+            const next = new Map(prev);
+            next.delete(updated.email!);
+            return next;
+          });
         }
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        showToast(`Failed to update contact: ${message}`, 'error');
-        console.error('[DirectoryTab] Error updating contact:', error);
+        showToast('Failed to update contact: Unable to save changes', 'error');
       }
+    } catch (error) {
+      if (updated.email) {
+        setOptimisticUpdates(prev => {
+          const next = new Map(prev);
+          next.delete(updated.email!);
+          return next;
+        });
+      }
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      showToast(`Failed to update contact: ${message}`, 'error');
+      console.error('[DirectoryTab] Error updating contact:', error);
+    }
   }
 
   const handleDeleteContact = async () => {
-      if (deleteConfirmation) {
-          const email = deleteConfirmation.email;
-          setOptimisticDeletes(prev => new Set(prev).add(email));
-          setDeleteConfirmation(null);
+    if (deleteConfirmation) {
+      const email = deleteConfirmation.email;
+      setOptimisticDeletes(prev => new Set(prev).add(email));
+      setDeleteConfirmation(null);
 
-          try {
-            const success = await window.api?.removeContact(email);
-            if (!success) {
-                setOptimisticDeletes(prev => {
-                    const next = new Set(prev);
-                    next.delete(email);
-                    return next;
-                });
-                showToast('Failed to delete contact: Contact not found or file error', 'error');
-            }
-          } catch (error) {
-            setOptimisticDeletes(prev => {
-                const next = new Set(prev);
-                next.delete(email);
-                return next;
-            });
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            showToast(`Failed to delete contact: ${message}`, 'error');
-            console.error('[DirectoryTab] Error deleting contact:', error);
-          }
+      try {
+        const success = await window.api?.removeContact(email);
+        if (!success) {
+          setOptimisticDeletes(prev => {
+            const next = new Set(prev);
+            next.delete(email);
+            return next;
+          });
+          showToast('Failed to delete contact: Contact not found or file error', 'error');
+        }
+      } catch (error) {
+        setOptimisticDeletes(prev => {
+          const next = new Set(prev);
+          next.delete(email);
+          return next;
+        });
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        showToast(`Failed to delete contact: ${message}`, 'error');
+        console.error('[DirectoryTab] Error deleting contact:', error);
       }
+    }
   };
 
   const onContextMenu = useCallback((e: React.MouseEvent, contact: Contact) => {
-      e.preventDefault();
-      setContextMenu({ x: e.clientX, y: e.clientY, contact });
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, contact });
   }, []);
 
   // Row click handler for keyboard navigation
@@ -590,11 +588,11 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   }), [filtered, recentlyAdded, handleAddWrapper, groups, groupMap, onContextMenu, scaledWidths, columnOrder, focusedIndex, onRowClick]);
 
   const LABELS: Record<keyof typeof DEFAULT_WIDTHS, string> = {
-      name: 'Name',
-      title: 'Job Title',
-      email: 'Email',
-      phone: 'Phone',
-      groups: 'Groups'
+    name: 'Name',
+    title: 'Job Title',
+    email: 'Email',
+    phone: 'Phone',
+    groups: 'Groups'
   };
 
   return (
@@ -607,7 +605,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     }}>
       {/* Header / Actions - Compact */}
       <div style={{
-        padding: '8px 14px',
+        padding: '12px 16px',
         borderBottom: 'var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
@@ -618,15 +616,15 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
-          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>}
           style={{ width: '300px' }}
         />
         {filtered.length > 0 && (
-          <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
             {filtered.length} matches
           </div>
         )}
-         <div style={{flex:1}}></div>
+        <div style={{ flex: 1 }}></div>
         <ToolbarButton
           label="ADD CONTACT"
           onClick={() => setIsAddModalOpen(true)}
@@ -634,50 +632,15 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         />
       </div>
 
-      {/* Header Row - Compact */}
-      <div style={{
-        display: 'flex',
-        padding: '8px 14px',
-        borderBottom: 'var(--border-subtle)',
-        background: 'rgba(255,255,255,0.02)',
-        fontSize: '10px',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: 'var(--color-text-tertiary)',
-        gap: '14px',
-        overflow: 'hidden'
-      }}>
-         <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-         >
-             <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                 {columnOrder.map(key => (
-                     <DraggableHeader key={key} id={key}>
-                         <ResizableHeader
-                            label={LABELS[key]}
-                            width={scaledWidths[key]}
-                            sortKey={key}
-                            currentSort={sortConfig}
-                            onSort={handleSort}
-                            onResize={(w) => handleResize(key, w)}
-                         />
-                     </DraggableHeader>
-                 ))}
-             </SortableContext>
-         </DndContext>
-      </div>
-
       {/* Virtualized List - Compact */}
       <div
         ref={listContainerRef}
-        style={{ flex: 1 }}
         onKeyDown={handleListKeyDown}
         role="grid"
         aria-label="Contacts list"
         aria-rowcount={filtered.length}
+        tabIndex={0}
+        style={{ flex: 1, outline: 'none' }}
       >
         <AutoSizer onResize={({ width }) => setListWidth(width)}>
           {({ height, width }) => (
@@ -685,10 +648,9 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
               ref={listRef}
               height={height}
               itemCount={filtered.length}
-              itemSize={40}
+              itemSize={64}
               width={width}
               itemData={itemData}
-              tabIndex={0}
               style={{ outline: 'none' }}
               onItemsRendered={() => {
                 // Ensure focused item is visible when list updates
@@ -701,22 +663,24 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
             </List>
           )}
         </AutoSizer>
-        {filtered.length === 0 && (
-          <div style={{
-            height: '200px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-text-tertiary)',
-            fontStyle: 'italic',
-            flexDirection: 'column',
-            gap: '8px'
-          }}>
-            <div style={{ fontSize: '24px', opacity: 0.3 }}>∅</div>
-            <div>No contacts found</div>
-          </div>
-        )}
-      </div>
+        {
+          filtered.length === 0 && (
+            <div style={{
+              height: '200px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-text-tertiary)',
+              fontStyle: 'italic',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ fontSize: '24px', opacity: 0.3 }}>∅</div>
+              <div>No contacts found</div>
+            </div>
+          )
+        }
+      </div >
 
       <AddContactModal
         isOpen={isAddModalOpen}
@@ -735,59 +699,62 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         title="Delete Contact"
         width="400px"
       >
-           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
-                Are you sure you want to delete <span style={{ fontWeight: 600 }}>{deleteConfirmation?.name || deleteConfirmation?.email}</span>?
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
-                This action cannot be undone.
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                <TactileButton onClick={() => setDeleteConfirmation(null)}>Cancel</TactileButton>
-                <TactileButton onClick={handleDeleteContact} variant="danger">Delete Contact</TactileButton>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
+            Are you sure you want to delete <span style={{ fontWeight: 600 }}>{deleteConfirmation?.name || deleteConfirmation?.email}</span>?
+          </div>
+          <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
+            This action cannot be undone.
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+            <TactileButton onClick={() => setDeleteConfirmation(null)}>Cancel</TactileButton>
+            <TactileButton onClick={handleDeleteContact} variant="danger">Delete Contact</TactileButton>
+          </div>
         </div>
       </Modal>
 
-      {contextMenu && (
+      {
+        contextMenu && (
           <ContextMenu
             x={contextMenu.x}
             y={contextMenu.y}
             onClose={() => setContextMenu(null)}
             items={[
-                {
-                    label: recentlyAdded.has(contextMenu.contact.email) ? 'Added to Assembler' : 'Add to Assembler',
-                    onClick: () => {
-                        handleAddWrapper(contextMenu.contact);
-                        setContextMenu(null);
-                    },
-                    disabled: recentlyAdded.has(contextMenu.contact.email),
-                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              {
+                label: recentlyAdded.has(contextMenu.contact.email) ? 'Added to Assembler' : 'Add to Assembler',
+                onClick: () => {
+                  handleAddWrapper(contextMenu.contact);
+                  setContextMenu(null);
                 },
-                {
-                    label: 'Manage Groups',
-                    onClick: () => {
-                        setGroupSelectorContact(contextMenu.contact);
-                        setContextMenu(null);
-                    },
-                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                disabled: recentlyAdded.has(contextMenu.contact.email),
+                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              },
+              {
+                label: 'Manage Groups',
+                onClick: () => {
+                  setGroupSelectorContact(contextMenu.contact);
+                  setContextMenu(null);
                 },
-                {
-                    label: 'Edit Contact',
-                    onClick: () => setEditingContact(contextMenu.contact),
-                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                },
-                {
-                    label: 'Delete',
-                    onClick: () => setDeleteConfirmation(contextMenu.contact),
-                    danger: true,
-                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                }
+                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              },
+              {
+                label: 'Edit Contact',
+                onClick: () => setEditingContact(contextMenu.contact),
+                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              },
+              {
+                label: 'Delete',
+                onClick: () => setDeleteConfirmation(contextMenu.contact),
+                danger: true,
+                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              }
             ]}
           />
-      )}
+        )
+      }
 
-      {groupSelectorContact && (
+      {
+        groupSelectorContact && (
           <Modal
             isOpen={true}
             onClose={() => setGroupSelectorContact(null)}
@@ -854,7 +821,8 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
               </div>
             </div>
           </Modal>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };

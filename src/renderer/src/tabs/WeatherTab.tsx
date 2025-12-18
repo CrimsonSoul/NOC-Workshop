@@ -16,12 +16,15 @@ interface WeatherData {
     time: string[];
     temperature_2m: number[];
     weathercode: number[];
+    precipitation_probability: number[];
   };
   daily: {
     time: string[];
     weathercode: number[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
+    wind_speed_10m_max: number[];
+    precipitation_probability_max: number[];
   };
 }
 
@@ -31,75 +34,100 @@ interface Location {
   name?: string;
 }
 
-// Generate NWS radar URL with location centered
-const getNWSRadarUrl = (lat: number, lon: number): string => {
-  const settings = {
-    agenda: {
-      id: null,
-      center: [lon, lat],
-      zoom: 8
-    }
-  };
-  const encoded = btoa(JSON.stringify(settings));
-  return `https://radar.weather.gov/?settings=v1_${encodeURIComponent(encoded)}`;
+// Generate RainViewer URL with location centered
+const getRadarUrl = (lat: number, lon: number): string => {
+  // theme=dark, color=2 (Universal Blue), opacity=0.8, smooth=1 (smoothed radar rendering)
+  // loc=lat,lon,zoom
+  return `https://www.rainviewer.com/map.html?loc=${lat},${lon},8&theme=dark&color=2&opacity=0.8&smooth=1&animation=1`;
 };
 
 const getWeatherIcon = (code: number, size = 24) => {
-  // WMO Weather interpretation codes (WW)
-  // 0: Clear sky
-  // 1, 2, 3: Mainly clear, partly cloudy, and overcast
-  // 45, 48: Fog
-  // 51, 53, 55: Drizzle
-  // 61, 63, 65: Rain
-  // 71, 73, 75: Snow
-  // 80, 81, 82: Rain showers
-  // 95, 96, 99: Thunderstorm
+  const strokeWidth = 2;
 
-  let path = '';
-  let color = 'var(--color-text-primary)';
-
-  if (code === 0 || code === 1) { // Sun / Clear
-    path = "M12 7V2m0 20v-5M7 12H2m20 0h-5m-2.93-6.07L10.5 9.5M4.93 19.07l3.54-3.54M17.07 19.07l-3.54-3.54M10.5 14.5l-3.54 3.54M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z";
-    color = '#FDB813';
-  } else if (code === 2 || code === 3) { // Cloud
-    path = "M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z";
-    color = '#A1A1AA';
-  } else if (code >= 51 && code <= 65) { // Rain
+  // Clear / Sun
+  if (code === 0 || code === 1) {
     return (
-       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-         <path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9" />
-         <path d="M16 14v6" />
-         <path d="M8 14v6" />
-         <path d="M12 16v6" />
-       </svg>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#FDB813" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="5" fill="rgba(253, 184, 19, 0.1)" />
+        <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73l-1.41 1.41" />
+      </svg>
     );
-  } else if (code >= 71 && code <= 77) { // Snow
-    color = '#E5E7EB';
-    path = "M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25";
-  } else if (code >= 95) { // Storm
-    color = '#60A5FA';
-    path = "M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9 M13 11l-4 6h6l-4 6";
-  } else {
-    // Default cloud
-    path = "M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z";
   }
 
+  // Partly Cloudy
+  if (code === 2) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2v2m-7.07.93l1.41 1.41M2 12h2" stroke="#FDB813" />
+        <path d="M20 17.5A4.5 4.5 0 0 0 17.5 9h-1.8a7 7 0 1 0-11.7 6.9" fill="rgba(161, 161, 170, 0.1)" stroke="#A1A1AA" />
+      </svg>
+    );
+  }
+
+  // Overcast / Fog
+  if (code === 3 || code === 45 || code === 48) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 17.5A4.5 4.5 0 0 0 17.5 9h-1.8a7 7 0 1 0-11.7 6.9" fill="rgba(161, 161, 170, 0.1)" />
+      </svg>
+    );
+  }
+
+  // Drizzle / Rain
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 17.5A4.5 4.5 0 0 0 17.5 9h-1.8a7 7 0 1 0-11.7 6.9" fill="rgba(96, 165, 250, 0.1)" />
+        <path d="M8 18v2m4-2v2m4-2v2" />
+      </svg>
+    );
+  }
+
+  // Snow
+  if (code >= 71 && code <= 77) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 17.5A4.5 4.5 0 0 0 17.5 9h-1.8a7 7 0 1 0-11.7 6.9" fill="rgba(229, 231, 235, 0.1)" />
+        <path d="M8 18h.01M12 18h.01M16 18h.01M10 21h.01M14 21h.01" />
+      </svg>
+    );
+  }
+
+  // Thunderstorm
+  if (code >= 95) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#FDE047" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 17.5A4.5 4.5 0 0 0 17.5 9h-1.8a7 7 0 1 0-11.7 6.9" stroke="#60A5FA" fill="rgba(96, 165, 250, 0.1)" />
+        <path d="M13 11l-4 6h6l-4 6" fill="#FDE047" stroke="none" />
+        <path d="M13 11l-4 6h6l-4 6" />
+      </svg>
+    );
+  }
+
+  // Default / Cloudy
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d={path} />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 17.5A4.5 4.5 0 0 0 17.5 9h-1.8a7 7 0 1 0-11.7 6.9" />
     </svg>
   );
 };
 
-export const WeatherTab: React.FC = () => {
-  const [location, setLocation] = useState<Location | null>(null);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
-  const [loading, setLoading] = useState(true);
+
+interface WeatherTabProps {
+  weather: WeatherData | null;
+  alerts: WeatherAlert[];
+  location: Location | null;
+  loading: boolean;
+  onLocationChange: (loc: Location) => void;
+  onManualRefresh: (lat: number, lon: number) => void;
+}
+
+export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, location, loading, onLocationChange, onManualRefresh }) => {
   const [manualInput, setManualInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [radarLoaded, setRadarLoaded] = useState(false);
   const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const webviewRef = useRef<Electron.WebviewTag | null>(null);
   const radarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -112,100 +140,57 @@ export const WeatherTab: React.FC = () => {
         return `${name}, ${admin1 || ''} ${country_code}`.trim();
       }
     } catch {
-      // Fallback to coordinate-based search
-      try {
-        const nearbyData = await window.api.searchLocation(`${lat.toFixed(2)} ${lon.toFixed(2)}`);
-        if (nearbyData.results && nearbyData.results.length > 0) {
-          const { name, admin1, country_code } = nearbyData.results[0];
-          return `${name}, ${admin1 || ''} ${country_code}`.trim();
-        }
-      } catch {
-        // Ignore
-      }
+      // Fallback
     }
     return 'Current Location';
   };
 
-  // Auto-locate on mount
-  useEffect(() => {
-    const initLocation = async () => {
-      // Check for saved location first
-      const savedLocation = localStorage.getItem('weather_location');
-      if (savedLocation) {
-        try {
-          const parsed = JSON.parse(savedLocation);
-          // Only use saved location if it has a real name (not "Current Location")
-          if (parsed.name && parsed.name !== 'Current Location') {
-            setLocation(parsed);
-            fetchWeather(parsed.latitude, parsed.longitude);
-            return;
-          }
-        } catch {
-          // Fall through to auto-locate
-        }
-      }
-
-      // Auto-locate using geolocation
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords;
-            const name = await reverseGeocode(latitude, longitude);
-            const newLoc = { latitude, longitude, name };
-            setLocation(newLoc);
-            localStorage.setItem('weather_location', JSON.stringify(newLoc));
-            fetchWeather(latitude, longitude);
-          },
-          (err) => {
-            console.error('Geolocation error:', err);
-            // Fall back to a default location (US center) or show error
-            setError('Could not detect location. Please search for your city.');
-            setLoading(false);
-          },
-          {
-            timeout: 10000,
-            maximumAge: 300000, // 5 min cache
-            enableHighAccuracy: true
-          }
-        );
-      } else {
-        setError('Geolocation is not supported. Please search for your city.');
-        setLoading(false);
-      }
-    };
-
-    initLocation();
-  }, []);
-
-  // Save location to localStorage when it changes
-  useEffect(() => {
-    if (location) {
-      localStorage.setItem('weather_location', JSON.stringify(location));
-    }
-  }, [location]);
-
-  const fetchWeather = useCallback(async (lat: number, lon: number) => {
-    setLoading(true);
+  const handleAutoLocate = useCallback(async () => {
     setError(null);
-    try {
-      // Fetch weather and alerts in parallel
-      const [weatherData, alertsData] = await Promise.all([
-        window.api.getWeather(lat, lon),
-        window.api.getWeatherAlerts(lat, lon).catch(() => []) // Don't fail if alerts fail
-      ]);
-      setWeather(weatherData);
-      setAlerts(alertsData);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Failed to fetch weather data');
-    } finally {
-      setLoading(false);
+    setPermissionDenied(false);
+
+    if (!('geolocation' in navigator)) {
+      setError('Geolocation is not supported by your system.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const name = await reverseGeocode(latitude, longitude);
+        const newLoc = { latitude, longitude, name };
+        onLocationChange(newLoc);
+        localStorage.setItem('weather_location', JSON.stringify(newLoc));
+        onManualRefresh(latitude, longitude);
+      },
+      (err) => {
+        console.error('Geolocation error:', err);
+        if (err.code === 1) { // PERMISSION_DENIED
+          setPermissionDenied(true);
+          setError('Location access was denied. Please check your macOS System Settings or type your city below.');
+        } else {
+          setError('Could not detect location. Please search for your city manualy.');
+        }
+      },
+      {
+        timeout: 10000,
+        maximumAge: 300000,
+        enableHighAccuracy: true
+      }
+    );
+  }, [onLocationChange, onManualRefresh]);
+
+  // Auto-locate on mount if no location
+  useEffect(() => {
+    if (!location && !loading) {
+      // Only auto-locate if we don't have a location and aren't already loading one (from app init)
+      // Actually, App passed null if nothing in storage.
+      handleAutoLocate();
     }
   }, []);
 
   const handleManualSearch = async () => {
     if (!manualInput.trim()) return;
-    setLoading(true);
     setError(null);
     try {
       const data = await window.api.searchLocation(manualInput);
@@ -213,28 +198,20 @@ export const WeatherTab: React.FC = () => {
         const { latitude, longitude, name, admin1, country_code } = data.results[0];
         const label = `${name}, ${admin1 || ''} ${country_code}`.trim();
         const newLoc = { latitude, longitude, name: label };
-        setLocation(newLoc);
+        onLocationChange(newLoc);
+        localStorage.setItem('weather_location', JSON.stringify(newLoc));
         setRadarLoaded(false); // Reset radar loading state
-        fetchWeather(latitude, longitude);
+
+        onManualRefresh(latitude, longitude);
         setManualInput(''); // Clear input after successful search
       } else {
         setError('Location not found. Try a different search term.');
-        setLoading(false);
       }
     } catch (err: any) {
       setError(err.message || 'Search failed');
-      setLoading(false);
     }
   };
 
-  // Refresh weather periodically
-  useEffect(() => {
-    if (!location) return;
-    const interval = setInterval(() => {
-      fetchWeather(location.latitude, location.longitude);
-    }, 300000); // 5 minutes
-    return () => clearInterval(interval);
-  }, [location]);
 
   // Handle webview events with timeout fallback
   useEffect(() => {
@@ -254,6 +231,11 @@ export const WeatherTab: React.FC = () => {
         clearTimeout(radarTimeoutRef.current);
       }
       setRadarLoaded(true);
+
+      // RainViewer handles dark mode natively via URL params, so we just force background to avoid white flash
+      if (webview) {
+        webview.insertCSS(`html, body { background-color: #0f0f12 !important; }`);
+      }
     };
 
     const handleDidFailLoad = () => {
@@ -312,7 +294,13 @@ export const WeatherTab: React.FC = () => {
     const currentHour = now.getHours();
 
     return weather.hourly.time
-      .map((t, i) => ({ time: t, temp: weather.hourly.temperature_2m[i], code: weather.hourly.weathercode[i], index: i }))
+      .map((t, i) => ({
+        time: t,
+        temp: weather.hourly.temperature_2m[i],
+        code: weather.hourly.weathercode[i],
+        precip: weather.hourly.precipitation_probability[i],
+        index: i
+      }))
       .filter((item, i) => {
         const date = new Date(item.time);
         // Show current hour and future hours, up to 12 items
@@ -342,13 +330,13 @@ export const WeatherTab: React.FC = () => {
         flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
             {location?.name || 'Weather'}
           </h2>
           {weather && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               {getWeatherIcon(weather.current_weather.weathercode, 28)}
-              <span style={{ fontSize: '22px', fontWeight: 500 }}>
+              <span style={{ fontSize: '24px', fontWeight: 500 }}>
                 {Math.round(weather.current_weather.temperature)}°F
               </span>
             </div>
@@ -381,7 +369,7 @@ export const WeatherTab: React.FC = () => {
 
       {/* Weather Alerts */}
       {alerts.length > 0 && (
-        <div style={{
+        <div className="weather-scroll-container" style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
@@ -434,13 +422,13 @@ export const WeatherTab: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{
                         fontWeight: 600,
-                        fontSize: '13px',
+                        fontSize: '15px',
                         color: colors.text
                       }}>
                         {alert.event}
                       </span>
                       <span style={{
-                        fontSize: '10px',
+                        fontSize: '11px',
                         padding: '2px 6px',
                         borderRadius: '4px',
                         background: 'rgba(0,0,0,0.2)',
@@ -452,7 +440,7 @@ export const WeatherTab: React.FC = () => {
                       </span>
                       {alert.urgency === 'Immediate' && (
                         <span style={{
-                          fontSize: '10px',
+                          fontSize: '11px',
                           padding: '2px 6px',
                           borderRadius: '4px',
                           background: 'rgba(220, 38, 38, 0.3)',
@@ -465,7 +453,7 @@ export const WeatherTab: React.FC = () => {
                       )}
                     </div>
                     <p style={{
-                      fontSize: '12px',
+                      fontSize: '14px',
                       color: 'var(--color-text-secondary)',
                       margin: '4px 0 0',
                       lineHeight: '1.4'
@@ -473,9 +461,9 @@ export const WeatherTab: React.FC = () => {
                       {alert.headline}
                     </p>
                     {isExpanded && (
-                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${colors.border}` }}>
+                      <div className="weather-scroll-container" style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${colors.border}` }}>
                         <p style={{
-                          fontSize: '11px',
+                          fontSize: '14px',
                           color: 'var(--color-text-tertiary)',
                           margin: '0 0 8px',
                           lineHeight: '1.5',
@@ -488,7 +476,7 @@ export const WeatherTab: React.FC = () => {
                         <div style={{
                           display: 'flex',
                           gap: '16px',
-                          fontSize: '10px',
+                          fontSize: '12px',
                           color: 'var(--color-text-quaternary)'
                         }}>
                           <span>Expires: {new Date(alert.expires).toLocaleString()}</span>
@@ -531,7 +519,7 @@ export const WeatherTab: React.FC = () => {
         overflow: 'hidden'
       }}>
         {/* Left: Forecast */}
-        <div style={{
+        <div className="weather-scroll-container" style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
@@ -558,7 +546,7 @@ export const WeatherTab: React.FC = () => {
             }}>
               Hourly Forecast
             </h3>
-            <div style={{
+            <div className="weather-scroll-container" style={{
               display: 'flex',
               gap: '4px',
               overflowX: 'auto',
@@ -583,7 +571,7 @@ export const WeatherTab: React.FC = () => {
                     }}
                   >
                     <span style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       color: isNow ? 'var(--color-accent-blue)' : 'var(--color-text-tertiary)',
                       marginBottom: '6px',
                       fontWeight: isNow ? 600 : 400
@@ -593,7 +581,20 @@ export const WeatherTab: React.FC = () => {
                     <div style={{ marginBottom: '6px' }}>
                       {getWeatherIcon(item.code, 18)}
                     </div>
-                    <span style={{ fontSize: '13px', fontWeight: 500 }}>
+                    {/* Rain Chance */}
+                    {item.precip > 0 ? (
+                      <div style={{
+                        fontSize: '10px',
+                        color: '#60A5FA',
+                        fontWeight: 600,
+                        marginBottom: '2px'
+                      }}>
+                        {item.precip}%
+                      </div>
+                    ) : (
+                      <div style={{ height: '15px' }} />
+                    )}
+                    <span style={{ fontSize: '14px', fontWeight: 500 }}>
                       {Math.round(item.temp)}°
                     </span>
                   </div>
@@ -614,7 +615,7 @@ export const WeatherTab: React.FC = () => {
             flexDirection: 'column'
           }}>
             <h3 style={{
-              fontSize: '12px',
+              fontSize: '13px',
               fontWeight: 600,
               marginBottom: '12px',
               color: 'var(--color-text-secondary)',
@@ -624,7 +625,7 @@ export const WeatherTab: React.FC = () => {
             }}>
               16-Day Forecast
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflow: 'auto' }}>
+            <div className="weather-scroll-container" style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflow: 'auto' }}>
               {weather?.daily.time.map((t, i) => {
                 const date = new Date(t);
                 const isToday = date.toDateString() === new Date().toDateString();
@@ -642,7 +643,7 @@ export const WeatherTab: React.FC = () => {
                     <span style={{
                       width: '44px',
                       fontWeight: isToday ? 600 : 500,
-                      fontSize: '13px',
+                      fontSize: '14px',
                       color: isToday ? 'var(--color-accent-blue)' : 'var(--color-text-primary)'
                     }}>
                       {isToday ? 'Today' : date.toLocaleDateString([], { weekday: 'short' })}
@@ -650,12 +651,25 @@ export const WeatherTab: React.FC = () => {
                     <div style={{ width: '32px', display: 'flex', justifyContent: 'center' }}>
                       {getWeatherIcon(weather.daily.weathercode[i], 20)}
                     </div>
-                    <div style={{ flex: 1 }} />
+                    {/* Wind and Precip */}
+                    <div style={{ display: 'flex', gap: '8px', marginLeft: '12px', flex: 1, alignItems: 'center' }}>
+                      {weather.daily.wind_speed_10m_max[i] > 8 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: 'var(--color-text-tertiary)', background: 'rgba(255,255,255,0.03)', padding: '2px 6px', borderRadius: '4px' }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                          <span style={{ fontSize: '11px', fontWeight: 500 }}>{Math.round(weather.daily.wind_speed_10m_max[i])}</span>
+                        </div>
+                      )}
+                      {weather.daily.precipitation_probability_max[i] > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#60A5FA', background: 'rgba(96, 165, 250, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 600 }}>{weather.daily.precipitation_probability_max[i]}%</span>
+                        </div>
+                      )}
+                    </div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 600, fontSize: '14px', minWidth: '32px', textAlign: 'right' }}>
+                      <span style={{ fontWeight: 600, fontSize: '15px', minWidth: '32px', textAlign: 'right' }}>
                         {Math.round(weather.daily.temperature_2m_max[i])}°
                       </span>
-                      <span style={{ color: 'var(--color-text-tertiary)', fontSize: '14px', minWidth: '32px', textAlign: 'right' }}>
+                      <span style={{ color: 'var(--color-text-tertiary)', fontSize: '15px', minWidth: '32px', textAlign: 'right' }}>
                         {Math.round(weather.daily.temperature_2m_min[i])}°
                       </span>
                     </div>
@@ -692,7 +706,7 @@ export const WeatherTab: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: '#1a1a2e',
+                    background: '#0f0f12', // Match NWS dark theme
                     zIndex: 10
                   }}>
                     <div style={{ textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
@@ -710,7 +724,7 @@ export const WeatherTab: React.FC = () => {
                 )}
                 <webview
                   ref={webviewRef as any}
-                  src={getNWSRadarUrl(location.latitude, location.longitude)}
+                  src={getRadarUrl(location.latitude, location.longitude)}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -718,7 +732,7 @@ export const WeatherTab: React.FC = () => {
                     opacity: radarLoaded ? 1 : 0,
                     transition: 'opacity 0.3s ease'
                   }}
-                  partition="persist:nwsradar"
+                  partition="persist:weather"
                   // @ts-ignore - webview attributes
                   allowpopups="false"
                 />

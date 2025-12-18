@@ -34,7 +34,7 @@ export const RadarTab: React.FC = () => {
         alignItems: 'center'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-           <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Live</h2>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>Live</h2>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -42,20 +42,20 @@ export const RadarTab: React.FC = () => {
             onClick={handleRefresh}
             label={isLoading ? 'REFRESHING' : 'REFRESH'}
             icon={
-                <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={isLoading ? 'spin' : ''}
-                    style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }}
-                >
-                    <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                </svg>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={isLoading ? 'spin' : ''}
+                style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }}
+              >
+                <path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
             }
           />
         </div>
@@ -64,15 +64,15 @@ export const RadarTab: React.FC = () => {
       {/* Webview Container - Full Bleed */}
       <div style={{ flex: 1, position: 'relative', background: 'black', overflow: 'hidden' }}>
         <webview
-            ref={webviewRef}
-            src={url}
-            onDidStopLoading={handleLoadStop}
-            style={{
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                background: 'white'
-            }}
+          ref={webviewRef}
+          src={url}
+          onDidStopLoading={handleLoadStop}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            background: 'white'
+          }}
         />
       </div>
 
