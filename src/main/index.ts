@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog, session } from 'electron';
 import { join } from 'path';
 import fs from 'fs';
 import { FileManager } from './FileManager';
@@ -276,6 +276,15 @@ app.on('login', (event, _webContents, _request, authInfo, callback) => {
 });
 
   app.whenReady().then(async () => {
+    // Permission handling for Geolocation
+    session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+      if (permission === 'geolocation') {
+        callback(true);
+        return;
+      }
+      callback(false);
+    });
+
     // Initialize IPC handlers first
     setupIpc();
 

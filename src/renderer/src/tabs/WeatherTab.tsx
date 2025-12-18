@@ -193,8 +193,8 @@ export const WeatherTab: React.FC = () => {
                     onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
                 />
             </div>
-            <TactileButton onClick={handleManualSearch} label="SEARCH" />
-            <TactileButton onClick={handleAutoLocation} label="LOCATE ME" />
+            <TactileButton onClick={handleManualSearch}>SEARCH</TactileButton>
+            <TactileButton onClick={handleAutoLocation}>LOCATE ME</TactileButton>
         </div>
       </div>
 
