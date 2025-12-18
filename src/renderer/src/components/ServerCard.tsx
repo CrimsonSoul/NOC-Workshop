@@ -55,12 +55,18 @@ const PersonInfo = ({ label, value, contactLookup }: { label: string, value: str
                 <span style={{ color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {displayName}
                     {parts.length > 1 && (
-                        <span
-                            style={{ opacity: 0.5, marginLeft: '4px', cursor: 'help' }}
-                            title={allNames}
-                        >
-                            +{parts.length - 1}
-                        </span>
+                        <div className="tooltip-container">
+                            <span className="spillover-badge">
+                                +{parts.length - 1}
+                            </span>
+                            <div className="tooltip-content">
+                                {parts.map((p, i) => {
+                                    const c = contactLookup.get(p.toLowerCase());
+                                    const name = c ? c.name : p;
+                                    return <div key={i} style={{ marginBottom: i === parts.length - 1 ? 0 : '4px', whiteSpace: 'nowrap' }}>{name}</div>;
+                                })}
+                            </div>
+                        </div>
                     )}
                 </span>
             </div>

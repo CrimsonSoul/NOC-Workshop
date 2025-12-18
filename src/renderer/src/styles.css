@@ -644,3 +644,48 @@ body.platform-win32 .window-controls-container {
     flex: 0 0 160px !important;
   }
 }
+
+/* Custom Tooltip System */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  background: rgba(15, 15, 15, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--color-text-primary);
+  whiteSpace: nowrap;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.tooltip-container:hover .tooltip-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.spillover-badge {
+  opacity: 0.5;
+  margin-left: 4px;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(255,255,255,0.2);
+  transition: opacity 0.2s;
+}
+
+.spillover-badge:hover {
+  opacity: 1;
+  color: var(--color-text-primary);
+}
