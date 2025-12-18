@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
 const ZONES = [
-  { label: 'CST', timeZone: 'America/Chicago', primary: true },
-  { label: 'EST', timeZone: 'America/New_York' },
+  { label: 'PST', timeZone: 'America/Los_Angeles' },
   { label: 'MST', timeZone: 'America/Denver' },
-  { label: 'PST', timeZone: 'America/Los_Angeles' }
+  { label: 'EST', timeZone: 'America/New_York' },
+  { label: 'CST', timeZone: 'America/Chicago', primary: true }
 ];
 
 // Bolt: Cache Intl formatters to avoid constructing several new formatter instances on every tick
