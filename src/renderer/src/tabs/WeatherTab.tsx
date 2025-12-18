@@ -622,7 +622,7 @@ export const WeatherTab: React.FC = () => {
               letterSpacing: '0.5px',
               flexShrink: 0
             }}>
-              7-Day Forecast
+              16-Day Forecast
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflow: 'auto' }}>
               {weather?.daily.time.map((t, i) => {
