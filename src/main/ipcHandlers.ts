@@ -240,6 +240,33 @@ export function setupIpcHandlers(
     return getBridgeLogger()?.reset() ?? false;
   });
 
+  // Weather Handlers
+  ipcMain.handle(IPC_CHANNELS.GET_WEATHER, async (_event, lat, lon) => {
+    try {
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch`
+      );
+      if (!res.ok) throw new Error('Failed to fetch weather data');
+      return await res.json();
+    } catch (err: any) {
+      console.error('[Weather] Fetch error:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.SEARCH_LOCATION, async (_event, query) => {
+    try {
+      const res = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`
+      );
+      if (!res.ok) throw new Error('Geocoding failed');
+      return await res.json();
+    } catch (err: any) {
+      console.error('[Weather] Search error:', err);
+      throw err;
+    }
+  });
+
   // --- Data Mutation Handlers (rate limited) ---
 
   // Helper to check mutation rate limit

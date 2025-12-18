@@ -373,9 +373,10 @@ body {
 
 /* Primary Variant */
 .tactile-button--primary {
+  background: var(--color-accent-blue);
   background: linear-gradient(135deg, var(--color-accent-blue) 0%, #2563EB 100%);
   border-color: var(--color-accent-blue);
-  color: white;
+  color: white !important;
   font-weight: 600;
 }
 

@@ -87,15 +87,11 @@ export const WeatherTab: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch`
-      );
-      if (!res.ok) throw new Error('Failed to fetch weather data');
-      const data = await res.json();
+      const data = await window.api.getWeather(lat, lon);
       setWeather(data);
     } catch (err: any) {
       console.error(err);
-      setError(err.message);
+      setError(err.message || 'Failed to fetch weather data');
     } finally {
       setLoading(false);
     }
@@ -128,9 +124,7 @@ export const WeatherTab: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(manualInput)}&count=1&language=en&format=json`);
-      if (!res.ok) throw new Error('Geocoding failed');
-      const data = await res.json();
+      const data = await window.api.searchLocation(manualInput);
       if (data.results && data.results.length > 0) {
         const { latitude, longitude, name, admin1, country_code } = data.results[0];
         const label = `${name}, ${admin1 || ''} ${country_code}`;
@@ -141,7 +135,7 @@ export const WeatherTab: React.FC = () => {
         setLoading(false);
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Search failed');
       setLoading(false);
     }
   };
@@ -193,8 +187,8 @@ export const WeatherTab: React.FC = () => {
                     onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
                 />
             </div>
-            <TactileButton onClick={handleManualSearch}>SEARCH</TactileButton>
-            <TactileButton onClick={handleAutoLocation}>LOCATE ME</TactileButton>
+            <TactileButton onClick={handleManualSearch} style={{ color: 'white' }}>SEARCH</TactileButton>
+            <TactileButton onClick={handleAutoLocation} style={{ color: 'white' }}>LOCATE ME</TactileButton>
         </div>
       </div>
 

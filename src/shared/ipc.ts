@@ -87,6 +87,8 @@ export type BridgeAPI = {
     logBridge: (groups: string[]) => void;
     getMetrics: () => Promise<MetricsData>;
     resetMetrics: () => Promise<boolean>;
+    getWeather: (lat: number, lon: number) => Promise<any>;
+    searchLocation: (query: string) => Promise<any>;
     addContact: (contact: Partial<Contact>) => Promise<boolean>;
     removeContact: (email: string) => Promise<boolean>;
     addServer: (server: Partial<Server>) => Promise<boolean>;
@@ -142,7 +144,9 @@ export const IPC_CHANNELS = {
     RADAR_DATA: 'radar:data',
     LOG_BRIDGE: 'metrics:logBridge',
     GET_METRICS: 'metrics:get',
-    RESET_METRICS: 'metrics:reset'
+    RESET_METRICS: 'metrics:reset',
+    GET_WEATHER: 'weather:get',
+    SEARCH_LOCATION: 'weather:search'
 } as const;
 
 export type BridgeEvent = {
