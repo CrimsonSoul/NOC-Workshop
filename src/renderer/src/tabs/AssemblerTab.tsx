@@ -658,7 +658,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                     }}
                     variant="primary"
                 >
-                    I've Enabled It
+                    I Understand
                 </TactileButton>
             </div>
         </div>
