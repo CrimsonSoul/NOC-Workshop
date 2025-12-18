@@ -156,8 +156,31 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
     setError(null);
     setPermissionDenied(false);
 
+    const tryIPLocation = async () => {
+      try {
+        console.log('[Weather] Attempting IP-based location fallback...');
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+
+        if (data.latitude && data.longitude) {
+          const newLoc = {
+            latitude: data.latitude,
+            longitude: data.longitude,
+            name: `${data.city}, ${data.region_code} ${data.country_code}`
+          };
+          onLocationChange(newLoc);
+          localStorage.setItem('weather_location', JSON.stringify(newLoc));
+          onManualRefresh(data.latitude, data.longitude);
+          return true;
+        }
+      } catch (e) {
+        console.error('[Weather] IP Location fallback failed:', e);
+      }
+      return false;
+    };
+
     if (!('geolocation' in navigator)) {
-      setError('Geolocation is not supported by your system.');
+      await tryIPLocation();
       return;
     }
 
@@ -170,22 +193,27 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
         localStorage.setItem('weather_location', JSON.stringify(newLoc));
         onManualRefresh(latitude, longitude);
       },
-      (err) => {
-        console.error('Geolocation error:', err);
-        if (err.code === 1) { // PERMISSION_DENIED
-          setPermissionDenied(true);
-          setError('Location access was denied. Please check your macOS System Settings or type your city below.');
-        } else {
-          setError('Could not detect location. Please search for your city manualy.');
+      async (err) => {
+        console.error('[Weather] Geolocation failed:', err.message);
+
+        const ipSuccess = await tryIPLocation();
+
+        if (!ipSuccess) {
+          if (err.code === 1) { // PERMISSION_DENIED
+            setPermissionDenied(true);
+            setError('Location access was denied and fallback failed. Please search for your city manualy.');
+          } else {
+            setError('Could not detect location automatically. Please search for your city manualy.');
+          }
         }
       },
       {
-        timeout: 10000,
+        timeout: 5000,
         maximumAge: 300000,
-        enableHighAccuracy: true
+        enableHighAccuracy: false // Use false initially for faster response on desktop
       }
     );
-  }, [onLocationChange, onManualRefresh]);
+  }, [onLocationChange, onManualRefresh, reverseGeocode]);
 
   // Auto-locate on mount if no location
   useEffect(() => {
