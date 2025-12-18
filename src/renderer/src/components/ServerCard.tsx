@@ -42,6 +42,11 @@ const PersonInfo = ({ label, value, contactLookup }: { label: string, value: str
     const displayName = found ? found.name : primary;
     const color = getColorForString(displayName).text;
 
+    const allNames = parts.map(part => {
+        const f = contactLookup.get(part.toLowerCase());
+        return f ? f.name : part;
+    }).join('; ');
+
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
             <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600, fontSize: '10px', width: '60px' }}>{label}</span>
@@ -49,7 +54,14 @@ const PersonInfo = ({ label, value, contactLookup }: { label: string, value: str
                 <UserAvatar name={displayName} color={color} />
                 <span style={{ color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {displayName}
-                    {parts.length > 1 && <span style={{ opacity: 0.5, marginLeft: '4px' }}>+{parts.length - 1}</span>}
+                    {parts.length > 1 && (
+                        <span
+                            style={{ opacity: 0.5, marginLeft: '4px', cursor: 'help' }}
+                            title={allNames}
+                        >
+                            +{parts.length - 1}
+                        </span>
+                    )}
                 </span>
             </div>
         </div>
