@@ -134,6 +134,8 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
 
+  const [isBridgeReminderOpen, setIsBridgeReminderOpen] = useState(false);
+
   // Group Sidebar Resize State
   const [groupSidebarWidth, setGroupSidebarWidth] = useState(170);
   const [isResizingGroupSidebar, setIsResizingGroupSidebar] = useState(false);
@@ -251,7 +253,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     showToast('Copied to clipboard', 'success');
   };
 
-  const handleDraftBridge = () => {
+  const executeDraftBridge = () => {
     const date = new Date();
     const dateStr = `${date.getMonth() + 1}/${date.getDate()} -`;
     const attendees = log.map(m => m.email).join(',');
@@ -264,6 +266,10 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
     window.api?.openExternal(url);
     window.api?.logBridge(selectedGroups);
     showToast('Bridge drafted', 'success');
+  };
+
+  const handleDraftBridge = () => {
+    setIsBridgeReminderOpen(true);
   };
 
   const handleQuickAdd = (emailOverride?: string) => {
@@ -627,6 +633,36 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
         initialEmail={pendingEmail}
         onSave={handleContactSaved}
       />
+
+      {/* Bridge Reminder Modal */}
+      <Modal
+        isOpen={isBridgeReminderOpen}
+        onClose={() => setIsBridgeReminderOpen(false)}
+        title="Meeting Recording"
+        width="400px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
+                Please ensure meeting recording is enabled.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <TactileButton
+                    onClick={() => setIsBridgeReminderOpen(false)}
+                >
+                    Cancel
+                </TactileButton>
+                <TactileButton
+                    onClick={() => {
+                        executeDraftBridge();
+                        setIsBridgeReminderOpen(false);
+                    }}
+                    variant="primary"
+                >
+                    I've Enabled It
+                </TactileButton>
+            </div>
+        </div>
+      </Modal>
 
       {/* Simple Create Group Modal */}
       <Modal
