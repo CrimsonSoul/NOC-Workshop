@@ -267,6 +267,60 @@ export function setupIpcHandlers(
     }
   });
 
+  // Weather Alerts (NWS API - US only)
+  ipcMain.handle(IPC_CHANNELS.GET_WEATHER_ALERTS, async (_event, lat: number, lon: number) => {
+    try {
+      // NWS requires a point lookup first to get the zone/county for alerts
+      const pointRes = await fetch(
+        `https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,
+        { headers: { 'User-Agent': 'Relay-Weather-App', 'Accept': 'application/geo+json' } }
+      );
+
+      if (!pointRes.ok) {
+        // Location might be outside US - return empty alerts
+        if (pointRes.status === 404) {
+          return [];
+        }
+        throw new Error('Failed to get location info from NWS');
+      }
+
+      const pointData = await pointRes.json();
+      const countyZone = pointData.properties?.county;
+      const forecastZone = pointData.properties?.forecastZone;
+
+      // Fetch alerts for the area
+      const alertRes = await fetch(
+        `https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`,
+        { headers: { 'User-Agent': 'Relay-Weather-App', 'Accept': 'application/geo+json' } }
+      );
+
+      if (!alertRes.ok) {
+        throw new Error('Failed to fetch weather alerts');
+      }
+
+      const alertData = await alertRes.json();
+      const features = alertData.features || [];
+
+      // Map to our WeatherAlert type
+      return features.map((f: any) => ({
+        id: f.properties?.id || f.id,
+        event: f.properties?.event || 'Unknown Event',
+        headline: f.properties?.headline || '',
+        description: f.properties?.description || '',
+        severity: f.properties?.severity || 'Unknown',
+        urgency: f.properties?.urgency || 'Unknown',
+        certainty: f.properties?.certainty || 'Unknown',
+        effective: f.properties?.effective || '',
+        expires: f.properties?.expires || '',
+        senderName: f.properties?.senderName || 'National Weather Service',
+        areaDesc: f.properties?.areaDesc || ''
+      }));
+    } catch (err: any) {
+      console.error('[Weather] Alerts fetch error:', err);
+      return []; // Return empty array on error to not break the UI
+    }
+  });
+
   // --- Data Mutation Handlers (rate limited) ---
 
   // Helper to check mutation rate limit

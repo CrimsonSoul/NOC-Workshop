@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TactileButton } from '../components/TactileButton';
 import { Input } from '../components/Input';
 import { TabFallback } from '../components/TabFallback';
+import type { WeatherAlert } from '@shared/ipc';
 
 interface WeatherData {
   current_weather: {
@@ -80,11 +81,14 @@ const getWeatherIcon = (code: number, size = 24) => {
 export const WeatherTab: React.FC = () => {
   const [location, setLocation] = useState<Location | null>(null);
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [manualInput, setManualInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [radarLoaded, setRadarLoaded] = useState(false);
+  const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
   const webviewRef = useRef<Electron.WebviewTag | null>(null);
+  const radarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reverse geocode coordinates to get location name
   const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
@@ -167,19 +171,24 @@ export const WeatherTab: React.FC = () => {
     }
   }, [location]);
 
-  const fetchWeather = async (lat: number, lon: number) => {
+  const fetchWeather = useCallback(async (lat: number, lon: number) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await window.api.getWeather(lat, lon);
-      setWeather(data);
+      // Fetch weather and alerts in parallel
+      const [weatherData, alertsData] = await Promise.all([
+        window.api.getWeather(lat, lon),
+        window.api.getWeatherAlerts(lat, lon).catch(() => []) // Don't fail if alerts fail
+      ]);
+      setWeather(weatherData);
+      setAlerts(alertsData);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to fetch weather data');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleManualSearch = async () => {
     if (!manualInput.trim()) return;
@@ -214,23 +223,70 @@ export const WeatherTab: React.FC = () => {
     return () => clearInterval(interval);
   }, [location]);
 
-  // Handle webview events
+  // Handle webview events with timeout fallback
   useEffect(() => {
     const webview = webviewRef.current;
-    if (!webview) return;
+    if (!webview || !location) return;
 
-    const handleDidFinishLoad = () => setRadarLoaded(true);
+    // Reset radar loaded state when location changes
+    setRadarLoaded(false);
+
+    // Clear any existing timeout
+    if (radarTimeoutRef.current) {
+      clearTimeout(radarTimeoutRef.current);
+    }
+
+    const handleDidFinishLoad = () => {
+      if (radarTimeoutRef.current) {
+        clearTimeout(radarTimeoutRef.current);
+      }
+      setRadarLoaded(true);
+    };
+
     const handleDidFailLoad = () => {
       console.error('Radar webview failed to load');
+      if (radarTimeoutRef.current) {
+        clearTimeout(radarTimeoutRef.current);
+      }
       setRadarLoaded(true); // Still mark as loaded to hide spinner
     };
+
+    // Set a timeout fallback - if radar doesn't load in 10 seconds, show it anyway
+    radarTimeoutRef.current = setTimeout(() => {
+      console.warn('Radar load timeout - forcing display');
+      setRadarLoaded(true);
+    }, 10000);
 
     webview.addEventListener('did-finish-load', handleDidFinishLoad);
     webview.addEventListener('did-fail-load', handleDidFailLoad);
 
+    // Check if webview is already loaded (race condition fix)
+    // Use a small delay to ensure the webview element is properly mounted
+    const checkLoaded = setTimeout(() => {
+      try {
+        // If the webview can execute JavaScript, it's loaded
+        webview.executeJavaScript('true').then(() => {
+          if (!radarLoaded) {
+            setRadarLoaded(true);
+            if (radarTimeoutRef.current) {
+              clearTimeout(radarTimeoutRef.current);
+            }
+          }
+        }).catch(() => {
+          // Not ready yet, wait for events
+        });
+      } catch {
+        // Webview not ready
+      }
+    }, 2000);
+
     return () => {
       webview.removeEventListener('did-finish-load', handleDidFinishLoad);
       webview.removeEventListener('did-fail-load', handleDidFailLoad);
+      if (radarTimeoutRef.current) {
+        clearTimeout(radarTimeoutRef.current);
+      }
+      clearTimeout(checkLoaded);
     };
   }, [location]);
 
@@ -307,6 +363,149 @@ export const WeatherTab: React.FC = () => {
           flexShrink: 0
         }}>
           {error}
+        </div>
+      )}
+
+      {/* Weather Alerts */}
+      {alerts.length > 0 && (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          flexShrink: 0,
+          maxHeight: expandedAlert ? '300px' : '150px',
+          overflowY: 'auto'
+        }}>
+          {alerts.map((alert) => {
+            const isExpanded = expandedAlert === alert.id;
+            const severityColors: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+              'Extreme': { bg: 'rgba(220, 38, 38, 0.15)', border: 'rgba(220, 38, 38, 0.5)', text: '#FCA5A5', icon: '#EF4444' },
+              'Severe': { bg: 'rgba(234, 88, 12, 0.15)', border: 'rgba(234, 88, 12, 0.5)', text: '#FDBA74', icon: '#F97316' },
+              'Moderate': { bg: 'rgba(234, 179, 8, 0.15)', border: 'rgba(234, 179, 8, 0.5)', text: '#FDE047', icon: '#EAB308' },
+              'Minor': { bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.5)', text: '#93C5FD', icon: '#3B82F6' },
+              'Unknown': { bg: 'rgba(107, 114, 128, 0.15)', border: 'rgba(107, 114, 128, 0.5)', text: '#9CA3AF', icon: '#6B7280' }
+            };
+            const colors = severityColors[alert.severity] || severityColors['Unknown'];
+
+            return (
+              <div
+                key={alert.id}
+                style={{
+                  background: colors.bg,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onClick={() => setExpandedAlert(isExpanded ? null : alert.id)}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  {/* Alert Icon */}
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={colors.icon}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flexShrink: 0, marginTop: '2px' }}
+                  >
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        color: colors.text
+                      }}>
+                        {alert.event}
+                      </span>
+                      <span style={{
+                        fontSize: '10px',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: colors.text,
+                        textTransform: 'uppercase',
+                        fontWeight: 500
+                      }}>
+                        {alert.severity}
+                      </span>
+                      {alert.urgency === 'Immediate' && (
+                        <span style={{
+                          fontSize: '10px',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: 'rgba(220, 38, 38, 0.3)',
+                          color: '#FCA5A5',
+                          textTransform: 'uppercase',
+                          fontWeight: 500
+                        }}>
+                          Immediate
+                        </span>
+                      )}
+                    </div>
+                    <p style={{
+                      fontSize: '12px',
+                      color: 'var(--color-text-secondary)',
+                      margin: '4px 0 0',
+                      lineHeight: '1.4'
+                    }}>
+                      {alert.headline}
+                    </p>
+                    {isExpanded && (
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${colors.border}` }}>
+                        <p style={{
+                          fontSize: '11px',
+                          color: 'var(--color-text-tertiary)',
+                          margin: '0 0 8px',
+                          lineHeight: '1.5',
+                          whiteSpace: 'pre-wrap',
+                          maxHeight: '120px',
+                          overflowY: 'auto'
+                        }}>
+                          {alert.description}
+                        </p>
+                        <div style={{
+                          display: 'flex',
+                          gap: '16px',
+                          fontSize: '10px',
+                          color: 'var(--color-text-quaternary)'
+                        }}>
+                          <span>Expires: {new Date(alert.expires).toLocaleString()}</span>
+                          <span>{alert.senderName}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Expand/Collapse Arrow */}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--color-text-tertiary)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      flexShrink: 0,
+                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease'
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -529,7 +728,7 @@ export const WeatherTab: React.FC = () => {
             color: 'var(--color-text-quaternary)',
             textAlign: 'right'
           }}>
-            Radar by RainViewer • Forecast by Open-Meteo
+            Radar by RainViewer • Forecast by Open-Meteo • Alerts by NWS
           </div>
         </div>
       </div>

@@ -89,6 +89,7 @@ export type BridgeAPI = {
     resetMetrics: () => Promise<boolean>;
     getWeather: (lat: number, lon: number) => Promise<any>;
     searchLocation: (query: string) => Promise<any>;
+    getWeatherAlerts: (lat: number, lon: number) => Promise<WeatherAlert[]>;
     addContact: (contact: Partial<Contact>) => Promise<boolean>;
     removeContact: (email: string) => Promise<boolean>;
     addServer: (server: Partial<Server>) => Promise<boolean>;
@@ -146,7 +147,8 @@ export const IPC_CHANNELS = {
     GET_METRICS: 'metrics:get',
     RESET_METRICS: 'metrics:reset',
     GET_WEATHER: 'weather:get',
-    SEARCH_LOCATION: 'weather:search'
+    SEARCH_LOCATION: 'weather:search',
+    GET_WEATHER_ALERTS: 'weather:alerts'
 } as const;
 
 export type BridgeEvent = {
@@ -160,4 +162,18 @@ export type MetricsData = {
   bridgesLast6m: number;
   bridgesLast1y: number;
   topGroups: { name: string; count: number }[];
+};
+
+export type WeatherAlert = {
+  id: string;
+  event: string;
+  headline: string;
+  description: string;
+  severity: 'Extreme' | 'Severe' | 'Moderate' | 'Minor' | 'Unknown';
+  urgency: 'Immediate' | 'Expected' | 'Future' | 'Past' | 'Unknown';
+  certainty: 'Observed' | 'Likely' | 'Possible' | 'Unlikely' | 'Unknown';
+  effective: string;
+  expires: string;
+  senderName: string;
+  areaDesc: string;
 };
