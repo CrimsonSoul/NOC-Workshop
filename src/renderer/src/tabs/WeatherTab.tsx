@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TactileButton } from '../components/TactileButton';
 import { Input } from '../components/Input';
 import { TabFallback } from '../components/TabFallback';
@@ -79,9 +79,33 @@ const getWeatherIcon = (code: number, size = 24) => {
 export const WeatherTab: React.FC = () => {
   const [location, setLocation] = useState<Location | null>(null);
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start loading to check persistence
   const [manualInput, setManualInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Persistence: Load from localStorage on mount
+  useEffect(() => {
+    const savedLocation = localStorage.getItem('weather_location');
+    if (savedLocation) {
+      try {
+        const parsed = JSON.parse(savedLocation);
+        setLocation(parsed);
+        fetchWeather(parsed.latitude, parsed.longitude);
+      } catch (e) {
+        // If parsing fails, fall back to auto location
+        handleAutoLocation();
+      }
+    } else {
+      handleAutoLocation();
+    }
+  }, []);
+
+  // Persistence: Save to localStorage whenever location changes
+  useEffect(() => {
+    if (location) {
+      localStorage.setItem('weather_location', JSON.stringify(location));
+    }
+  }, [location]);
 
   const fetchWeather = async (lat: number, lon: number) => {
     setLoading(true);
@@ -100,17 +124,24 @@ export const WeatherTab: React.FC = () => {
   const handleAutoLocation = () => {
     setLoading(true);
     setError(null);
+
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setLocation({ latitude, longitude, name: 'Current Location' });
+          const newLoc = { latitude, longitude, name: 'Current Location' };
+          setLocation(newLoc);
           fetchWeather(latitude, longitude);
         },
         (err) => {
           console.error(err);
           setError('Location access denied or unavailable. Please try manual entry.');
           setLoading(false);
+        },
+        {
+          timeout: 8000, // 8 seconds timeout for the API itself
+          maximumAge: 600000, // Accept cached position (10 mins)
+          enableHighAccuracy: false
         }
       );
     } else {
@@ -128,7 +159,8 @@ export const WeatherTab: React.FC = () => {
       if (data.results && data.results.length > 0) {
         const { latitude, longitude, name, admin1, country_code } = data.results[0];
         const label = `${name}, ${admin1 || ''} ${country_code}`;
-        setLocation({ latitude, longitude, name: label });
+        const newLoc = { latitude, longitude, name: label };
+        setLocation(newLoc);
         fetchWeather(latitude, longitude);
       } else {
         setError('Location not found.');
@@ -141,14 +173,14 @@ export const WeatherTab: React.FC = () => {
   };
 
   useEffect(() => {
-    handleAutoLocation();
+    // Refresh weather periodically
     const interval = setInterval(() => {
         if (location) {
             fetchWeather(location.latitude, location.longitude);
         }
     }, 300000); // Update every 5 minutes
     return () => clearInterval(interval);
-  }, []);
+  }, [location]); // Depend on location to ensure we fetch for the correct place
 
   if (!location && loading) return <TabFallback />;
 
@@ -253,19 +285,15 @@ export const WeatherTab: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div style={{ flex: 1, background: '#000', borderRadius: '12px', overflow: 'hidden', position: 'relative', border: '1px solid var(--border-subtle)' }}>
                   {location ? (
-                      <iframe
+                      <webview
                         src={`https://www.rainviewer.com/map.html?loc=${location.latitude},${location.longitude},8&oFa=0&oC=1&oU=0&oCS=1&oF=0&oAP=1&c=3&o=90&lm=1&layer=radar&sm=1&sn=1`}
-                        width="100%"
-                        height="100%"
-                        style={{ border: 'none', display: 'block' }}
-                        title="Weather Radar"
+                        style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
                       />
                   ) : (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-tertiary)' }}>
                           Map unavailable
                       </div>
                   )}
-                  {/* Overlay to block interactions if needed, but map should be interactive */}
               </div>
               <div style={{ marginTop: '12px', fontSize: '11px', color: 'var(--color-text-tertiary)', textAlign: 'right' }}>
                   Radar data provided by RainViewer | Forecast by Open-Meteo
