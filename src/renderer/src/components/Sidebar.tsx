@@ -1,6 +1,6 @@
 import React from 'react';
 
-type Tab = 'Compose' | 'People' | 'Reports' | 'Live' | 'Servers';
+type Tab = 'Compose' | 'People' | 'Reports' | 'Live' | 'Servers' | 'Weather';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -172,6 +172,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
 
       {/* Settings */}
       <div style={{ WebkitAppRegion: 'no-drag' as any }}>
+        <SidebarButton
+          label="Weather"
+          isActive={activeTab === 'Weather'}
+          onClick={() => onTabChange('Weather')}
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.5 19c0-1.7-1.3-3-3-3h-11c-1.7 0-3 1.3-3 3 .6 0 1.1.5 1.1 1.1 0 .6-.5 1.1-1.1 1.1v.8h17v-.8c-.6 0-1.1-.5-1.1-1.1 0-.6.5-1.1 1.1-1.1z"/>
+              <path d="M6 16v-2a6 6 0 1 1 12 0v2"/>
+              <path d="M12 9V3"/>
+              <path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/>
+            </svg>
+          }
+        />
+        <div style={{ height: '4px' }} />
         <SidebarButton
           label="Settings"
           isActive={false}

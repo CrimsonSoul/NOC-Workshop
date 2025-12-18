@@ -91,10 +91,11 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 const DirectoryTab = lazy(() => import('./tabs/DirectoryTab').then(m => ({ default: m.DirectoryTab })));
 const ServersTab = lazy(() => import('./tabs/ServersTab').then(m => ({ default: m.ServersTab })));
 const RadarTab = lazy(() => import('./tabs/RadarTab').then(m => ({ default: m.RadarTab })));
+const WeatherTab = lazy(() => import('./tabs/WeatherTab').then(m => ({ default: m.WeatherTab })));
 const MetricsTab = lazy(() => import('./tabs/MetricsTab').then(m => ({ default: m.MetricsTab })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 
-type Tab = 'Compose' | 'People' | 'Servers' | 'Reports' | 'Live';
+type Tab = 'Compose' | 'People' | 'Servers' | 'Reports' | 'Live' | 'Weather';
 
 // Format data errors for user-friendly display
 function formatDataError(error: DataError): string {
@@ -262,6 +263,7 @@ export function MainApp() {
                {activeTab === 'Servers' && 'Infrastructure Servers'}
                {activeTab === 'Reports' && 'Reports'}
                {activeTab === 'Live' && 'Dispatcher Radar'}
+               {activeTab === 'Weather' && 'Weather & Radar'}
              </span>
            </div>
 
@@ -297,6 +299,13 @@ export function MainApp() {
                   groups={data.groups}
                   onAddToAssembler={handleAddToAssembler}
                 />
+              </Suspense>
+            </div>
+          )}
+          {activeTab === 'Weather' && (
+            <div className="animate-fade-in" style={{ height: '100%' }}>
+              <Suspense fallback={<TabFallback />}>
+                <WeatherTab />
               </Suspense>
             </div>
           )}
