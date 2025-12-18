@@ -35,9 +35,28 @@ interface Location {
 const getNWSRadarUrl = (lat: number, lon: number): string => {
   const settings = {
     agenda: {
-      id: null,
+      id: 'local',
       center: [lon, lat],
-      zoom: 8
+      location: null,
+      zoom: 8,
+      filter: 'WSR-88D',
+      layer: 'sr_bref',
+      station: null
+    },
+    animating: false,
+    base: 'standard',
+    artcc: false,
+    county: false,
+    cwa: false,
+    rfc: false,
+    state: false,
+    menu: true,
+    shortFusedOnly: true,
+    opacity: {
+      alerts: 0.8,
+      local: 0.6,
+      localStations: 0.8,
+      national: 0.6
     }
   };
   const encoded = btoa(JSON.stringify(settings));
