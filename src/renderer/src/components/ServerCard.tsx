@@ -202,20 +202,23 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                         whiteSpace: 'nowrap',
                         overflow: 'hidden'
                     }}>
-                        <span style={{ color: '#E5E7EB', opacity: 0.9 }}>{server.businessArea}</span>
-                        <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>
-                        <span>{server.lob}</span>
+                        <span style={{ color: '#E5E7EB', opacity: 0.9, flexShrink: 0 }}>{server.businessArea}</span>
+                        <span style={{ opacity: 0.3, fontSize: '16px', flexShrink: 0 }}>|</span>
+                        <span style={{ flexShrink: 0 }}>{server.lob}</span>
                         {server.comment && server.comment !== '-' && (
                             <>
-                                <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>
-                                <span style={{
-                                    fontStyle: 'italic',
-                                    opacity: 0.6,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis'
-                                }}>
-                                    {server.comment}
-                                </span>
+                                <span style={{ opacity: 0.3, fontSize: '16px', flexShrink: 0 }}>|</span>
+                                <Tooltip content={server.comment}>
+                                    <span style={{
+                                        fontStyle: 'italic',
+                                        opacity: 0.6,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        cursor: 'help'
+                                    }}>
+                                        {server.comment}
+                                    </span>
+                                </Tooltip>
                             </>
                         )}
                     </div>

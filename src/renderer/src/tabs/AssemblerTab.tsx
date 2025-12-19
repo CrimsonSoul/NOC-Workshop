@@ -577,7 +577,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 height: '100%',
                 overflow: 'hidden',
                 background: 'var(--color-bg-app)', // Seamless with sidebar
-                paddingLeft: '20px' // Fix the overlap/clipping!
+                paddingLeft: '8px' // Reduced padding for better card fit
             }}>
 
                 {/* Toolbar - Compact */}

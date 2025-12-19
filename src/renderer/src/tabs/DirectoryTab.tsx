@@ -753,7 +753,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
             onClose={() => setContextMenu(null)}
             items={[
               {
-                label: recentlyAdded.has(contextMenu.contact.email) ? 'Added to Assembler' : 'Add to Assembler',
+                label: recentlyAdded.has(contextMenu.contact.email) ? 'Added to Composer' : 'Add to Composer',
                 onClick: () => {
                   handleAddWrapper(contextMenu.contact);
                   setContextMenu(null);

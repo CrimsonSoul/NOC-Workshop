@@ -18,36 +18,36 @@ const formatSingleNumber = (phone: string): string => {
     const hasPlus = phone.trim().startsWith('+');
     let clean = phone.replace(/[^0-9]/g, '');
 
-    // Normalize US with 1 prefix (no plus)
+    // Normalize US with 1 prefix
+    // Only strip 1 if it's strictly a 10-digit number following it (standard US)
     if (!hasPlus && clean.length === 11 && clean.startsWith('1')) {
         clean = clean.slice(1);
     }
 
-    // Format US 10-digit
-    if (clean.length === 10) {
+    // Format US 10-digit: (XXX) XXX-XXXX
+    if (clean.length === 10 && (!hasPlus || (hasPlus && phone.startsWith('+1')))) {
         return `(${clean.slice(0, 3)}) ${clean.slice(3, 6)}-${clean.slice(6)}`;
     }
 
-    // Format US 11-digit starting with 1 (e.g. 15551234567 or +15551234567)
+    // Format US 11-digit starting with 1
     if (clean.length === 11 && clean.startsWith('1')) {
         const d = clean.slice(1);
-        return `(1) (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+        return `+1 (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
     }
 
-    // Format shorter US-like numbers (e.g. +1 5551234 -> (1) 555-1234)
-    if (clean.startsWith('1') && clean.length > 7 && clean.length < 11) {
-        const d = clean.slice(1);
-        return `(1) ${d.slice(0, 3)}-${d.slice(3)}`;
+    // International (non-US) fallback or shorter/longer numbers
+    if (hasPlus || clean.length > 11) {
+        const p = hasPlus ? '+' : '';
+        // Group by 3 or 4 for readability
+        if (clean.length > 7) {
+            return `${p}${clean.slice(0, clean.length - 7)} ${clean.slice(clean.length - 7, clean.length - 4)} ${clean.slice(clean.length - 4)}`;
+        }
+        return p + clean;
     }
 
     // Format US 7-digit (local)
     if (clean.length === 7) {
         return `${clean.slice(0, 3)}-${clean.slice(3)}`;
-    }
-
-    // International (non-US) fallback
-    if (hasPlus) {
-        return '+' + clean;
     }
 
     // Internal Extension (2-6 digits)

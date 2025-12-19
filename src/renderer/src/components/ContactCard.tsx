@@ -174,12 +174,14 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
             overflow: 'hidden'
           }}>
             {title && (
-              <>
+              <Tooltip content={title}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
-                <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>
-              </>
+              </Tooltip>
             )}
-            <span style={{ opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
+            {title && <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>}
+            <Tooltip content={email}>
+              <span style={{ opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
+            </Tooltip>
           </div>
 
           {/* Bottom Row: Phone & Groups */}
@@ -203,23 +205,25 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
             )}
 
             {groups.length > 0 && (
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                {groups.slice(0, 1).map(g => (
-                  <GroupPill key={g} group={g} />
-                ))}
-                {groups.length > 1 && (
-                  <span style={{
-                    fontSize: '12px',
-                    color: 'var(--color-text-tertiary)',
-                    fontWeight: 700,
-                    background: 'rgba(255,255,255,0.05)',
-                    padding: '2px 6px',
-                    borderRadius: '6px'
-                  }}>
-                    +{groups.length - 1}
-                  </span>
-                )}
-              </div>
+              <Tooltip content={groups.join(', ')}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', cursor: 'help' }}>
+                  {groups.slice(0, 1).map(g => (
+                    <GroupPill key={g} group={g} />
+                  ))}
+                  {groups.length > 1 && (
+                    <span style={{
+                      fontSize: '12px',
+                      color: 'var(--color-text-tertiary)',
+                      fontWeight: 700,
+                      background: 'rgba(255,255,255,0.05)',
+                      padding: '2px 6px',
+                      borderRadius: '6px'
+                    }}>
+                      +{groups.length - 1}
+                    </span>
+                  )}
+                </div>
+              </Tooltip>
             )}
           </div>
         </div>
