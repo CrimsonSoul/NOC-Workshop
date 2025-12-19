@@ -105,16 +105,16 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         {/* Avatar */}
         <div
           style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
+            width: '48px',
+            height: '48px',
+            borderRadius: '14px',
             background: colorScheme.bg,
             border: `1px solid ${colorScheme.border}`,
             color: colorScheme.text,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '18px',
+            fontSize: '20px',
             fontWeight: 800,
             flexShrink: 0,
             position: 'relative'
@@ -129,32 +129,33 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           flexDirection: 'column',
           flex: 1,
           minWidth: 0,
-          gap: '2px',
+          gap: '4px',
           justifyContent: 'center'
         }}>
           {/* Top Row: Name */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{
-              fontSize: '15px',
-              fontWeight: 700,
+              fontSize: '20px',
+              fontWeight: 800,
               color: 'var(--color-text-primary)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              letterSpacing: '-0.01em'
+              letterSpacing: '-0.02em'
             }}>
               {displayName}
             </span>
             {sourceLabel && (
               <span style={{
-                fontSize: '8px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                color: 'var(--color-text-tertiary)',
-                padding: '1px 4px',
-                borderRadius: '3px',
-                fontWeight: 800,
+                fontSize: '10px',
+                background: 'rgba(255, 255, 255, 0.12)',
+                color: 'var(--color-text-primary)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontWeight: 900,
                 textTransform: 'uppercase',
-                flexShrink: 0
+                flexShrink: 0,
+                letterSpacing: '0.05em'
               }}>
                 {sourceLabel}
               </span>
@@ -163,22 +164,22 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
 
           {/* Middle Row: Title | Email */}
           <div style={{
-            fontSize: '12px',
+            fontSize: '14px',
             color: 'var(--color-text-secondary)',
-            fontWeight: 500,
+            fontWeight: 550,
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
             whiteSpace: 'nowrap',
             overflow: 'hidden'
           }}>
             {title && (
               <>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
-                <span style={{ opacity: 0.3 }}>|</span>
+                <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>
               </>
             )}
-            <span style={{ opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
+            <span style={{ opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
           </div>
 
           {/* Bottom Row: Phone & Groups */}
@@ -186,15 +187,15 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '8px',
+            gap: '12px',
             marginTop: '2px'
           }}>
             {formattedPhone && (
               <span style={{
-                fontSize: '12px',
-                color: 'var(--color-accent-blue-hover)',
-                fontWeight: 600,
-                letterSpacing: '0.02em',
+                fontSize: '18px',
+                color: '#60A5FA', // Brighter blue for 10ft visibility
+                fontWeight: 700,
+                letterSpacing: '0.05em',
                 whiteSpace: 'nowrap'
               }}>
                 {formattedPhone}
@@ -202,12 +203,19 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
             )}
 
             {groups.length > 0 && (
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 {groups.slice(0, 1).map(g => (
                   <GroupPill key={g} group={g} />
                 ))}
                 {groups.length > 1 && (
-                  <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: 'var(--color-text-tertiary)',
+                    fontWeight: 700,
+                    background: 'rgba(255,255,255,0.05)',
+                    padding: '2px 6px',
+                    borderRadius: '6px'
+                  }}>
                     +{groups.length - 1}
                   </span>
                 )}

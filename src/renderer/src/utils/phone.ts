@@ -31,7 +31,12 @@ const formatSingleNumber = (phone: string): string => {
 
     // Format US 10-digit
     if (clean.length === 10) {
-        return `${clean.slice(0, 3)}-${clean.slice(3, 6)}-${clean.slice(6)}`;
+        return `(${clean.slice(0, 3)}) ${clean.slice(3, 6)}-${clean.slice(6)}`;
+    }
+
+    // Format US 7-digit (local)
+    if (clean.length === 7) {
+        return `${clean.slice(0, 3)}-${clean.slice(3)}`;
     }
 
     // International (non-US)
@@ -39,13 +44,13 @@ const formatSingleNumber = (phone: string): string => {
         return '+' + clean;
     }
 
-    // Internal Extension (3-5 digits)
+    // Internal Extension (2-6 digits)
     if (clean.length >= 2 && clean.length <= 6) {
         return clean;
     }
 
     // Fallback
-    return clean;
+    return hasPlus ? '+' + clean : clean;
 };
 
 /**
