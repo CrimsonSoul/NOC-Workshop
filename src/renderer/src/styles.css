@@ -616,17 +616,25 @@ body.platform-win32 .window-controls-container {
   .weather-tab-root {
     flex-direction: column-reverse !important;
     overflow-y: auto !important;
+    padding-bottom: 40px !important;
+    gap: 24px !important;
+  }
+
+  /* Radar Header (Right Column when desktop) */
+  .weather-tab-root>div:last-child {
+    flex: none !important;
+    height: 450px !important;
+    min-height: 450px !important;
+    width: 100% !important;
+    z-index: 5;
   }
 
   .weather-forecast-column {
     flex: none !important;
     width: 100% !important;
     max-width: none !important;
-  }
-
-  /* Ensure radar maintains some height when stacked */
-  .weather-tab-root>div:last-child {
-    min-height: 450px;
+    height: auto !important;
+    overflow-y: visible !important;
   }
 }
 

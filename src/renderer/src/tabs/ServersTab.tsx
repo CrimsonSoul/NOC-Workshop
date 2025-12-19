@@ -143,11 +143,12 @@ const ServerRow = memo(({ index, style, data }: ListChildComponentProps<{
         const allNames = resolvedList.map(c => c.name || c.email).join('; ');
 
         content = (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
             <div style={{
-              width: '24px', height: '24px', borderRadius: '50%',
-              background: color, color: '#18181b',
-              fontSize: '12px', fontWeight: 600,
+              width: '24px', height: '24px', borderRadius: '6px',
+              background: color.bg, color: color.text,
+              border: `1px solid ${color.border}`,
+              fontSize: '11px', fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0
             }}>
@@ -155,7 +156,15 @@ const ServerRow = memo(({ index, style, data }: ListChildComponentProps<{
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <Tooltip content={allNames}>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
+                <span style={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  lineHeight: '1.2',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: 'var(--color-text-primary)'
+                }}>
                   {allNames}
                 </span>
               </Tooltip>
