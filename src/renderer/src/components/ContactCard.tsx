@@ -68,13 +68,14 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         ...style,
         display: 'flex',
         alignItems: 'center',
-        padding: '0 16px',
-        position: 'relative'
+        padding: '0 24px',
+        position: 'relative',
+        boxSizing: 'border-box'
       }}
     >
       <div
         style={{
-          width: '100%',
+          flex: 1,
           height: 'calc(100% - 12px)',
           display: 'flex',
           alignItems: 'center',

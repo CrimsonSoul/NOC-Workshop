@@ -609,7 +609,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 <div style={{
                     flex: 1,
                     overflow: 'hidden', // AutoSizer handles scrolling
-                    padding: '0' // Content has its own padding
+                    padding: '0 12px' // Give some room for card rounding
                 }}>
                     {log.length === 0 ? (
                         <div style={{

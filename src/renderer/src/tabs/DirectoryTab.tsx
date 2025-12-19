@@ -86,7 +86,7 @@ const GroupSelector = ({ contact, groups, onClose }: { contact: Contact, groups:
     const mem: Record<string, boolean> = {};
     const contactEmail = contact.email.toLowerCase();
     Object.entries(groups).forEach(([gName, emails]) => {
-      mem[gName] = emails.some(e => e.toLowerCase() === contactEmail);
+      mem[gName] = (emails as string[]).some((e: string) => e.toLowerCase() === contactEmail);
     });
     setMembership(mem);
   }, [contact, groups]);
@@ -672,7 +672,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         aria-label="Contacts list"
         aria-rowcount={filtered.length}
         tabIndex={0}
-        style={{ flex: 1, outline: 'none', paddingTop: '16px' }}
+        style={{ flex: 1, outline: 'none', paddingTop: '16px', paddingLeft: '8px', paddingRight: '8px' }}
       >
         <AutoSizer onResize={({ width }) => setListWidth(width)}>
           {({ height, width }) => (

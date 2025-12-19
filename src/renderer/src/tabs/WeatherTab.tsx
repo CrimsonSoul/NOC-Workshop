@@ -267,28 +267,38 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
       }
       setRadarLoaded(true);
 
-      // RainViewer handles dark mode natively via URL params, so we just force background to avoid white flash
       if (webview) {
+        // Persistent CSS injection
         webview.insertCSS(`
           html, body { 
             background-color: #0f0f12 !important; 
             overflow: hidden !important;
           }
-          /* Hide RainViewer UI Clutter */
+          /* Aggressively Hide RainViewer UI Clutter */
           .menu-container, 
           .left-menu, 
           .right-menu, 
+          .top-menu,
+          .bottom-menu,
           .search-container, 
           .logo-alt,
           .map-legend,
-          .leaflet-control-zoom,
+          .leaflet-control,
           .promo-container,
           .bottom-info,
-          .header-container { 
+          .header-container,
+          .app-promo,
+          .larger-map-btn,
+          .refresh-btn,
+          #search-input-container,
+          .leaflet-top.leaflet-right,
+          .leaflet-top.leaflet-left,
+          .leaflet-bottom.leaflet-left { 
             display: none !important; 
           }
           /* Ensure player is visible and positioned nicely */
           .player-container {
+            display: block !important;
             bottom: 20px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
@@ -298,7 +308,20 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             padding: 4px 12px !important;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+            z-index: 10000 !important;
           }
+        `);
+
+        // DOM Removal as a second layer of defense
+        webview.executeJavaScript(`
+          const cleanup = () => {
+            const selectors = ['.menu-container', '.left-menu', '.right-menu', '.top-menu', '.bottom-menu', '.search-container', '.logo-alt', '.map-legend', '.leaflet-control', '.promo-container', '.bottom-info', '.header-container', '.app-promo', '.larger-map-btn', '.refresh-btn', '#search-input-container'];
+            selectors.forEach(s => {
+              document.querySelectorAll(s).forEach(el => el.style.display = 'none');
+            });
+          };
+          cleanup();
+          setTimeout(cleanup, 2000); // Repeat once to catch late-renders
         `);
       }
     };
