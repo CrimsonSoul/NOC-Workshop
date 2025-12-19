@@ -118,88 +118,90 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                     bottom: 0,
                     width: '4px',
                     background: osInfo.text,
-                    opacity: 0.6
+                    opacity: 0.8
                 }} />
 
-                {/* Main Info Section */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: '0 0 220px', minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {/* Main Content Stack - Vertical for 10ft readability */}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    minWidth: 0,
+                    gap: '4px',
+                    justifyContent: 'center',
+                    padding: '12px 0'
+                }}>
+                    {/* Row 1: Name and Platform Badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{
-                            fontSize: '17px',
-                            fontWeight: 700,
+                            fontSize: '20px',
+                            fontWeight: 800,
                             color: 'var(--color-text-primary)',
-                            letterSpacing: '-0.01em'
+                            letterSpacing: '-0.02em',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                         }}>
                             {server.name}
                         </span>
                         <span style={{
-                            fontSize: '9px',
-                            fontWeight: 800,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
+                            fontSize: '10px',
+                            fontWeight: 900,
+                            padding: '2px 8px',
+                            borderRadius: '6px',
                             background: osInfo.bg,
                             border: `1px solid ${osInfo.border}`,
                             color: osInfo.text,
-                            letterSpacing: '0.05em'
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase'
                         }}>
                             {osInfo.label}
                         </span>
                     </div>
 
+                    {/* Row 2: Business Area | LOB | Comments */}
                     <div style={{
-                        fontSize: '13px',
+                        fontSize: '14px',
                         color: 'var(--color-text-secondary)',
-                        fontWeight: 500,
+                        fontWeight: 550,
                         display: 'flex',
-                        gap: '6px'
+                        alignItems: 'center',
+                        gap: '8px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden'
                     }}>
-                        <span>{server.businessArea}</span>
-                        <span style={{ opacity: 0.3 }}>/</span>
+                        <span style={{ color: 'var(--color-text-primary)', opacity: 0.9 }}>{server.businessArea}</span>
+                        <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>
                         <span>{server.lob}</span>
+                        {server.comment && server.comment !== '-' && (
+                            <>
+                                <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>
+                                <span style={{
+                                    fontStyle: 'italic',
+                                    opacity: 0.6,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                }}>
+                                    {server.comment}
+                                </span>
+                            </>
+                        )}
                     </div>
-                </div>
 
-                {/* Comments Section */}
-                <div style={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontSize: '13px',
-                    color: 'var(--color-text-tertiary)',
-                    fontStyle: 'italic',
-                    padding: '0 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    lineHeight: '1.5',
-                    borderLeft: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRight: '1px solid rgba(255, 255, 255, 0.05)',
-                    height: '60%'
-                }}>
-                    {server.comment && server.comment !== '-' ? (
-                        <div style={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical'
-                        }}>
-                            {server.comment}
+                    {/* Row 3: Owners & IT Contacts */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '24px',
+                        marginTop: '4px'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <PersonInfo label="OWNER" value={server.owner || ''} contactLookup={contactLookup} />
                         </div>
-                    ) : (
-                        <span style={{ opacity: 0.2 }}>No comments available</span>
-                    )}
-                </div>
-
-                {/* People Section */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    width: '280px',
-                    flexShrink: 0,
-                    paddingLeft: '12px'
-                }}>
-                    <PersonInfo label="OWNER" value={server.owner || ''} contactLookup={contactLookup} />
-                    <PersonInfo label="IT CONTACT" value={server.contact || ''} contactLookup={contactLookup} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <PersonInfo label="IT CONTACT" value={server.contact || ''} contactLookup={contactLookup} />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

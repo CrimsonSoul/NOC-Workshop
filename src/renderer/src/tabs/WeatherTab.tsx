@@ -297,7 +297,6 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
         webview.executeJavaScript(`
           const cleanup = () => {
              const selectors = [
-              '.menu-container', 
               '.promo-container',
               '.larger-map-btn', 
               '.refresh-btn', 
@@ -306,9 +305,7 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
               '.view-selector',
               '.leaflet-control-zoom',
               '.leaflet-control-attribution',
-              '.leaflet-control-container',
-              '.top-menu',
-              '.bottom-menu'
+              '.header-container'
             ];
             
             selectors.forEach(s => {
@@ -323,6 +320,14 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
                   el.style.setProperty('display', 'none', 'important');
                }
             });
+
+            // Ensure map container remains visible
+            const map = document.querySelector('.leaflet-container');
+            if (map) {
+              map.style.setProperty('display', 'block', 'important');
+              map.style.setProperty('visibility', 'visible', 'important');
+              map.style.setProperty('opacity', '1', 'important');
+            }
 
             // Ensure player stays visible and high-z-index
             const player = document.querySelector('.player-container');
