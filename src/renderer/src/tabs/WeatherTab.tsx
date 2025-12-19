@@ -358,14 +358,14 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
         gap: '12px',
         flexShrink: 0
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: '32px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
             {location?.name || 'Weather'}
           </h2>
           {weather && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-              {getWeatherIcon(weather.current_weather.weathercode, 28)}
-              <span style={{ fontSize: '24px', fontWeight: 500 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              {getWeatherIcon(weather.current_weather.weathercode, 36)}
+              <span style={{ fontSize: '32px', fontWeight: 600, color: '#FDB813' }}>
                 {Math.round(weather.current_weather.temperature)}°F
               </span>
             </div>
@@ -450,42 +450,45 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{
-                        fontWeight: 600,
-                        fontSize: '15px',
-                        color: colors.text
+                        fontWeight: 700,
+                        fontSize: '18px',
+                        color: colors.text,
+                        letterSpacing: '-0.01em'
                       }}>
                         {alert.event}
                       </span>
                       <span style={{
-                        fontSize: '11px',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        background: 'rgba(0,0,0,0.2)',
+                        fontSize: '12px',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(0,0,0,0.3)',
                         color: colors.text,
                         textTransform: 'uppercase',
-                        fontWeight: 500
+                        fontWeight: 800
                       }}>
                         {alert.severity}
                       </span>
                       {alert.urgency === 'Immediate' && (
                         <span style={{
-                          fontSize: '11px',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: 'rgba(220, 38, 38, 0.3)',
-                          color: '#FCA5A5',
+                          fontSize: '12px',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          background: 'rgba(220, 38, 38, 0.4)',
+                          color: '#FFF',
                           textTransform: 'uppercase',
-                          fontWeight: 500
+                          fontWeight: 800
                         }}>
-                          Immediate
+                          🚨 Immediate
                         </span>
                       )}
                     </div>
                     <p style={{
-                      fontSize: '14px',
-                      color: 'var(--color-text-secondary)',
-                      margin: '4px 0 0',
-                      lineHeight: '1.4'
+                      fontSize: '16px',
+                      color: 'var(--color-text-primary)',
+                      opacity: 0.9,
+                      margin: '6px 0 0',
+                      lineHeight: '1.4',
+                      fontWeight: 500
                     }}>
                       {alert.headline}
                     </p>
