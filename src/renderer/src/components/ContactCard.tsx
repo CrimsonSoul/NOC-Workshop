@@ -68,7 +68,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
         ...style,
         display: 'flex',
         alignItems: 'center',
-        padding: '0 24px',
+        padding: '0 8px',
         position: 'relative',
         boxSizing: 'border-box'
       }}
@@ -76,14 +76,14 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
       <div
         style={{
           flex: 1,
-          height: 'calc(100% - 12px)',
+          height: 'calc(100% - 10px)',
           display: 'flex',
           alignItems: 'center',
-          padding: '0 20px',
+          padding: '0 12px',
           background: selected ? 'rgba(59, 130, 246, 0.08)' : 'rgba(255, 255, 255, 0.02)',
           border: selected ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid rgba(255, 255, 255, 0.05)',
           borderRadius: '12px',
-          gap: '20px',
+          gap: '12px',
           transition: 'all 0.2s ease',
           cursor: 'default',
           position: 'relative',
@@ -133,7 +133,8 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              letterSpacing: '-0.01em'
+              letterSpacing: '-0.01em',
+              flex: 1
             }}>
               {displayName}
             </span>
@@ -173,13 +174,12 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           </div>
         </div>
 
-        {/* Contact Details Section */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
-          gap: '8px',
-          width: '240px',
+          gap: '4px',
+          width: '160px',
           flexShrink: 0,
           paddingLeft: '12px',
           borderLeft: '1px solid rgba(255, 255, 255, 0.05)'

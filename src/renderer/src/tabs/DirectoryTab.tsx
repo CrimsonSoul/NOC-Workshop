@@ -605,7 +605,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     }}>
       {/* Header / Actions - Compact */}
       <div style={{
-        padding: '16px 32px',
+        padding: '16px 12px',
         borderBottom: 'var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
@@ -672,7 +672,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         aria-label="Contacts list"
         aria-rowcount={filtered.length}
         tabIndex={0}
-        style={{ flex: 1, outline: 'none', paddingTop: '16px', paddingLeft: '32px', paddingRight: '32px' }}
+        style={{ flex: 1, outline: 'none', paddingTop: '16px', paddingLeft: '12px', paddingRight: '12px' }}
       >
         <AutoSizer onResize={({ width }) => setListWidth(width)}>
           {({ height, width }) => (

@@ -579,7 +579,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
 
                 {/* Toolbar - Compact */}
                 <div style={{
-                    padding: '10px 32px',
+                    padding: '10px 12px',
                     borderBottom: 'var(--border-subtle)',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -609,7 +609,7 @@ export const AssemblerTab: React.FC<Props> = ({ groups, contacts, selectedGroups
                 <div style={{
                     flex: 1,
                     overflow: 'hidden', // AutoSizer handles scrolling
-                    padding: '0 32px' // Give some room for card rounding
+                    padding: '0 12px' // Give some room for card rounding
                 }}>
                     {log.length === 0 ? (
                         <div style={{

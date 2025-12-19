@@ -312,21 +312,46 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
           }
         `);
 
-        // DOM Removal - Ultra Aggressive
+        // DOM Removal - Nuclear Option
         webview.executeJavaScript(`
           const cleanup = () => {
-            // Hide all standard control containers
-            const containers = document.querySelectorAll('.leaflet-control-container, .menu-container, .top-menu, .bottom-menu, .left-menu, .right-menu, .header-container, .promo-container');
-            containers.forEach(c => {
-               if (c) c.style.display = 'none';
-            });
-
-            // Specific problematic buttons
-            const selectors = ['.larger-map-btn', '.refresh-btn', '.app-promo', '.logo-alt', '.search-container', '#search-input-container', '.view-selector'];
+             const selectors = [
+              '.leaflet-control-container', 
+              '.menu-container', 
+              '.top-menu', 
+              '.bottom-menu', 
+              '.left-menu', 
+              '.right-menu', 
+              '.header-container', 
+              '.promo-container',
+              '.larger-map-btn', 
+              '.refresh-btn', 
+              '.app-promo', 
+              '.logo-alt', 
+              '.search-container', 
+              '#search-input-container', 
+              '.view-selector',
+              '.map-info-container',
+              '.player-title',
+              '.leaflet-control-zoom',
+              '.leaflet-control-attribution',
+              '#radar-info',
+              '.info-box',
+              '.weather-info-container',
+              '.map-legend'
+            ];
+            
             selectors.forEach(s => {
               document.querySelectorAll(s).forEach(el => {
-                if (el) el.style.display = 'none';
+                if (el) el.style.setProperty('display', 'none', 'important');
               });
+            });
+
+            // Specific targeting for annoying text overlays
+            document.querySelectorAll('div, span, a').forEach(el => {
+               if (el.textContent && (el.textContent.includes('Plain Viewer') || el.textContent.includes('Larger map'))) {
+                  el.style.setProperty('display', 'none', 'important');
+               }
             });
 
             // Ensure player stays visible
@@ -334,13 +359,13 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
             if (player) {
               player.style.setProperty('display', 'block', 'important');
               player.style.setProperty('z-index', '99999', 'important');
+              player.style.setProperty('opacity', '1', 'important');
             }
           };
           
           cleanup();
-          // Hammer it for the first 5 seconds to catch late loads
-          const interval = setInterval(cleanup, 500);
-          setTimeout(() => clearInterval(interval), 5000);
+          const interval = setInterval(cleanup, 1000);
+          setTimeout(() => clearInterval(interval), 15000); // Run for 15s to catch late renders
         `);
       }
     };
@@ -423,7 +448,7 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
       height: '100%',
       width: '100%',
       background: 'var(--color-bg-app)',
-      padding: '20px 32px',
+      padding: '20px 12px',
       gap: '16px',
       overflow: 'hidden'
     }}>
