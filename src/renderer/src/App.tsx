@@ -4,7 +4,7 @@ import { WorldClock } from './components/WorldClock';
 import { AssemblerTab } from './tabs/AssemblerTab';
 import { WindowControls } from './components/WindowControls';
 import { ToastProvider, useToast } from './components/Toast';
-import { AppData, Contact, DataError } from '@shared/ipc';
+import { AppData, Contact, DataError, WeatherAlert } from '@shared/ipc';
 import { TabFallback } from './components/TabFallback';
 import './styles.css';
 import { DUMMY_DATA } from './dummyData';
@@ -165,9 +165,9 @@ export function MainApp() {
   // Weather State (Lifted)
   const [weatherLocation, setWeatherLocation] = useState<Location | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [weatherAlerts, setWeatherAlerts] = useState<any[]>([]);
+  const [weatherAlerts, setWeatherAlerts] = useState<WeatherAlert[]>([]);
   const [weatherLoading, setWeatherLoading] = useState(false);
-  const [lastAlertIds, setLastAlertIds] = useState<Set<string>>(new Set());
+  const lastAlertIdsRef = useRef<Set<string>>(new Set());
 
   // Restore Weather Location
   useEffect(() => {
@@ -192,18 +192,14 @@ export function MainApp() {
       // Handle Realtime Alerts
       if (aData.length > 0) {
         // Find new alerts we haven't shown yet
-        const newAlerts = aData.filter((a: any) => !lastAlertIds.has(a.id));
+        const newAlerts = aData.filter((a: any) => !lastAlertIdsRef.current.has(a.id));
         if (newAlerts.length > 0) {
           // Toast the most severe one to avoid spam
           const severe = newAlerts.find((a: any) => a.severity === 'Extreme' || a.severity === 'Severe') || newAlerts[0];
           showToast(`Weather Alert: ${severe.event}`, 'error');
 
           // Update known IDs
-          setLastAlertIds(prev => {
-            const next = new Set(prev);
-            newAlerts.forEach((a: any) => next.add(a.id));
-            return next;
-          });
+          newAlerts.forEach((a: any) => lastAlertIdsRef.current.add(a.id));
         }
       }
 
@@ -212,27 +208,22 @@ export function MainApp() {
     } finally {
       if (!silent) setWeatherLoading(false);
     }
-  }, [lastAlertIds, showToast]);
+  }, [showToast]);
 
-  // Weather Polling (Every 15 mins) & Tab Switch Refresh
+  // Weather Polling (Every 2 mins) & Tab Switch Refresh
   useEffect(() => {
     if (!weatherLocation) return;
 
-    // Fetch immediately if switching to tab or initial load
-    if (activeTab === 'Weather') {
-      fetchWeather(weatherLocation.latitude, weatherLocation.longitude, !!weatherData); // Silent if we already have data
-    } else {
-      // If we are not on the tab, but location is set, we might want to poll for alerts 
-      // We'll rely on the interval for background updates
-    }
+    // Fetch immediately on mount or location change
+    fetchWeather(weatherLocation.latitude, weatherLocation.longitude, !!weatherData);
 
-    // Poll every 15 minutes
+    // Poll every 2 minutes for background alerts
     const interval = setInterval(() => {
       fetchWeather(weatherLocation.latitude, weatherLocation.longitude, true);
-    }, 15 * 60 * 1000);
+    }, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [weatherLocation, activeTab, fetchWeather]); // Re-run when tab changes or location changes
+  }, [weatherLocation, fetchWeather]); // Re-run when location changes
 
 
   // Sync ref
@@ -418,7 +409,6 @@ export function MainApp() {
           {activeTab === 'Weather' && (
             <div className="animate-fade-in" style={{ height: '100%' }}>
               <Suspense fallback={<TabFallback />}>
-                {/* @ts-ignore - props mismatch until WeatherTab is updated */}
                 <WeatherTab
                   weather={weatherData}
                   alerts={weatherAlerts}

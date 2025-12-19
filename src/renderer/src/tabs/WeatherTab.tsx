@@ -47,7 +47,7 @@ const getWeatherIcon = (code: number, size = 24) => {
   // Clear / Sun
   if (code === 0 || code === 1) {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#FDB813" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#FDB813" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ overflow: 'visible' }}>
         <circle cx="12" cy="12" r="4" fill="rgba(253, 184, 19, 0.1)" />
         <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73l-1.41 1.41" />
       </svg>
@@ -57,7 +57,7 @@ const getWeatherIcon = (code: number, size = 24) => {
   // Partly Cloudy
   if (code === 2) {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ overflow: 'visible' }}>
         {/* Sun peaking behind */}
         <path d="M12 2v2m-6.36 1.64 1.41 1.41M2 12h2" stroke="#FDB813" />
         <circle cx="12" cy="12" r="3" stroke="#FDB813" />
@@ -75,7 +75,7 @@ const getWeatherIcon = (code: number, size = 24) => {
   // Overcast / Fog
   if (code === 3 || code === 45 || code === 48) {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ overflow: 'visible' }}>
         <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.3-1.7-4.2-3.9-4.5-1.1-2.9-3.9-4.9-7.1-4.9-3.3 0-6.2 2.1-7.1 5.2C1.7 10.8 0 12.8 0 15.2c0 2.6 2.1 4.8 4.7 4.8h12.8" fill="rgba(161, 161, 170, 0.05)" />
       </svg>
     );
@@ -84,7 +84,7 @@ const getWeatherIcon = (code: number, size = 24) => {
   // Drizzle / Rain
   if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ overflow: 'visible' }}>
         <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.3-1.7-4.2-3.9-4.5-1.1-2.9-3.9-4.9-7.1-4.9-3.3 0-6.2 2.1-7.1 5.2C1.7 10.8 0 12.8 0 15.2c0 2.6 2.1 4.8 4.7 4.8h12.8" stroke="#A1A1AA" />
         <path d="M8 20l-1 2m4-2l-1 2m4-2l-1 2" stroke="#60A5FA" />
       </svg>
@@ -94,7 +94,7 @@ const getWeatherIcon = (code: number, size = 24) => {
   // Snow
   if (code >= 71 && code <= 77) {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ overflow: 'visible' }}>
         <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.3-1.7-4.2-3.9-4.5-1.1-2.9-3.9-4.9-7.1-4.9-3.3 0-6.2 2.1-7.1 5.2C1.7 10.8 0 12.8 0 15.2c0 2.6 2.1 4.8 4.7 4.8h12.8" stroke="#A1A1AA" />
         <path d="M8 20h.01M12 20h.01M16 20h.01" stroke="#E5E7EB" strokeWidth="3" />
       </svg>
@@ -104,7 +104,7 @@ const getWeatherIcon = (code: number, size = 24) => {
   // Thunderstorm
   if (code >= 95) {
     return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ overflow: 'visible' }}>
         <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.3-1.7-4.2-3.9-4.5-1.1-2.9-3.9-4.9-7.1-4.9-3.3 0-6.2 2.1-7.1 5.2C1.7 10.8 0 12.8 0 15.2c0 2.6 2.1 4.8 4.7 4.8h12.8" stroke="#A1A1AA" />
         <path d="m13 14-4 6h5l-4 6" stroke="#FDE047" fill="rgba(253, 224, 71, 0.1)" />
       </svg>
@@ -113,7 +113,7 @@ const getWeatherIcon = (code: number, size = 24) => {
 
   // Default / Cloudy
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ overflow: 'visible' }}>
       <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.3-1.7-4.2-3.9-4.5-1.1-2.9-3.9-4.9-7.1-4.9-3.3 0-6.2 2.1-7.1 5.2C1.7 10.8 0 12.8 0 15.2c0 2.6 2.1 4.8 4.7 4.8h12.8" />
     </svg>
   );
@@ -269,7 +269,37 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
 
       // RainViewer handles dark mode natively via URL params, so we just force background to avoid white flash
       if (webview) {
-        webview.insertCSS(`html, body { background-color: #0f0f12 !important; }`);
+        webview.insertCSS(`
+          html, body { 
+            background-color: #0f0f12 !important; 
+            overflow: hidden !important;
+          }
+          /* Hide RainViewer UI Clutter */
+          .menu-container, 
+          .left-menu, 
+          .right-menu, 
+          .search-container, 
+          .logo-alt,
+          .map-legend,
+          .leaflet-control-zoom,
+          .promo-container,
+          .bottom-info,
+          .header-container { 
+            display: none !important; 
+          }
+          /* Ensure player is visible and positioned nicely */
+          .player-container {
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: rgba(15, 15, 18, 0.8) !important;
+            backdrop-filter: blur(8px) !important;
+            border-radius: 12px !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding: 4px 12px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+          }
+        `);
       }
     };
 
@@ -345,7 +375,7 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
   };
 
   return (
-    <div style={{
+    <div className="weather-scroll-container" style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
@@ -369,7 +399,7 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
             {location?.name || 'Weather'}
           </h2>
           {weather && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               {getWeatherIcon(weather.current_weather.weathercode, 28)}
               <span style={{ fontSize: '24px', fontWeight: 500 }}>
                 {Math.round(weather.current_weather.temperature)}°F
@@ -546,7 +576,7 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
       )}
 
       {/* Main Content - Responsive Grid */}
-      <div className="weather-tab-root" style={{
+      <div className="weather-tab-root weather-scroll-container" style={{
         display: 'flex',
         gap: '16px',
         flex: 1,
