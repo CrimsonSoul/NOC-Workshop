@@ -66,7 +66,12 @@ const PersonInfo = ({ label, value, contactLookup }: { label: string, value: str
                         textOverflow: 'ellipsis',
                         fontWeight: 500
                     }}>
-                        {allNames}
+                        {displayName}
+                        {parts.length > 1 && (
+                            <span style={{ opacity: 0.5, marginLeft: '6px', fontSize: '11px' }}>
+                                +{parts.length - 1}
+                            </span>
+                        )}
                     </span>
                 </Tooltip>
             </div>
