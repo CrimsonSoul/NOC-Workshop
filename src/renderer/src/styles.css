@@ -611,6 +611,13 @@ body.platform-win32 .window-controls-container {
   background-color: rgba(255, 255, 255, 0.4);
 }
 
+.server-card-hover:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
 /* Responsive Weather Tab */
 @media (max-width: 850px) {
   .weather-tab-root {
