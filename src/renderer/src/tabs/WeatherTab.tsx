@@ -312,33 +312,19 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
           }
         `);
 
-        // DOM Removal - Nuclear Option
+        // DOM Removal - Surgical and Safe
         webview.executeJavaScript(`
           const cleanup = () => {
              const selectors = [
-              '.leaflet-control-container', 
               '.menu-container', 
-              '.top-menu', 
-              '.bottom-menu', 
-              '.left-menu', 
-              '.right-menu', 
-              '.header-container', 
               '.promo-container',
               '.larger-map-btn', 
               '.refresh-btn', 
               '.app-promo', 
               '.logo-alt', 
-              '.search-container', 
-              '#search-input-container', 
               '.view-selector',
-              '.map-info-container',
-              '.player-title',
               '.leaflet-control-zoom',
-              '.leaflet-control-attribution',
-              '#radar-info',
-              '.info-box',
-              '.weather-info-container',
-              '.map-legend'
+              '.leaflet-control-attribution'
             ];
             
             selectors.forEach(s => {
@@ -347,25 +333,17 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
               });
             });
 
-            // Specific targeting for annoying text overlays
-            document.querySelectorAll('div, span, a').forEach(el => {
-               if (el.textContent && (el.textContent.includes('Plain Viewer') || el.textContent.includes('Larger map'))) {
-                  el.style.setProperty('display', 'none', 'important');
-               }
-            });
-
             // Ensure player stays visible
             const player = document.querySelector('.player-container');
             if (player) {
               player.style.setProperty('display', 'block', 'important');
               player.style.setProperty('z-index', '99999', 'important');
-              player.style.setProperty('opacity', '1', 'important');
             }
           };
           
           cleanup();
-          const interval = setInterval(cleanup, 1000);
-          setTimeout(() => clearInterval(interval), 15000); // Run for 15s to catch late renders
+          setTimeout(cleanup, 2000);
+          setTimeout(cleanup, 5000);
         `);
       }
     };

@@ -79,11 +79,11 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           height: 'calc(100% - 10px)',
           display: 'flex',
           alignItems: 'center',
-          padding: '0 12px',
+          padding: '0 8px',
           background: selected ? 'rgba(59, 130, 246, 0.08)' : 'rgba(255, 255, 255, 0.02)',
           border: selected ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid rgba(255, 255, 255, 0.05)',
           borderRadius: '12px',
-          gap: '12px',
+          gap: '10px',
           transition: 'all 0.2s ease',
           cursor: 'default',
           position: 'relative',
@@ -123,7 +123,7 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           {getInitials(name, email)}
         </div>
 
-        {/* Info Section */}
+        {/* Info Section - Name, Title, Email, Phone */}
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{
@@ -162,7 +162,8 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
             fontWeight: 500,
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            flexWrap: 'wrap'
           }}>
             {title && (
               <>
@@ -171,37 +172,32 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
               </>
             )}
             <span style={{ opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
+            {formattedPhone && (
+              <>
+                <span style={{ opacity: 0.3 }}>|</span>
+                <span style={{ color: 'var(--color-text-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>{formattedPhone}</span>
+              </>
+            )}
           </div>
         </div>
 
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: '4px',
-          width: '160px',
-          flexShrink: 0,
-          paddingLeft: '12px',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.05)'
-        }}>
-          {formattedPhone && (
-            <div style={{
-              fontSize: '15px',
-              color: 'var(--color-text-primary)',
-              fontWeight: 600,
-              letterSpacing: '0.02em'
-            }}>
-              {formattedPhone}
-            </div>
-          )}
-
-          {groups.length > 0 && (
+        {/* Groups Section - Secondary */}
+        {groups.length > 0 && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: '4px',
+            flexShrink: 0,
+            paddingLeft: '12px',
+            borderLeft: '1px solid rgba(255, 255, 255, 0.05)'
+          }}>
             <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
-              {groups.slice(0, 2).map(g => (
+              {groups.slice(0, 1).map(g => (
                 <GroupPill key={g} group={g} />
               ))}
-              {groups.length > 2 && (
-                <Tooltip content={groups.slice(2).join(', ')}>
+              {groups.length > 1 && (
+                <Tooltip content={groups.slice(1).join(', ')}>
                   <span
                     style={{
                       fontSize: '11px',
@@ -214,13 +210,13 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
                       cursor: 'help'
                     }}
                   >
-                    +{groups.length - 2}
+                    +{groups.length - 1}
                   </span>
                 </Tooltip>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {action && (
