@@ -605,11 +605,11 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
     }}>
       {/* Header / Actions - Compact */}
       <div style={{
-        padding: '12px 16px',
+        padding: '16px 24px',
         borderBottom: 'var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
-        gap: '10px'
+        gap: '16px'
       }}>
         <Input
           placeholder="Search people..."
@@ -617,7 +617,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
           onChange={(e) => setSearch(e.target.value)}
           autoFocus
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>}
-          style={{ width: '300px' }}
+          style={{ width: '340px' }}
         />
         {filtered.length > 0 && (
           <div style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>
@@ -625,6 +625,38 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
           </div>
         )}
         <div style={{ flex: 1 }}></div>
+
+        {/* Sort Toggle */}
+        <div
+          onClick={() => setSortConfig(prev => ({ ...prev, direction: prev.direction === 'asc' ? 'desc' : 'asc' }))}
+          style={{
+            fontSize: '11px',
+            fontWeight: 800,
+            color: 'var(--color-text-tertiary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            transition: 'all 0.2s',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.color = 'var(--color-text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+            e.currentTarget.style.color = 'var(--color-text-tertiary)';
+          }}
+        >
+          SORT: NAME {sortConfig.direction === 'asc' ? '↑' : '↓'}
+        </div>
+
         <ToolbarButton
           label="ADD CONTACT"
           onClick={() => setIsAddModalOpen(true)}
@@ -640,7 +672,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
         aria-label="Contacts list"
         aria-rowcount={filtered.length}
         tabIndex={0}
-        style={{ flex: 1, outline: 'none' }}
+        style={{ flex: 1, outline: 'none', paddingTop: '16px' }}
       >
         <AutoSizer onResize={({ width }) => setListWidth(width)}>
           {({ height, width }) => (
@@ -648,7 +680,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
               ref={listRef}
               height={height}
               itemCount={filtered.length}
-              itemSize={64}
+              itemSize={88} // Larger cards
               width={width}
               itemData={itemData}
               style={{ outline: 'none' }}

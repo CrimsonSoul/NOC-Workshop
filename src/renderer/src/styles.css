@@ -611,7 +611,8 @@ body.platform-win32 .window-controls-container {
   background-color: rgba(255, 255, 255, 0.4);
 }
 
-.server-card-hover:hover {
+.server-card-hover:hover,
+.contact-card-hover:hover {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   transform: translateY(-1px);
