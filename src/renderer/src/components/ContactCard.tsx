@@ -123,100 +123,98 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           {getInitials(name, email)}
         </div>
 
-        {/* Info Section - Name, Title, Email, Phone */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, gap: '4px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Main Info Stack - Vertical for maximum narrow-width compatibility */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minWidth: 0,
+          gap: '2px',
+          justifyContent: 'center'
+        }}>
+          {/* Top Row: Name */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
-              fontSize: '17px',
+              fontSize: '15px',
               fontWeight: 700,
               color: 'var(--color-text-primary)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              letterSpacing: '-0.01em',
-              flex: 1
+              letterSpacing: '-0.01em'
             }}>
               {displayName}
             </span>
             {sourceLabel && (
               <span style={{
-                fontSize: '9px',
+                fontSize: '8px',
                 background: 'rgba(255, 255, 255, 0.08)',
                 color: 'var(--color-text-tertiary)',
-                padding: '2px 6px',
-                borderRadius: '4px',
+                padding: '1px 4px',
+                borderRadius: '3px',
                 fontWeight: 800,
                 textTransform: 'uppercase',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                flexShrink: 0,
-                letterSpacing: '0.05em'
+                flexShrink: 0
               }}>
                 {sourceLabel}
               </span>
             )}
           </div>
 
+          {/* Middle Row: Title | Email */}
           <div style={{
-            fontSize: '13px',
+            fontSize: '12px',
             color: 'var(--color-text-secondary)',
             fontWeight: 500,
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            flexWrap: 'wrap'
+            gap: '6px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden'
           }}>
             {title && (
               <>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</span>
                 <span style={{ opacity: 0.3 }}>|</span>
               </>
             )}
-            <span style={{ opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
+            <span style={{ opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</span>
+          </div>
+
+          {/* Bottom Row: Phone & Groups */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            marginTop: '2px'
+          }}>
             {formattedPhone && (
-              <>
-                <span style={{ opacity: 0.3 }}>|</span>
-                <span style={{ color: 'var(--color-text-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>{formattedPhone}</span>
-              </>
+              <span style={{
+                fontSize: '12px',
+                color: 'var(--color-accent-blue-hover)',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                whiteSpace: 'nowrap'
+              }}>
+                {formattedPhone}
+              </span>
+            )}
+
+            {groups.length > 0 && (
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                {groups.slice(0, 1).map(g => (
+                  <GroupPill key={g} group={g} />
+                ))}
+                {groups.length > 1 && (
+                  <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
+                    +{groups.length - 1}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
-
-        {/* Groups Section - Secondary */}
-        {groups.length > 0 && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            gap: '4px',
-            flexShrink: 0,
-            paddingLeft: '12px',
-            borderLeft: '1px solid rgba(255, 255, 255, 0.05)'
-          }}>
-            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
-              {groups.slice(0, 1).map(g => (
-                <GroupPill key={g} group={g} />
-              ))}
-              {groups.length > 1 && (
-                <Tooltip content={groups.slice(1).join(', ')}>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      color: 'var(--color-text-primary)',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      padding: '2px 6px',
-                      borderRadius: '12px',
-                      fontWeight: 700,
-                      cursor: 'help'
-                    }}
-                  >
-                    +{groups.length - 1}
-                  </span>
-                </Tooltip>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {action && (

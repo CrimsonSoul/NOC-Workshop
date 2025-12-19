@@ -293,22 +293,30 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
           #search-input-container,
           .leaflet-top.leaflet-right,
           .leaflet-top.leaflet-left,
-          .leaflet-bottom.leaflet-left { 
+          .leaflet-bottom.leaflet-left,
+          .leaflet-bottom.leaflet-right,
+          .leaflet-control-container,
+          #radar-info,
+          .info-box { 
             display: none !important; 
           }
           /* Ensure player is visible and positioned nicely */
           .player-container {
             display: block !important;
-            bottom: 20px !important;
+            bottom: 30px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
-            background: rgba(15, 15, 18, 0.8) !important;
-            backdrop-filter: blur(8px) !important;
-            border-radius: 12px !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            padding: 4px 12px !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
-            z-index: 10000 !important;
+            background: rgba(15, 15, 18, 0.95) !important;
+            backdrop-filter: blur(12px) !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            padding: 8px 16px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+            z-index: 999999 !important;
+          }
+          /* Hide the text overlays that RainViewer injects */
+          div[style*="z-index"][style*="position: absolute"] {
+             pointer-events: none !important;
           }
         `);
 
@@ -324,7 +332,10 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
               '.logo-alt', 
               '.view-selector',
               '.leaflet-control-zoom',
-              '.leaflet-control-attribution'
+              '.leaflet-control-attribution',
+              '.leaflet-control-container',
+              '.top-menu',
+              '.bottom-menu'
             ];
             
             selectors.forEach(s => {
@@ -333,17 +344,27 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
               });
             });
 
-            // Ensure player stays visible
+            // Target "Plain Viewer" and "Larger map" by text
+            document.querySelectorAll('div, span, a').forEach(el => {
+               if (el.textContent && (el.textContent.includes('Plain Viewer') || el.textContent.includes('Larger map'))) {
+                  el.style.setProperty('display', 'none', 'important');
+               }
+            });
+
+            // Ensure player stays visible and high-z-index
             const player = document.querySelector('.player-container');
             if (player) {
               player.style.setProperty('display', 'block', 'important');
-              player.style.setProperty('z-index', '99999', 'important');
+              player.style.setProperty('z-index', '999999', 'important');
+              player.style.setProperty('bottom', '30px', 'important');
+              player.style.setProperty('top', 'auto', 'important');
             }
           };
           
           cleanup();
-          setTimeout(cleanup, 2000);
-          setTimeout(cleanup, 5000);
+          // Hammer it for 10 seconds
+          const interval = setInterval(cleanup, 1000);
+          setTimeout(() => clearInterval(interval), 10000);
         `);
       }
     };
