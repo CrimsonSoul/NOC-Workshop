@@ -36,9 +36,7 @@ interface Location {
 
 // Generate RainViewer URL with location centered
 const getRadarUrl = (lat: number, lon: number): string => {
-  // theme=dark, color=2 (Universal Blue), opacity=0.8, smooth=1 (smoothed radar rendering)
-  // loc=lat,lon,zoom
-  return `https://www.rainviewer.com/map.html?loc=${lat},${lon},8&theme=dark&color=2&opacity=0.8&smooth=1&animation=1`;
+  return `https://www.rainviewer.com/map.html?loc=${lat},${lon},6&theme=dark&color=1&opacity=0.7`;
 };
 
 const getWeatherIcon = (code: number, size = 24) => {
@@ -266,85 +264,7 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({ weather, alerts, locatio
         clearTimeout(radarTimeoutRef.current);
       }
       setRadarLoaded(true);
-
-      if (webview) {
-        // Persistent CSS injection
-        webview.insertCSS(`
-          html, body { 
-            background-color: #0f0f12 !important; 
-          }
-          /* Hide non-essential UI buttons only */
-          .larger-map-btn, .refresh-btn, .app-promo, .promo-container, .logo-alt, .header-container {
-            display: none !important;
-          }
-          /* Ensure player remains visible and centered */
-          .player-container {
-            display: block !important;
-            bottom: 30px !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            background: rgba(15, 15, 18, 0.95) !important;
-            backdrop-filter: blur(12px) !important;
-            border-radius: 16px !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            padding: 8px 16px !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
-            z-index: 999999 !important;
-          }
-        `);
-
-        // DOM Removal - Surgical and Safe
-        webview.executeJavaScript(`
-          const cleanup = () => {
-             const selectors = [
-              '.promo-container',
-              '.larger-map-btn', 
-              '.refresh-btn', 
-              '.app-promo', 
-              '.logo-alt', 
-              '.view-selector',
-              '.leaflet-control-zoom',
-              '.leaflet-control-attribution',
-              '.header-container'
-            ];
-            
-            selectors.forEach(s => {
-              document.querySelectorAll(s).forEach(el => {
-                if (el) el.style.setProperty('display', 'none', 'important');
-              });
-            });
-
-            // Target "Plain Viewer" and "Larger map" by text
-            document.querySelectorAll('div, span, a').forEach(el => {
-               if (el.textContent && (el.textContent.includes('Plain Viewer') || el.textContent.includes('Larger map'))) {
-                  el.style.setProperty('display', 'none', 'important');
-               }
-            });
-
-            // Ensure map container remains visible
-            const map = document.querySelector('.leaflet-container');
-            if (map) {
-              map.style.setProperty('display', 'block', 'important');
-              map.style.setProperty('visibility', 'visible', 'important');
-              map.style.setProperty('opacity', '1', 'important');
-            }
-
-            // Ensure player stays visible and high-z-index
-            const player = document.querySelector('.player-container');
-            if (player) {
-              player.style.setProperty('display', 'block', 'important');
-              player.style.setProperty('z-index', '999999', 'important');
-              player.style.setProperty('bottom', '30px', 'important');
-              player.style.setProperty('top', 'auto', 'important');
-            }
-          };
-          
-          cleanup();
-          // Hammer it for 10 seconds
-          const interval = setInterval(cleanup, 1000);
-          setTimeout(() => clearInterval(interval), 10000);
-        `);
-      }
+      // No cleanup for now to ensure visibility
     };
 
     const handleDidFailLoad = () => {

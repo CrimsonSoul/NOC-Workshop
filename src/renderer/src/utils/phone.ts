@@ -18,12 +18,6 @@ const formatSingleNumber = (phone: string): string => {
     const hasPlus = phone.trim().startsWith('+');
     let clean = phone.replace(/[^0-9]/g, '');
 
-    // Normalize US with +1 prefix
-    if (hasPlus && clean.length === 11 && clean.startsWith('1')) {
-        const digits = clean.slice(1);
-        return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-    }
-
     // Normalize US with 1 prefix (no plus)
     if (!hasPlus && clean.length === 11 && clean.startsWith('1')) {
         clean = clean.slice(1);

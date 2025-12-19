@@ -37,8 +37,8 @@ const UserAvatar = ({ name, color, border }: { name: string, color: string, bord
 const PersonInfo = ({ label, value, contactLookup }: { label: string, value: string, contactLookup: Map<string, Contact> }) => {
     if (!value || value === '-' || value === '0') return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.3 }}>
-            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600, fontSize: '9px', width: '60px' }}>{label}</span>
-            <span style={{ fontSize: '12px' }}>-</span>
+            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 600, fontSize: '11px', width: '70px', letterSpacing: '0.05em' }}>{label}</span>
+            <span style={{ fontSize: '14px' }}>-</span>
         </div>
     );
 
@@ -54,21 +54,31 @@ const PersonInfo = ({ label, value, contactLookup }: { label: string, value: str
     }).join('; ');
 
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 700, fontSize: '9px', width: '60px', letterSpacing: '0.05em' }}>{label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}>
+            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 800, fontSize: '11px', width: '70px', letterSpacing: '0.08em' }}>{label}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                <UserAvatar name={displayName} color={colorScheme.bg} border={colorScheme.border} />
+                <div style={{
+                    width: '28px', height: '28px', borderRadius: '8px',
+                    background: colorScheme.bg,
+                    color: colorScheme.text,
+                    border: `1px solid ${colorScheme.border}`,
+                    fontSize: '12px', fontWeight: 800,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0
+                }}>
+                    {displayName.charAt(0).toUpperCase()}
+                </div>
                 <Tooltip content={allNames}>
                     <span style={{
                         color: 'var(--color-text-primary)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        fontWeight: 500
+                        fontWeight: 600
                     }}>
                         {displayName}
                         {parts.length > 1 && (
-                            <span style={{ opacity: 0.5, marginLeft: '6px', fontSize: '11px' }}>
+                            <span style={{ opacity: 0.5, marginLeft: '6px', fontSize: '12px' }}>
                                 +{parts.length - 1}
                             </span>
                         )}
@@ -110,7 +120,7 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                 }}
                 className="server-card-hover"
             >
-                {/* Platform Indicator Strip */}
+                {/* Accent Strip */}
                 <div style={{
                     position: 'absolute',
                     left: 0,
@@ -121,6 +131,29 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                     opacity: 0.8
                 }} />
 
+                {/* Avatar-like Icon Section (Matches ContactCard) */}
+                <div
+                    style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '14px',
+                        background: osInfo.bg,
+                        border: `1px solid ${osInfo.border}`,
+                        color: osInfo.text,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                    }}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                        <line x1="6" y1="6" x2="6.01" y2="6" />
+                        <line x1="6" y1="18" x2="6.01" y2="18" />
+                    </svg>
+                </div>
+
                 {/* Main Content Stack - Vertical for 10ft readability */}
                 <div style={{
                     display: 'flex',
@@ -128,13 +161,12 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                     flex: 1,
                     minWidth: 0,
                     gap: '4px',
-                    justifyContent: 'center',
-                    padding: '12px 0'
+                    justifyContent: 'center'
                 }}>
                     {/* Row 1: Name and Platform Badge */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{
-                            fontSize: '20px',
+                            fontSize: '22px', // Slightly larger for server names
                             fontWeight: 800,
                             color: 'var(--color-text-primary)',
                             letterSpacing: '-0.02em',
@@ -170,7 +202,7 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                         whiteSpace: 'nowrap',
                         overflow: 'hidden'
                     }}>
-                        <span style={{ color: 'var(--color-text-primary)', opacity: 0.9 }}>{server.businessArea}</span>
+                        <span style={{ color: '#E5E7EB', opacity: 0.9 }}>{server.businessArea}</span>
                         <span style={{ opacity: 0.3, fontSize: '16px' }}>|</span>
                         <span>{server.lob}</span>
                         {server.comment && server.comment !== '-' && (
@@ -193,14 +225,10 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                         display: 'flex',
                         alignItems: 'center',
                         gap: '24px',
-                        marginTop: '4px'
+                        marginTop: '6px'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <PersonInfo label="OWNER" value={server.owner || ''} contactLookup={contactLookup} />
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <PersonInfo label="IT CONTACT" value={server.contact || ''} contactLookup={contactLookup} />
-                        </div>
+                        <PersonInfo label="OWNER" value={server.owner || ''} contactLookup={contactLookup} />
+                        <PersonInfo label="SUPPORT" value={server.contact || ''} contactLookup={contactLookup} />
                     </div>
                 </div>
             </div>
