@@ -35,6 +35,16 @@ interface SortableTeamCardProps {
     setMenu: (menu: { x: number, y: number, items: any[] } | null) => void;
 }
 
+interface OnCallPanelProps {
+    onCall: OnCallEntry[];
+    contacts: Contact[];
+    groups: GroupMap;
+    onUpdate: (entry: OnCallEntry) => void;
+    onRemoveTeam: (team: string) => void;
+    onRenameTeam: (oldName: string, newName: string) => void;
+    onAddTeam: (name: string) => void;
+}
+
 const SortableTeamCard = ({
     team,
     entry,
