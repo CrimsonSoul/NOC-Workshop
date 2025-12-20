@@ -448,4 +448,20 @@ export function setupIpcHandlers(
   ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => {
     getMainWindow()?.close();
   });
+
+  // Maximize state query
+  ipcMain.handle(IPC_CHANNELS.WINDOW_IS_MAXIMIZED, () => {
+    return getMainWindow()?.isMaximized() ?? false;
+  });
+
+  // Listen for maximize/unmaximize events and notify renderer
+  const mw = getMainWindow();
+  if (mw) {
+    mw.on('maximize', () => {
+      mw.webContents.send(IPC_CHANNELS.WINDOW_MAXIMIZE_CHANGE, true);
+    });
+    mw.on('unmaximize', () => {
+      mw.webContents.send(IPC_CHANNELS.WINDOW_MAXIMIZE_CHANGE, false);
+    });
+  }
 }

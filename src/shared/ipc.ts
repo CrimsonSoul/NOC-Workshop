@@ -119,6 +119,9 @@ export type BridgeAPI = {
     windowMinimize: () => void;
     windowMaximize: () => void;
     windowClose: () => void;
+    isMaximized: () => Promise<boolean>;
+    onMaximizeChange: (callback: (event: any, maximized: boolean) => void) => void;
+    removeMaximizeListener: () => void;
 };
 
 export const IPC_CHANNELS = {
@@ -126,6 +129,8 @@ export const IPC_CHANNELS = {
     WINDOW_MINIMIZE: 'window:minimize',
     WINDOW_MAXIMIZE: 'window:maximize',
     WINDOW_CLOSE: 'window:close',
+    WINDOW_IS_MAXIMIZED: 'window:isMaximized',
+    WINDOW_MAXIMIZE_CHANGE: 'window:maximizeChange',
     CHANGE_DATA_FOLDER: 'config:changeDataFolder',
     RESET_DATA_FOLDER: 'config:resetDataFolder',
     GET_DATA_PATH: 'config:getDataPath',

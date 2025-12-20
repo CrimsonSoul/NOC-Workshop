@@ -138,13 +138,18 @@ const SortableTeamCard = ({
                             fontSize: '12px',
                             fontWeight: 800,
                             color: colorScheme.text, // Dynamic color for team name
-                            letterSpacing: '0.08em'
+                            letterSpacing: '0.08em',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '200px'
                         }}
+                        title={team.toUpperCase()}
                     >
                         {team.toUpperCase()}
                     </div>
                     {/* Drag Handle Icon (optional visual cue) */}
-                    <div style={{ color: 'var(--color-text-tertiary)', opacity: 0.5 }}>
+                    <div style={{ color: 'var(--color-text-tertiary)', opacity: 0.5, flexShrink: 0 }}>
                         ⋮⋮
                     </div>
                 </div>
@@ -153,26 +158,32 @@ const SortableTeamCard = ({
                     style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 700, opacity: 0.6 }}>PRI</span>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '18px', fontWeight: 700, color: entry?.primary ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 700, opacity: 0.6, flexShrink: 0 }}>PRI</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', overflow: 'hidden', minWidth: 0 }}>
+                            <span
+                                style={{ fontSize: '16px', fontWeight: 700, color: entry?.primary ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                                title={primaryContact?.name || entry?.primary || 'UNASSIGNED'}
+                            >
                                 {primaryContact?.name || entry?.primary || 'UNASSIGNED'}
                             </span>
                             {primaryContact?.phone && (
-                                <span style={{ fontSize: '15px', color: 'var(--color-text-secondary)', fontWeight: 600, marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+                                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)', fontWeight: 600, marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
                                     {primaryContact.phone}
                                 </span>
                             )}
                         </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 700, opacity: 0.6 }}>BAK</span>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '14px', fontWeight: 600, color: entry?.backup ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 700, opacity: 0.6, flexShrink: 0 }}>BAK</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', overflow: 'hidden', minWidth: 0 }}>
+                            <span
+                                style={{ fontSize: '13px', fontWeight: 600, color: entry?.backup ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                                title={backupContact?.name || entry?.backup || 'UNASSIGNED'}
+                            >
                                 {backupContact?.name || entry?.backup || 'UNASSIGNED'}
                             </span>
                             {backupContact?.phone && (
-                                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)', fontWeight: 500, marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+                                <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: 500, marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
                                     {backupContact.phone}
                                 </span>
                             )}
@@ -551,10 +562,15 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
                                         }}
                                         variant={currentEntry?.primary === c.email ? 'primary' : 'secondary'}
                                     >
-                                        <div style={{ textAlign: 'left', width: '100%', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <div style={{ fontWeight: 600, fontSize: '14px', color: currentEntry?.primary === c.email ? 'white' : 'var(--color-text-primary)' }}>{c.name || c.email}</div>
-                                            {c.title && <div style={{ fontSize: '12px', opacity: 0.8, color: currentEntry?.primary === c.email ? 'rgba(255,255,255,0.9)' : 'var(--color-text-secondary)' }}>{c.title}</div>}
-                                            <div style={{ fontSize: '11px', opacity: 0.5, fontFamily: 'monospace', color: currentEntry?.primary === c.email ? 'rgba(255,255,255,0.7)' : 'var(--color-text-tertiary)' }}>{c.email}</div>
+                                        <div style={{ textAlign: 'left', width: '100%', display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                                            <div
+                                                style={{ fontWeight: 600, fontSize: '14px', color: currentEntry?.primary === c.email ? 'white' : 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                                title={c.name || c.email}
+                                            >
+                                                {c.name || c.email}
+                                            </div>
+                                            {c.title && <div style={{ fontSize: '12px', opacity: 0.8, color: currentEntry?.primary === c.email ? 'rgba(255,255,255,0.9)' : 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.title}>{c.title}</div>}
+                                            <div style={{ fontSize: '11px', opacity: 0.5, fontFamily: 'monospace', color: currentEntry?.primary === c.email ? 'rgba(255,255,255,0.7)' : 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.email}>{c.email}</div>
                                         </div>
                                     </TactileButton>
                                 ))}
@@ -582,10 +598,15 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
                                         }}
                                         variant={currentEntry?.backup === c.email ? 'primary' : 'secondary'}
                                     >
-                                        <div style={{ textAlign: 'left', width: '100%', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <div style={{ fontWeight: 600, fontSize: '14px', color: currentEntry?.backup === c.email ? 'white' : 'var(--color-text-primary)' }}>{c.name || c.email}</div>
-                                            {c.title && <div style={{ fontSize: '12px', opacity: 0.8, color: currentEntry?.backup === c.email ? 'rgba(255,255,255,0.9)' : 'var(--color-text-secondary)' }}>{c.title}</div>}
-                                            <div style={{ fontSize: '11px', opacity: 0.5, fontFamily: 'monospace', color: currentEntry?.backup === c.email ? 'rgba(255,255,255,0.7)' : 'var(--color-text-tertiary)' }}>{c.email}</div>
+                                        <div style={{ textAlign: 'left', width: '100%', display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                                            <div
+                                                style={{ fontWeight: 600, fontSize: '14px', color: currentEntry?.backup === c.email ? 'white' : 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                                title={c.name || c.email}
+                                            >
+                                                {c.name || c.email}
+                                            </div>
+                                            {c.title && <div style={{ fontSize: '12px', opacity: 0.8, color: currentEntry?.backup === c.email ? 'rgba(255,255,255,0.9)' : 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.title}>{c.title}</div>}
+                                            <div style={{ fontSize: '11px', opacity: 0.5, fontFamily: 'monospace', color: currentEntry?.backup === c.email ? 'rgba(255,255,255,0.7)' : 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.email}>{c.email}</div>
                                         </div>
                                     </TactileButton>
                                 ))}

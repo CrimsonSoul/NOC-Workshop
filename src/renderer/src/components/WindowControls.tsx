@@ -1,12 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export const WindowControls = () => {
     const [isMaximized, setIsMaximized] = useState(false);
 
+    // Sync with actual window maximize state
+    useEffect(() => {
+        // Check initial state
+        window.api?.isMaximized?.().then((maximized: boolean) => {
+            setIsMaximized(maximized);
+        });
+
+        // Listen for maximize/unmaximize events from main process
+        const handleMaximizeChange = (_event: any, maximized: boolean) => {
+            setIsMaximized(maximized);
+        };
+
+        window.api?.onMaximizeChange?.(handleMaximizeChange);
+
+        return () => {
+            window.api?.removeMaximizeListener?.();
+        };
+    }, []);
+
     const handleMinimize = () => window.api?.windowMinimize();
     const handleMaximize = () => {
         window.api?.windowMaximize();
-        setIsMaximized(!isMaximized);
+        // The state will be updated via the onMaximizeChange listener
     };
     const handleClose = () => window.api?.windowClose();
 
@@ -55,9 +74,18 @@ export const WindowControls = () => {
             <button
                 onClick={handleMaximize}
                 className={btnClass}
-                title="Maximize"
+                title={isMaximized ? "Restore Down" : "Maximize"}
             >
-                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0v10h10V0H0zm9 9H1V1h8v8z" fill="currentColor" /></svg>
+                {isMaximized ? (
+                    // Restore icon (two overlapping squares, like Edge/Windows)
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        {/* Back square (offset) */}
+                        <path d="M2 0v2H0v8h8V8h2V0H2zm6 8H1V3h7v5z" fill="currentColor" />
+                    </svg>
+                ) : (
+                    // Maximize icon (single square)
+                    <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0v10h10V0H0zm9 9H1V1h8v8z" fill="currentColor" /></svg>
+                )}
             </button>
             <button
                 onClick={handleClose}

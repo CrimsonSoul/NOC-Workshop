@@ -99,6 +99,14 @@ const api: BridgeAPI = {
   windowMinimize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
   windowMaximize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
   windowClose: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE),
+  isMaximized: () => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_IS_MAXIMIZED),
+  onMaximizeChange: (callback) => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.WINDOW_MAXIMIZE_CHANGE);
+    ipcRenderer.on(IPC_CHANNELS.WINDOW_MAXIMIZE_CHANGE, callback);
+  },
+  removeMaximizeListener: () => {
+    ipcRenderer.removeAllListeners(IPC_CHANNELS.WINDOW_MAXIMIZE_CHANGE);
+  },
   platform: process.platform
 };
 
