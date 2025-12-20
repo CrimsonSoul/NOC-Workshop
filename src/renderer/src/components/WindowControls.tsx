@@ -8,6 +8,8 @@ export const WindowControls = () => {
         // Check initial state
         window.api?.isMaximized?.().then((maximized: boolean) => {
             setIsMaximized(maximized);
+        }).catch(() => {
+            // Fallback if API not available yet
         });
 
         // Listen for maximize/unmaximize events from main process
@@ -25,7 +27,9 @@ export const WindowControls = () => {
     const handleMinimize = () => window.api?.windowMinimize();
     const handleMaximize = () => {
         window.api?.windowMaximize();
-        // The state will be updated via the onMaximizeChange listener
+        // Optimistically toggle state immediately for responsive UI
+        // The listener will correct if needed
+        setIsMaximized(prev => !prev);
     };
     const handleClose = () => window.api?.windowClose();
 
@@ -78,9 +82,11 @@ export const WindowControls = () => {
             >
                 {isMaximized ? (
                     // Restore icon (two overlapping squares, like Edge/Windows)
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        {/* Back square (offset) */}
-                        <path d="M2 0v2H0v8h8V8h2V0H2zm6 8H1V3h7v5z" fill="currentColor" />
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                        {/* Front window */}
+                        <path d="M0 2v8h8V2H0zm7 7H1V3h6v6z" />
+                        {/* Back window (top-right offset) */}
+                        <path d="M2 0v2h1V1h6v6H8v1h2V0H2z" />
                     </svg>
                 ) : (
                     // Maximize icon (single square)

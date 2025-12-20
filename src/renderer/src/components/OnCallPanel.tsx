@@ -86,6 +86,7 @@ const SortableTeamCard = ({
             <div
                 style={{
                     height: '100%',
+                    minHeight: '130px', // Ensure enough height for all content
                     padding: '16px 16px 16px 20px', // More left padding for accent strip
                     background: 'rgba(255, 255, 255, 0.03)',
                     borderRadius: '12px',
@@ -95,8 +96,8 @@ const SortableTeamCard = ({
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px',
-                    position: 'relative',
-                    overflow: 'hidden' // Ensure accent strip is contained
+                    position: 'relative'
+                    // Note: overflow:hidden removed to prevent content clipping
                 }}
                 onMouseEnter={e => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
