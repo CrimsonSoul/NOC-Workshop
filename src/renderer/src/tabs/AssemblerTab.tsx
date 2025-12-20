@@ -115,9 +115,6 @@ const SortableHeader = ({
 };
 
 export const AssemblerTab: React.FC<Props> = ({ groups, contacts, onCall, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
-    // DEBUG: Log contacts to trace data flow
-    console.log('[AssemblerTab] Render with contacts:', contacts.length, 'First:', contacts[0]?.name);
-
     const { showToast } = useToast();
     const [adhocInput, setAdhocInput] = useState('');
     const debouncedAdhocInput = useDebounce(adhocInput, 300);

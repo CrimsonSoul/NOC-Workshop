@@ -3,7 +3,16 @@ import fsPromises from 'fs/promises';
 import { join } from 'path';
 import { app } from 'electron';
 
+// Default headers for each file type - used when creating new files
+const DEFAULT_HEADERS: Record<string, string> = {
+  'groups.csv': 'Group,Members',
+  'contacts.csv': 'Name,Email,Phone,Title',
+  'servers.csv': 'Server,IP,Port,Protocol,Owner,Comment',
+  'oncall.csv': 'Team,Primary,Backup'
+};
+
 // Async version for non-blocking startup
+// IMPORTANT: Never copies bundled sample data - only creates empty files with headers
 export async function ensureDataFilesAsync(targetRoot: string, bundledDataPath: string, isPackaged: boolean) {
   // Always ensure directory exists, even in dev
   try {
@@ -12,7 +21,7 @@ export async function ensureDataFilesAsync(targetRoot: string, bundledDataPath: 
     console.error('Failed to create persistent data directory:', e);
   }
 
-  // Ensure groups.csv and contacts.csv exist
+  // Ensure groups.csv and contacts.csv exist - create with headers only, never copy bundled data
   const files = ['groups.csv', 'contacts.csv'];
   for (const file of files) {
     const targetPath = join(targetRoot, file);
@@ -20,18 +29,20 @@ export async function ensureDataFilesAsync(targetRoot: string, bundledDataPath: 
       await fsPromises.access(targetPath);
       // File exists, skip
     } catch {
-      // File doesn't exist, try to copy from bundled
+      // File doesn't exist - create empty file with headers only (NO bundled data)
       try {
-        const sourcePath = join(bundledDataPath, file);
-        await fsPromises.copyFile(sourcePath, targetPath);
+        const headers = DEFAULT_HEADERS[file] || '';
+        await fsPromises.writeFile(targetPath, headers + '\n', 'utf-8');
+        console.log(`[dataUtils] Created empty ${file} with headers only (no sample data)`);
       } catch (e) {
-        console.error(`Failed to copy default ${file}:`, e);
+        console.error(`Failed to create ${file}:`, e);
       }
     }
   }
 }
 
 // Sync version for compatibility (used during path changes)
+// IMPORTANT: Never copies bundled sample data - only creates empty files with headers
 export function ensureDataFiles(targetRoot: string, bundledDataPath: string, isPackaged: boolean) {
   // Always ensure directory exists, even in dev (if we switch to using appData in dev too)
   if (!fs.existsSync(targetRoot)) {
@@ -42,28 +53,25 @@ export function ensureDataFiles(targetRoot: string, bundledDataPath: string, isP
     }
   }
 
-  // Ensure groups.csv and contacts.csv exist
+  // Ensure groups.csv and contacts.csv exist - create with headers only, never copy bundled data
   const files = ['groups.csv', 'contacts.csv'];
   for (const file of files) {
     const targetPath = join(targetRoot, file);
     if (!fs.existsSync(targetPath)) {
-      // If we are in dev, bundledDataPath might be relative or different.
-      // But typically we pass a valid path.
-      if (fs.existsSync(bundledDataPath)) {
-        const sourcePath = join(bundledDataPath, file);
-        if (fs.existsSync(sourcePath)) {
-          try {
-            fs.copyFileSync(sourcePath, targetPath);
-          } catch (e) {
-            console.error(`Failed to copy default ${file}:`, e);
-          }
-        }
+      // Create empty file with headers only (NO bundled data to prevent contamination)
+      try {
+        const headers = DEFAULT_HEADERS[file] || '';
+        fs.writeFileSync(targetPath, headers + '\n', 'utf-8');
+        console.log(`[dataUtils] Created empty ${file} with headers only (no sample data)`);
+      } catch (e) {
+        console.error(`Failed to create ${file}:`, e);
       }
     }
   }
 }
 
 // Async version for non-blocking file copying with parallel operations
+// IMPORTANT: Never falls back to bundled sample data - creates empty files with headers instead
 export async function copyDataFilesAsync(sourceRoot: string, targetRoot: string, bundledDataPath: string): Promise<boolean> {
   const essentialFiles = ['contacts.csv', 'groups.csv', 'oncall.csv', 'history.json'];
 
@@ -84,28 +92,27 @@ export async function copyDataFilesAsync(sourceRoot: string, targetRoot: string,
       await fsPromises.access(target);
       return false; // Target exists, skip
     } catch {
-      // Target doesn't exist, proceed with copy
+      // Target doesn't exist, proceed
     }
 
-    // Try sourceRoot first
+    // Try sourceRoot first (user's existing data)
     try {
       await fsPromises.access(source);
       await fsPromises.copyFile(source, target);
       console.log(`Copied ${file} from ${sourceRoot} to ${targetRoot}`);
       return true;
     } catch {
-      // Source doesn't exist, try bundle
-    }
-
-    // Fallback to bundle
-    const bundled = join(bundledDataPath, file);
-    try {
-      await fsPromises.access(bundled);
-      await fsPromises.copyFile(bundled, target);
-      console.log(`Copied ${file} from bundle to ${targetRoot}`);
-      return true;
-    } catch (e) {
-      // Bundle doesn't exist either
+      // Source doesn't exist - create empty file with headers (NO bundled data)
+      const headers = DEFAULT_HEADERS[file];
+      if (headers) {
+        try {
+          await fsPromises.writeFile(target, headers + '\n', 'utf-8');
+          console.log(`Created empty ${file} with headers only (no sample data)`);
+          return true;
+        } catch {
+          // Failed to create
+        }
+      }
       return false;
     }
   });
@@ -116,6 +123,7 @@ export async function copyDataFilesAsync(sourceRoot: string, targetRoot: string,
 }
 
 // Sync version for compatibility (used during path changes)
+// IMPORTANT: Never falls back to bundled sample data - creates empty files with headers instead
 export function copyDataFiles(sourceRoot: string, targetRoot: string, bundledDataPath: string) {
   const essentialFiles = ['contacts.csv', 'groups.csv', 'oncall.csv', 'history.json'];
   let filesCopied = false;
@@ -130,7 +138,7 @@ export function copyDataFiles(sourceRoot: string, targetRoot: string, bundledDat
     const target = join(targetRoot, file);
     // Only copy if target DOES NOT exist
     if (!fs.existsSync(target)) {
-      // Try sourceRoot
+      // Try sourceRoot (user's existing data)
       if (fs.existsSync(source)) {
         try {
           fs.copyFileSync(source, target);
@@ -140,15 +148,15 @@ export function copyDataFiles(sourceRoot: string, targetRoot: string, bundledDat
           console.error(`Failed to copy ${file}:`, e);
         }
       } else {
-        // Fallback to bundle if sourceRoot fails
-        const bundled = join(bundledDataPath, file);
-        if (fs.existsSync(bundled)) {
+        // Source doesn't exist - create empty file with headers (NO bundled data)
+        const headers = DEFAULT_HEADERS[file];
+        if (headers) {
           try {
-            fs.copyFileSync(bundled, target);
+            fs.writeFileSync(target, headers + '\n', 'utf-8');
             filesCopied = true;
-            console.log(`Copied ${file} from bundle to ${targetRoot}`);
+            console.log(`Created empty ${file} with headers only (no sample data)`);
           } catch (e) {
-            console.error(`Failed to copy bundled ${file}:`, e);
+            console.error(`Failed to create ${file}:`, e);
           }
         }
       }

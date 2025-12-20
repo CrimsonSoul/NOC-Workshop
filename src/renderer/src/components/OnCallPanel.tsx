@@ -236,11 +236,6 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
         return contacts.filter(c => c._searchString.includes(low));
     }, [contacts, searchQuery]);
 
-    // DEBUG: Log when contacts change to trace data flow
-    useEffect(() => {
-        console.log('[OnCallPanel] Contacts received:', contacts.length, 'First contact:', contacts[0]?.name || 'none');
-    }, [contacts]);
-
 
     const handleUpdate = (team: string, type: 'primary' | 'backup', email: string) => {
         const existing = localOnCall.find(e => e.team === team) || { team, primary: '', backup: '' };
