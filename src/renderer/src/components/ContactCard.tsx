@@ -133,18 +133,21 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           justifyContent: 'center'
         }}>
           {/* Top Row: Name */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{
-              fontSize: '20px',
-              fontWeight: 800,
-              color: 'var(--color-text-primary)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              letterSpacing: '-0.02em'
-            }}>
-              {displayName}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+            <Tooltip content={displayName}>
+              <span style={{
+                fontSize: '20px',
+                fontWeight: 800,
+                color: 'var(--color-text-primary)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                letterSpacing: '-0.02em',
+                display: 'block'
+              }}>
+                {displayName}
+              </span>
+            </Tooltip>
             {sourceLabel && (
               <span style={{
                 fontSize: '10px',
@@ -187,17 +190,22 @@ export const ContactCard = memo(({ name, email, title, phone, avatarColor, actio
           {/* Phone & Groups with stable spacing */}
           <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, gap: '12px' }}>
             {formattedPhone ? (
-              <span style={{
-                fontSize: '18px',
-                color: '#60A5FA',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                whiteSpace: 'nowrap',
-                minWidth: '160px',
-                flexShrink: 0
-              }}>
-                {formattedPhone}
-              </span>
+              <Tooltip content={formattedPhone}>
+                <span style={{
+                  fontSize: '18px',
+                  color: '#60A5FA',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  whiteSpace: 'nowrap',
+                  minWidth: '160px',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: 'block'
+                }}>
+                  {formattedPhone}
+                </span>
+              </Tooltip>
             ) : (
               <div style={{ minWidth: '160px', height: '18px', flexShrink: 0 }} />
             )}

@@ -24,17 +24,6 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { getColorForString } from '../utils/colors';
 
-const shortenOnCallText = (text: string) => {
-    if (!text) return text;
-    return text
-        .replace(/TELECOMMUNICATIONS/gi, 'TELECOM')
-        .replace(/WEEKEND/gi, 'WKND')
-        .replace(/ADMINISTRATOR/gi, 'ADMIN')
-        .replace(/ENGINEER/gi, 'ENGR')
-        .replace(/TECHNICIAN/gi, 'TECH')
-        .replace(/CONSULTANT/gi, 'CONS');
-};
-
 interface SortableTeamCardProps {
     team: string;
     entry: OnCallEntry | undefined;
@@ -96,8 +85,8 @@ const SortableTeamCard = ({
         >
             <div
                 style={{
-                    height: '100%',
-                    minHeight: '110px', // Slightly reduced minHeight
+                    height: 'auto',
+                    minHeight: '0',
                     padding: '10px 12px 10px 16px', // Reduced padding
                     background: 'rgba(255, 255, 255, 0.03)',
                     borderRadius: '12px',
@@ -107,8 +96,8 @@ const SortableTeamCard = ({
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px', // Reduced gap between sections
-                    position: 'relative'
-                    // Note: overflow:hidden removed to prevent content clipping
+                    position: 'relative',
+                    overflow: 'hidden' // Restore overflow:hidden to clip accent strip corners
                 }}
                 onMouseEnter={e => {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
@@ -158,7 +147,7 @@ const SortableTeamCard = ({
                         }}
                         title={team.toUpperCase()}
                     >
-                        {shortenOnCallText(team.toUpperCase())}
+                        {team.toUpperCase()}
                     </div>
                     {/* Drag Handle Icon - Absolute top-right to save space */}
                     <div style={{
@@ -184,7 +173,7 @@ const SortableTeamCard = ({
                                 style={{ fontSize: '15px', fontWeight: 700, color: entry?.primary ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                 title={primaryContact?.name || entry?.primary || 'UNASSIGNED'}
                             >
-                                {shortenOnCallText(primaryContact?.name || entry?.primary || 'UNASSIGNED')}
+                                {primaryContact?.name || entry?.primary || 'UNASSIGNED'}
                             </span>
                             {primaryContact?.phone && (
                                 <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)', fontWeight: 600, marginTop: '1px', fontFamily: 'var(--font-mono)' }}>
@@ -194,13 +183,13 @@ const SortableTeamCard = ({
                         </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 700, opacity: 0.6, flexShrink: 0 }}>BAK</span>
+                        <span style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', fontWeight: 700, opacity: 0.6, flexShrink: 0 }}>{entry?.backupLabel || 'BAK'}</span>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', overflow: 'hidden', minWidth: 0 }}>
                             <span
                                 style={{ fontSize: '13px', fontWeight: 600, color: entry?.backup ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                 title={backupContact?.name || entry?.backup || 'UNASSIGNED'}
                             >
-                                {shortenOnCallText(backupContact?.name || entry?.backup || 'UNASSIGNED')}
+                                {backupContact?.name || entry?.backup || 'UNASSIGNED'}
                             </span>
                             {backupContact?.phone && (
                                 <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: 500, marginTop: '1px', fontFamily: 'var(--font-mono)' }}>
@@ -268,15 +257,21 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
     }, [contacts, searchQuery]);
 
 
-    const handleUpdate = (team: string, type: 'primary' | 'backup', email: string) => {
-        const existing = localOnCall.find(e => e.team === team) || { team, primary: '', backup: '' };
+    const handleUpdate = (team: string, type: 'primary' | 'backup' | 'backupLabel', value: string) => {
+        const existing = localOnCall.find(e => e.team === team) || { team, primary: '', backup: '', backupLabel: 'BAK' };
         const updated = {
             ...existing,
-            [type]: email
+            [type]: value
         };
 
         // Optimistic update
-        setLocalOnCall(prev => prev.map(e => e.team === team ? updated : e).concat(prev.find(e => e.team === team) ? [] : [updated]));
+        setLocalOnCall(prev => {
+            const exists = prev.find(e => e.team === team);
+            if (exists) {
+                return prev.map(e => e.team === team ? updated : e);
+            }
+            return [...prev, updated];
+        });
 
         onUpdate(updated);
     };
@@ -595,14 +590,34 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
                                     </TactileButton>
                                 ))}
                             </div>
-
                         </div>
 
                         {/* Backup Assignment */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflow: 'hidden' }}>
-                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--color-text-tertiary)', letterSpacing: '0.05em' }}>BACKUP</label>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--color-text-tertiary)', letterSpacing: '0.05em' }}>BACKUP LABEL</label>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                    {['BAK', 'BAK/WKND', 'TELECOM'].map(label => (
+                                        <TactileButton
+                                            key={label}
+                                            onClick={() => handleUpdate(editingTeam!, 'backupLabel', label)}
+                                            style={{
+                                                padding: '4px 8px',
+                                                fontSize: '10px',
+                                                height: 'auto',
+                                                minWidth: '0',
+                                                minHeight: '24px',
+                                                border: (currentEntry?.backupLabel || 'BAK') === label ? '1px solid var(--color-accent-blue)' : '1px solid rgba(255,255,255,0.05)'
+                                            }}
+                                            variant={(currentEntry?.backupLabel || 'BAK') === label ? 'primary' : 'secondary'}
+                                        >
+                                            {label}
+                                        </TactileButton>
+                                    ))}
+                                </div>
+                            </div>
                             <div style={{ fontSize: '16px', fontWeight: 700, padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', color: 'var(--color-text-secondary)' }}>
-                                {contacts.find(c => c.email === currentEntry?.backup)?.name || currentEntry?.backup || 'NONE'}
+                                {contacts.find(c => c.email === currentEntry?.backup)?.name || 'NONE'}
                             </div>
                             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '8px' }}>
                                 {filteredContacts.map(c => (
@@ -631,7 +646,6 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
                                     </TactileButton>
                                 ))}
                             </div>
-
                         </div>
                     </div>
 
@@ -649,7 +663,7 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
                     onClose={() => setMenu(null)}
                 />
             )}
-        </div>
+        </div >
 
     );
 };

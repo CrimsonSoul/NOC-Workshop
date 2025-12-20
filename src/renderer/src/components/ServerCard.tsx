@@ -74,7 +74,8 @@ const PersonInfo = ({ label, value, contactLookup }: { label: string, value: str
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        fontWeight: 600
+                        fontWeight: 600,
+                        display: 'block'
                     }}>
                         {displayName}
                         {parts.length > 1 && (
@@ -165,17 +166,20 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                 }}>
                     {/* Row 1: Name and Platform Badge */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{
-                            fontSize: '22px', // Slightly larger for server names
-                            fontWeight: 800,
-                            color: 'var(--color-text-primary)',
-                            letterSpacing: '-0.02em',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                        }}>
-                            {server.name}
-                        </span>
+                        <Tooltip content={server.name}>
+                            <span style={{
+                                fontSize: '22px', // Slightly larger for server names
+                                fontWeight: 800,
+                                color: 'var(--color-text-primary)',
+                                letterSpacing: '-0.02em',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: 'block'
+                            }}>
+                                {server.name}
+                            </span>
+                        </Tooltip>
                         <span style={{
                             fontSize: '10px',
                             fontWeight: 900,
@@ -214,7 +218,8 @@ export const ServerCard = memo(({ server, contactLookup, onContextMenu, style }:
                                         opacity: 0.6,
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
-                                        cursor: 'help'
+                                        cursor: 'help',
+                                        display: 'block'
                                     }}>
                                         {server.comment}
                                     </span>

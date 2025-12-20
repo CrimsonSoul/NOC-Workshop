@@ -68,7 +68,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
                 ref={triggerRef}
                 onMouseEnter={() => setIsVisible(true)}
                 onMouseLeave={() => setIsVisible(false)}
-                style={{ display: 'contents' }}
+                style={{ display: 'inline-flex', minWidth: 0, flexShrink: 1 }}
             >
                 {children}
             </div>

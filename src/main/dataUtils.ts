@@ -8,7 +8,7 @@ const DEFAULT_HEADERS: Record<string, string> = {
   'groups.csv': 'Group,Members',
   'contacts.csv': 'Name,Email,Phone,Title',
   'servers.csv': 'Server,IP,Port,Protocol,Owner,Comment',
-  'oncall.csv': 'Team,Primary,Backup'
+  'oncall.csv': 'Team,Primary,Backup,Label'
 };
 
 // Async version for non-blocking startup

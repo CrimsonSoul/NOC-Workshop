@@ -25,7 +25,8 @@ export const CONTACT_COLUMNS = {
 export const ONCALL_COLUMNS = {
   TEAM: 'Team',
   PRIMARY: 'Primary',
-  BACKUP: 'Backup'
+  BACKUP: 'Backup',
+  LABEL: 'Label'
 } as const;
 
 // Standard headers for each CSV type
@@ -49,7 +50,8 @@ export const STD_CONTACT_HEADERS = [
 export const STD_ONCALL_HEADERS = [
   ONCALL_COLUMNS.TEAM,
   ONCALL_COLUMNS.PRIMARY,
-  ONCALL_COLUMNS.BACKUP
+  ONCALL_COLUMNS.BACKUP,
+  ONCALL_COLUMNS.LABEL
 ] as const;
 
 // Column alias mappings for flexible header matching

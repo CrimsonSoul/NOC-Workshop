@@ -24,6 +24,7 @@ export type OnCallEntry = {
     team: string;
     primary: string;
     backup: string;
+    backupLabel?: string;
 };
 
 export type OnCallData = OnCallEntry[];

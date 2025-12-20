@@ -1293,6 +1293,7 @@ export class FileManager {
       const teamIdx = header.indexOf(ONCALL_COLUMNS.TEAM.toLowerCase());
       const primaryIdx = header.indexOf(ONCALL_COLUMNS.PRIMARY.toLowerCase());
       const backupIdx = header.indexOf(ONCALL_COLUMNS.BACKUP.toLowerCase());
+      const labelIdx = header.indexOf(ONCALL_COLUMNS.LABEL.toLowerCase());
 
       if (teamIdx === -1 || primaryIdx === -1 || backupIdx === -1) {
         return [];
@@ -1301,7 +1302,8 @@ export class FileManager {
       return rows.map((row: any[]) => ({
         team: row[teamIdx],
         primary: row[primaryIdx],
-        backup: row[backupIdx]
+        backup: row[backupIdx],
+        backupLabel: labelIdx !== -1 ? row[labelIdx] : undefined
       }));
     } catch (e) {
       console.error('Error parsing oncall:', e);
@@ -1330,8 +1332,9 @@ export class FileManager {
       const teamIdx = header.indexOf(ONCALL_COLUMNS.TEAM.toLowerCase());
       const primaryIdx = header.indexOf(ONCALL_COLUMNS.PRIMARY.toLowerCase());
       const backupIdx = header.indexOf(ONCALL_COLUMNS.BACKUP.toLowerCase());
+      const labelIdx = header.indexOf(ONCALL_COLUMNS.LABEL.toLowerCase());
 
-      console.log(`[FileManager] Indices - Team: ${teamIdx}, Primary: ${primaryIdx}, Backup: ${backupIdx}`);
+      console.log(`[FileManager] Indices - Team: ${teamIdx}, Primary: ${primaryIdx}, Backup: ${backupIdx}, Label: ${labelIdx}`);
 
       if (teamIdx === -1 || primaryIdx === -1 || backupIdx === -1) {
         // This shouldn't happen if we just pushed STD_ONCALL_HEADERS, but for safety:
@@ -1344,11 +1347,32 @@ export class FileManager {
       if (rowIndex !== -1) {
         workingData[rowIndex][primaryIdx] = entry.primary;
         workingData[rowIndex][backupIdx] = entry.backup;
+        if (labelIdx !== -1) {
+          workingData[rowIndex][labelIdx] = entry.backupLabel || '';
+        } else if (entry.backupLabel) {
+          // If label exists in entry but not in CSV header, add the column
+          workingData[0].push(ONCALL_COLUMNS.LABEL);
+          const newLabelIdx = workingData[0].length - 1;
+          // Fill existing rows with empty label
+          for (let i = 1; i < workingData.length; i++) {
+            workingData[i].push('');
+          }
+          workingData[rowIndex][newLabelIdx] = entry.backupLabel;
+        }
       } else {
         const newRow = new Array(workingData[0].length).fill('');
         newRow[teamIdx] = entry.team;
         newRow[primaryIdx] = entry.primary;
         newRow[backupIdx] = entry.backup;
+        if (labelIdx !== -1) {
+          newRow[labelIdx] = entry.backupLabel || '';
+        } else if (entry.backupLabel) {
+          workingData[0].push(ONCALL_COLUMNS.LABEL);
+          for (let i = 1; i < workingData.length; i++) {
+            workingData[i].push('');
+          }
+          newRow.push(entry.backupLabel);
+        }
         workingData.push(newRow);
       }
 
