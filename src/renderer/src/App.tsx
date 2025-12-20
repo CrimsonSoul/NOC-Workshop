@@ -275,6 +275,7 @@ export function MainApp() {
   useEffect(() => {
     if (!window.api) return;
     window.api.subscribeToData((newData) => {
+      console.log('[App] Received data update - contacts:', newData.contacts.length, 'First:', newData.contacts[0]?.name);
       setData(newData);
       settleReloadIndicator();
     });
