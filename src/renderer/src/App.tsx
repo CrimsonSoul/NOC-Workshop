@@ -494,13 +494,17 @@ export function MainApp() {
               />
             </div>
           )}
-          {activeTab === "Personnel" && (
-            <div className="animate-fade-in" style={{ height: "100%" }}>
-              <Suspense fallback={<TabFallback />}>
-                <PersonnelTab onCall={data.onCall} contacts={data.contacts} />
-              </Suspense>
-            </div>
-          )}
+          <div
+            className={activeTab === "Personnel" ? "animate-fade-in" : ""}
+            style={{
+              height: "100%",
+              display: activeTab === "Personnel" ? "block" : "none",
+            }}
+          >
+            <Suspense fallback={<TabFallback />}>
+              <PersonnelTab onCall={data.onCall} contacts={data.contacts} />
+            </Suspense>
+          </div>
           {activeTab === "People" && (
             <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
