@@ -57,7 +57,7 @@ const SortableEditRow = ({
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? 'none' : transition,
         opacity: isDragging ? 0.5 : 1,
         position: 'relative' as const,
         zIndex: isDragging ? 999 : (isActive ? 100 : 'auto'), // Elevate z-index when using dropdowns
@@ -208,7 +208,7 @@ export const MaintainTeamModal: React.FC<MaintainTeamModalProps> = ({
         if (isOpen) {
             setRows(initialRows.map(r => ({ ...r }))); // Deep copy to avoid mutating parent state
         }
-    }, [isOpen, initialRows]);
+    }, [isOpen]); // Only reset when opening, NOT when initialRows changes while open
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

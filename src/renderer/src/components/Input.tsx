@@ -28,9 +28,15 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
 
   useLayoutEffect(() => {
     if (props.value !== undefined) {
-        setHasValue(!!props.value);
+      setHasValue(!!props.value);
     }
   }, [props.value]);
+
+  useLayoutEffect(() => {
+    if (props.autoFocus && innerRef.current) {
+      setTimeout(() => innerRef.current?.focus(), 150);
+    }
+  }, [props.autoFocus]);
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -42,16 +48,16 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
       innerRef.current.dispatchEvent(event);
 
       if (props.onChange) {
-         const syntheticEvent = {
-             ...e,
-             target: innerRef.current,
-             currentTarget: innerRef.current,
-             bubbles: true,
-             cancelable: false,
-             type: 'change'
-         } as unknown as React.ChangeEvent<HTMLInputElement>;
-         syntheticEvent.target.value = '';
-         props.onChange(syntheticEvent);
+        const syntheticEvent = {
+          ...e,
+          target: innerRef.current,
+          currentTarget: innerRef.current,
+          bubbles: true,
+          cancelable: false,
+          type: 'change'
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
+        syntheticEvent.target.value = '';
+        props.onChange(syntheticEvent);
       }
 
       // Update local state immediately for uncontrolled usage
@@ -62,12 +68,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
 
   return (
     <div style={{
-        position: position || 'relative',
-        width: width || '100%',
-        height, minWidth, minHeight, maxWidth, maxHeight,
-        margin, marginTop, marginBottom, marginLeft, marginRight,
-        flex, flexGrow, flexShrink, flexBasis,
-        zIndex, top, bottom, left, right
+      position: position || 'relative',
+      width: width || '100%',
+      height, minWidth, minHeight, maxWidth, maxHeight,
+      margin, marginTop, marginBottom, marginLeft, marginRight,
+      flex, flexGrow, flexShrink, flexBasis,
+      zIndex, top, bottom, left, right
     }}>
       {icon && (
         <div style={{
@@ -117,51 +123,51 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ style, ic
         }}
         {...props}
         onChange={(e) => {
-            // Update local state for both controlled and uncontrolled
-            setHasValue(!!e.target.value);
-            props.onChange?.(e);
+          // Update local state for both controlled and uncontrolled
+          setHasValue(!!e.target.value);
+          props.onChange?.(e);
         }}
       />
 
       {hasValue && !props.readOnly && !props.disabled && (
         <div
-            onClick={handleClear}
-            style={{
-                position: 'absolute',
-                right: 'var(--space-2)',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '18px',
-                height: '18px',
-                borderRadius: 'var(--radius-round)',
-                background: 'rgba(255, 255, 255, 0.08)',
-                zIndex: 50,
-                transition: 'all var(--transition-fast)',
-                border: '1px solid transparent'
-            }}
-            onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                e.currentTarget.style.color = 'var(--color-text-primary)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-            }}
-            onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.color = 'var(--color-text-secondary)';
-                e.currentTarget.style.borderColor = 'transparent';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-            }}
-            title="Clear"
+          onClick={handleClear}
+          style={{
+            position: 'absolute',
+            right: 'var(--space-2)',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '18px',
+            height: '18px',
+            borderRadius: 'var(--radius-round)',
+            background: 'rgba(255, 255, 255, 0.08)',
+            zIndex: 50,
+            transition: 'all var(--transition-fast)',
+            border: '1px solid transparent'
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.color = 'var(--color-text-primary)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+            e.currentTarget.style.color = 'var(--color-text-secondary)';
+            e.currentTarget.style.borderColor = 'transparent';
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+          }}
+          title="Clear"
         >
-             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                 <line x1="18" y1="6" x2="6" y2="18" />
-                 <line x1="6" y1="6" x2="18" y2="18" />
-             </svg>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </div>
       )}
     </div>

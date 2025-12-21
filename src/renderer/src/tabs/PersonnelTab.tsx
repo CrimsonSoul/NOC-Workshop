@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 import { MaintainTeamModal } from '../components/MaintainTeamModal';
 import { Input } from '../components/Input';
 import { ContextMenu, ContextMenuItem } from '../components/ContextMenu';
+import { ConfirmModal } from '../components/ConfirmModal';
 import {
     DndContext,
     closestCenter,
@@ -36,6 +37,7 @@ interface TeamCardProps {
     onUpdateRows: (team: string, rows: OnCallRow[]) => void;
     onRenameTeam: (oldName: string, newName: string) => void;
     onRemoveTeam: (team: string) => void;
+    setConfirm: (confirm: { team: string, onConfirm: () => void } | null) => void;
     setMenu: (menu: { x: number, y: number, items: ContextMenuItem[] } | null) => void;
 }
 
@@ -55,6 +57,7 @@ const SortableTeamCard = ({
     onUpdateRows,
     onRenameTeam,
     onRemoveTeam,
+    setConfirm,
     setMenu
 }: TeamCardProps) => {
     const {
@@ -114,7 +117,7 @@ const SortableTeamCard = ({
                             items: [
                                 { label: 'Edit Team', onClick: () => setIsEditing(true) },
                                 { label: 'Rename Team', onClick: () => onRenameTeam(team, team) },
-                                { label: 'Remove Team', danger: true, onClick: () => { if (confirm(`Remove ${team}?`)) onRemoveTeam(team); } }
+                                { label: 'Remove Team', danger: true, onClick: () => setConfirm({ team, onConfirm: () => onRemoveTeam(team) }) }
                             ]
                         });
                     }}
@@ -146,7 +149,7 @@ const SortableTeamCard = ({
                     </div>
 
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingLeft: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '16px' }}>
                         {teamRows.map(row => (
                             <div key={row.id} style={{
                                 display: 'grid',
@@ -258,6 +261,7 @@ export const PersonnelTab: React.FC<{
     const [renamingTeam, setRenamingTeam] = useState<{ old: string, new: string } | null>(null);
     const [localOnCall, setLocalOnCall] = useState<OnCallRow[]>(onCall);
     const [menu, setMenu] = useState<{ x: number, y: number, items: ContextMenuItem[] } | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<{ team: string, onConfirm: () => void } | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -374,7 +378,7 @@ export const PersonnelTab: React.FC<{
 
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
                 gap: '24px',
                 paddingBottom: '40px'
             }}>
@@ -389,6 +393,7 @@ export const PersonnelTab: React.FC<{
                                 onUpdateRows={handleUpdateRows}
                                 onRenameTeam={(o, n) => setRenamingTeam({ old: o, new: n })}
                                 onRemoveTeam={handleRemoveTeam}
+                                setConfirm={setConfirmDelete}
                                 setMenu={setMenu}
                             />
                         ))}
@@ -440,6 +445,17 @@ export const PersonnelTab: React.FC<{
                 </div>
             </Modal>
 
+            {confirmDelete && (
+                <ConfirmModal
+                    isOpen={!!confirmDelete}
+                    onClose={() => setConfirmDelete(null)}
+                    onConfirm={confirmDelete.onConfirm}
+                    title="Remove Team"
+                    message={`Are you sure you want to remove the team "${confirmDelete.team}"? This will delete all members in this team.`}
+                    confirmLabel="Remove"
+                    isDanger
+                />
+            )}
             {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
         </div>
     );
