@@ -84,9 +84,6 @@ export const WindowControls = () => {
                 title={isMaximized ? "Restore Down" : "Maximize"}
             >
                 {isMaximized ? (
-                    // Maximize icon (single square)
-                    <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0v10h10V0H0zm9 9H1V1h8v8z" fill="currentColor" /></svg>
-                ) : (
                     // Restore icon (two overlapping squares, like Edge/Windows)
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
                         {/* Front window */}
@@ -94,6 +91,9 @@ export const WindowControls = () => {
                         {/* Back window (top-right offset) */}
                         <path d="M2 0v2h1V1h6v6H8v1h2V0H2z" />
                     </svg>
+                ) : (
+                    // Maximize icon (single square)
+                    <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0v10h10V0H0zm9 9H1V1h8v8z" fill="currentColor" /></svg>
                 )}
             </button>
             <button
