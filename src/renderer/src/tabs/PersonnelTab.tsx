@@ -5,7 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { OnCallRow, Contact, GroupMap } from "@shared/ipc";
+import { OnCallRow, Contact } from "@shared/ipc";
 import { formatPhoneNumber } from "../utils/phone";
 import { TactileButton } from "../components/TactileButton";
 import { Modal } from "../components/Modal";
@@ -15,7 +15,7 @@ import { ContextMenu, ContextMenuItem } from "../components/ContextMenu";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { getColorForString } from "../utils/colors";
 import { useToast } from "../components/Toast";
-import { v4 as uuidv4 } from "uuid";
+
 import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack.min.css";
 
@@ -315,7 +315,6 @@ const gridStackStyles = `
 export const PersonnelTab: React.FC<{
   onCall: OnCallRow[];
   contacts: Contact[];
-  groups: GroupMap;
 }> = ({ onCall, contacts }) => {
   const { showToast } = useToast();
   const [isAddingTeam, setIsAddingTeam] = useState(false);
@@ -490,7 +489,7 @@ export const PersonnelTab: React.FC<{
 
   const handleAddTeam = async (name: string) => {
     const initialRow: OnCallRow = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       team: name,
       role: "Primary",
       name: "",

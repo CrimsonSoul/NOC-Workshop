@@ -7,7 +7,7 @@
 import { join } from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
-import { v4 } from "uuid";
+import { randomUUID } from "crypto";
 import type { OnCallRow } from "@shared/ipc";
 import { ONCALL_COLUMNS, STD_ONCALL_HEADERS } from "@shared/csvTypes";
 import { parseCsvAsync, desanitizeField } from "../csvUtils";
@@ -74,7 +74,7 @@ export async function parseOnCall(ctx: FileContext): Promise<OnCallRow[]> {
         if (team) {
           if (primary) {
             migratedRows.push({
-              id: v4(),
+              id: randomUUID(),
               team,
               role: "Primary",
               name: "", // Will be resolved by frontend match if possible
@@ -83,7 +83,7 @@ export async function parseOnCall(ctx: FileContext): Promise<OnCallRow[]> {
           }
           if (backup) {
             migratedRows.push({
-              id: v4(),
+              id: randomUUID(),
               team,
               role: label || "Backup",
               name: "",
@@ -117,7 +117,7 @@ export async function parseOnCall(ctx: FileContext): Promise<OnCallRow[]> {
 
     return rows
       .map((row: string[]) => ({
-        id: v4(),
+        id: randomUUID(),
         team: desanitizeField(row[teamIdx] || ""),
         role: roleIdx !== -1 ? desanitizeField(row[roleIdx] || "") : "",
         name: nameIdx !== -1 ? desanitizeField(row[nameIdx] || "") : "",

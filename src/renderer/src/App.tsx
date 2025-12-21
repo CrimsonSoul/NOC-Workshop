@@ -1,14 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback, Suspense, lazy, Component, ErrorInfo, ReactNode } from 'react';
-import { Sidebar } from './components/Sidebar';
-import { WorldClock } from './components/WorldClock';
-import { AssemblerTab } from './tabs/AssemblerTab';
-import { WindowControls } from './components/WindowControls';
-import { ToastProvider, useToast } from './components/Toast';
-import { AppData, Contact, DataError, WeatherAlert } from '@shared/ipc';
-import { TabFallback } from './components/TabFallback';
-import { TactileButton } from './components/TactileButton';
-import './styles.css';
-
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  Suspense,
+  lazy,
+  Component,
+  ErrorInfo,
+  ReactNode,
+} from "react";
+import { Sidebar } from "./components/Sidebar";
+import { WorldClock } from "./components/WorldClock";
+import { AssemblerTab } from "./tabs/AssemblerTab";
+import { WindowControls } from "./components/WindowControls";
+import { ToastProvider, useToast } from "./components/Toast";
+import { AppData, Contact, DataError, WeatherAlert } from "@shared/ipc";
+import { TabFallback } from "./components/TabFallback";
+import { TactileButton } from "./components/TactileButton";
+import "./styles.css";
 
 // Error Boundary to prevent full app crashes from component errors
 interface ErrorBoundaryProps {
@@ -31,44 +40,62 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    console.error("[ErrorBoundary] Caught error:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          background: 'var(--color-bg-app)',
-          color: 'var(--color-text-primary)',
-          padding: '40px',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px', opacity: 0.3 }}>⚠</div>
-          <h1 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px' }}>Something went wrong</h1>
-          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '24px', maxWidth: '400px' }}>
-            The application encountered an unexpected error. Please restart the application.
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100vh",
+            background: "var(--color-bg-app)",
+            color: "var(--color-text-primary)",
+            padding: "40px",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: "48px", marginBottom: "20px", opacity: 0.3 }}>
+            ⚠
+          </div>
+          <h1
+            style={{ fontSize: "20px", fontWeight: 600, marginBottom: "12px" }}
+          >
+            Something went wrong
+          </h1>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "var(--color-text-secondary)",
+              marginBottom: "24px",
+              maxWidth: "400px",
+            }}
+          >
+            The application encountered an unexpected error. Please restart the
+            application.
           </p>
-          <pre style={{
-            fontSize: '11px',
-            color: 'var(--color-text-tertiary)',
-            background: 'rgba(255,255,255,0.05)',
-            padding: '12px 16px',
-            borderRadius: '6px',
-            maxWidth: '500px',
-            overflow: 'auto',
-            textAlign: 'left'
-          }}>
-            {this.state.error?.message || 'Unknown error'}
+          <pre
+            style={{
+              fontSize: "11px",
+              color: "var(--color-text-tertiary)",
+              background: "rgba(255,255,255,0.05)",
+              padding: "12px 16px",
+              borderRadius: "6px",
+              maxWidth: "500px",
+              overflow: "auto",
+              textAlign: "left",
+            }}
+          >
+            {this.state.error?.message || "Unknown error"}
           </pre>
           <TactileButton
             onClick={() => window.location.reload()}
             variant="primary"
-            style={{ marginTop: '24px' }}
+            style={{ marginTop: "24px" }}
           >
             Reload Application
           </TactileButton>
@@ -81,37 +108,61 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 // Lazy load non-default tabs and settings modal to optimize initial bundle size
-const DirectoryTab = lazy(() => import('./tabs/DirectoryTab').then(m => ({ default: m.DirectoryTab })));
-const ServersTab = lazy(() => import('./tabs/ServersTab').then(m => ({ default: m.ServersTab })));
-const RadarTab = lazy(() => import('./tabs/RadarTab').then(m => ({ default: m.RadarTab })));
-const WeatherTab = lazy(() => import('./tabs/WeatherTab').then(m => ({ default: m.WeatherTab })));
-const MetricsTab = lazy(() => import('./tabs/MetricsTab').then(m => ({ default: m.MetricsTab })));
-const PersonnelTab = lazy(() => import('./tabs/PersonnelTab').then(m => ({ default: m.PersonnelTab })));
-const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const DirectoryTab = lazy(() =>
+  import("./tabs/DirectoryTab").then((m) => ({ default: m.DirectoryTab }))
+);
+const ServersTab = lazy(() =>
+  import("./tabs/ServersTab").then((m) => ({ default: m.ServersTab }))
+);
+const RadarTab = lazy(() =>
+  import("./tabs/RadarTab").then((m) => ({ default: m.RadarTab }))
+);
+const WeatherTab = lazy(() =>
+  import("./tabs/WeatherTab").then((m) => ({ default: m.WeatherTab }))
+);
+const MetricsTab = lazy(() =>
+  import("./tabs/MetricsTab").then((m) => ({ default: m.MetricsTab }))
+);
+const PersonnelTab = lazy(() =>
+  import("./tabs/PersonnelTab").then((m) => ({ default: m.PersonnelTab }))
+);
+const SettingsModal = lazy(() =>
+  import("./components/SettingsModal").then((m) => ({
+    default: m.SettingsModal,
+  }))
+);
 
-type Tab = 'Compose' | 'Personnel' | 'People' | 'Servers' | 'Reports' | 'Radar' | 'Weather';
+type Tab =
+  | "Compose"
+  | "Personnel"
+  | "People"
+  | "Servers"
+  | "Reports"
+  | "Radar"
+  | "Weather";
 
 // Format data errors for user-friendly display
 function formatDataError(error: DataError): string {
-  const file = error.file ? ` in ${error.file}` : '';
+  const file = error.file ? ` in ${error.file}` : "";
   switch (error.type) {
-    case 'validation':
+    case "validation":
       if (Array.isArray(error.details) && error.details.length > 0) {
         const count = error.details.length;
-        return `Data validation: ${count} issue${count > 1 ? 's' : ''} found${file}`;
+        return `Data validation: ${count} issue${
+          count > 1 ? "s" : ""
+        } found${file}`;
       }
       return error.message;
-    case 'parse':
+    case "parse":
       return `Failed to parse data${file}: ${error.message}`;
-    case 'write':
+    case "write":
       return `Failed to save changes${file}`;
-    case 'read':
+    case "read":
       return `Failed to read data${file}`;
     default:
-      return error.message || 'An unknown error occurred';
+      return error.message || "An unknown error occurred";
   }
 }
-
 
 interface WeatherData {
   current_weather: {
@@ -145,13 +196,13 @@ interface Location {
 
 export function MainApp() {
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<Tab>('Compose');
+  const [activeTab, setActiveTab] = useState<Tab>("Compose");
   const [data, setData] = useState<AppData>({
     groups: {},
     contacts: [],
     servers: [],
     onCall: [],
-    lastUpdated: 0
+    lastUpdated: 0,
   });
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [manualAdds, setManualAdds] = useState<string[]>([]);
@@ -170,51 +221,62 @@ export function MainApp() {
 
   // Restore Weather Location
   useEffect(() => {
-    const saved = localStorage.getItem('weather_location');
+    const saved = localStorage.getItem("weather_location");
     if (saved) {
       try {
         setWeatherLocation(JSON.parse(saved));
-      } catch { }
+      } catch {}
     }
   }, []);
 
-  const fetchWeather = useCallback(async (lat: number, lon: number, silent = false) => {
-    if (!silent) setWeatherLoading(true);
-    try {
-      const [wData, aData] = await Promise.all([
-        window.api.getWeather(lat, lon),
-        window.api.getWeatherAlerts(lat, lon).catch(() => [])
-      ]);
-      setWeatherData(wData);
-      setWeatherAlerts(aData);
+  const fetchWeather = useCallback(
+    async (lat: number, lon: number, silent = false) => {
+      if (!silent) setWeatherLoading(true);
+      try {
+        const [wData, aData] = await Promise.all([
+          window.api.getWeather(lat, lon),
+          window.api.getWeatherAlerts(lat, lon).catch(() => []),
+        ]);
+        setWeatherData(wData);
+        setWeatherAlerts(aData);
 
-      // Handle Realtime Alerts
-      if (aData.length > 0) {
-        // Find new alerts we haven't shown yet
-        const newAlerts = aData.filter((a: any) => !lastAlertIdsRef.current.has(a.id));
-        if (newAlerts.length > 0) {
-          // Toast the most severe one to avoid spam
-          const severe = newAlerts.find((a: any) => a.severity === 'Extreme' || a.severity === 'Severe') || newAlerts[0];
-          showToast(`Weather Alert: ${severe.event}`, 'error');
+        // Handle Realtime Alerts
+        if (aData.length > 0) {
+          // Find new alerts we haven't shown yet
+          const newAlerts = aData.filter(
+            (a: any) => !lastAlertIdsRef.current.has(a.id)
+          );
+          if (newAlerts.length > 0) {
+            // Toast the most severe one to avoid spam
+            const severe =
+              newAlerts.find(
+                (a: any) => a.severity === "Extreme" || a.severity === "Severe"
+              ) || newAlerts[0];
+            showToast(`Weather Alert: ${severe.event}`, "error");
 
-          // Update known IDs
-          newAlerts.forEach((a: any) => lastAlertIdsRef.current.add(a.id));
+            // Update known IDs
+            newAlerts.forEach((a: any) => lastAlertIdsRef.current.add(a.id));
+          }
         }
+      } catch (err) {
+        console.error("Weather fetch failed", err);
+      } finally {
+        if (!silent) setWeatherLoading(false);
       }
-
-    } catch (err) {
-      console.error('Weather fetch failed', err);
-    } finally {
-      if (!silent) setWeatherLoading(false);
-    }
-  }, [showToast]);
+    },
+    [showToast]
+  );
 
   // Weather Polling (Every 2 mins) & Tab Switch Refresh
   useEffect(() => {
     if (!weatherLocation) return;
 
     // Fetch immediately on mount or location change
-    fetchWeather(weatherLocation.latitude, weatherLocation.longitude, !!weatherData);
+    fetchWeather(
+      weatherLocation.latitude,
+      weatherLocation.longitude,
+      !!weatherData
+    );
 
     // Poll every 2 minutes for background alerts
     const interval = setInterval(() => {
@@ -224,27 +286,34 @@ export function MainApp() {
     return () => clearInterval(interval);
   }, [weatherLocation, fetchWeather]); // Re-run when location changes
 
-
   // Sync ref
-  useEffect(() => { isReloadingRef.current = isReloading; }, [isReloading]);
+  useEffect(() => {
+    isReloadingRef.current = isReloading;
+  }, [isReloading]);
 
   // Set platform class on body for CSS targeting
   useEffect(() => {
-    const platform = window.api?.platform || (navigator.platform.toLowerCase().includes('mac') ? 'darwin' : 'win32');
+    const platform =
+      window.api?.platform ||
+      (navigator.platform.toLowerCase().includes("mac") ? "darwin" : "win32");
     document.body.classList.add(`platform-${platform}`);
-
 
     // Horizontal Scroll Wheel Support
     const handleGlobalWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
-      const horizontalContainer = target.closest('.weather-scroll-container, [style*="overflow-x: auto"], [style*="overflow-x: scroll"]') as HTMLElement;
+      const horizontalContainer = target.closest(
+        '.weather-scroll-container, [style*="overflow-x: auto"], [style*="overflow-x: scroll"]'
+      ) as HTMLElement;
 
       if (horizontalContainer && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         // If it's primarily a vertical scroll but we are on a container that prefers horizontal
         // or has horizontal overflow but NO vertical overflow
         const style = window.getComputedStyle(horizontalContainer);
-        const isHorizontalOnly = (style.overflowX === 'auto' || style.overflowX === 'scroll') &&
-          (style.overflowY === 'hidden' || horizontalContainer.scrollHeight <= horizontalContainer.clientHeight);
+        const isHorizontalOnly =
+          (style.overflowX === "auto" || style.overflowX === "scroll") &&
+          (style.overflowY === "hidden" ||
+            horizontalContainer.scrollHeight <=
+              horizontalContainer.clientHeight);
 
         if (isHorizontalOnly) {
           horizontalContainer.scrollLeft += e.deltaY;
@@ -253,8 +322,8 @@ export function MainApp() {
       }
     };
 
-    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
-    return () => window.removeEventListener('wheel', handleGlobalWheel);
+    window.addEventListener("wheel", handleGlobalWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleGlobalWheel);
   }, []);
 
   const settleReloadIndicator = useCallback(() => {
@@ -273,13 +342,14 @@ export function MainApp() {
     }, delay);
   }, []);
 
-
   // Safety timeout to prevent stuck syncing state
   useEffect(() => {
     if (isReloading) {
       const safety = setTimeout(() => {
         if (isReloadingRef.current) {
-          console.warn('[App] Force clearing stuck sync indicator after timeout');
+          console.warn(
+            "[App] Force clearing stuck sync indicator after timeout"
+          );
           setIsReloading(false);
           reloadStartRef.current = null;
         }
@@ -289,9 +359,18 @@ export function MainApp() {
   }, [isReloading]);
 
   // Bolt: Memoize window API calls (though they use global window.api, good practice)
-  const handleImportGroups = useCallback(async () => await window.api?.importGroupsFile(), []);
-  const handleImportContacts = useCallback(async () => await window.api?.importContactsFile(), []);
-  const handleImportServers = useCallback(async () => await window.api?.importServersFile(), []);
+  const handleImportGroups = useCallback(
+    async () => await window.api?.importGroupsFile(),
+    []
+  );
+  const handleImportContacts = useCallback(
+    async () => await window.api?.importContactsFile(),
+    []
+  );
+  const handleImportServers = useCallback(
+    async () => await window.api?.importServersFile(),
+    []
+  );
 
   useEffect(() => {
     if (!window.api) return;
@@ -308,9 +387,9 @@ export function MainApp() {
     });
     // Subscribe to data errors and surface them to the user
     const unsubscribeDataError = window.api.onDataError((error: DataError) => {
-      console.error('[App] Data error received:', error);
+      console.error("[App] Data error received:", error);
       const errorMessage = formatDataError(error);
-      showToast(errorMessage, 'error');
+      showToast(errorMessage, "error");
     });
     return () => {
       unsubscribeData();
@@ -323,12 +402,14 @@ export function MainApp() {
 
   // Bolt: Memoize handlers to prevent re-renders of heavy AssemblerTab/DirectoryTab lists
   const handleAddToAssembler = useCallback((contact: Contact) => {
-    setManualRemoves(prev => prev.filter(e => e !== contact.email));
-    setManualAdds(prev => prev.includes(contact.email) ? prev : [...prev, contact.email]);
+    setManualRemoves((prev) => prev.filter((e) => e !== contact.email));
+    setManualAdds((prev) =>
+      prev.includes(contact.email) ? prev : [...prev, contact.email]
+    );
   }, []);
 
   const handleUndoRemove = useCallback(() => {
-    setManualRemoves(prev => {
+    setManualRemoves((prev) => {
       const newRemoves = [...prev];
       newRemoves.pop();
       return newRemoves;
@@ -342,11 +423,11 @@ export function MainApp() {
   }, []);
 
   const handleAddManual = useCallback((email: string) => {
-    setManualAdds(p => [...p, email]);
+    setManualAdds((p) => [...p, email]);
   }, []);
 
   const handleRemoveManual = useCallback((email: string) => {
-    setManualRemoves(p => [...p, email]);
+    setManualRemoves((p) => [...p, email]);
   }, []);
 
   const handleSync = useCallback(async () => {
@@ -359,9 +440,9 @@ export function MainApp() {
 
   // Extracted callback to avoid conditional hook call
   const handleToggleGroup = useCallback((group: string) => {
-    setSelectedGroups(prev => {
+    setSelectedGroups((prev) => {
       if (prev.includes(group)) {
-        return prev.filter(g => g !== group);
+        return prev.filter((g) => g !== group);
       }
       return [...prev, group];
     });
@@ -385,9 +466,7 @@ export function MainApp() {
         {/* Breadcrumb / Header Area */}
         <header className="app-header">
           <div className="header-title-container">
-            <span className="header-breadcrumb">
-              Relay / {activeTab}
-            </span>
+            <span className="header-breadcrumb">Relay / {activeTab}</span>
           </div>
 
           {/* Actions Area */}
@@ -398,8 +477,8 @@ export function MainApp() {
 
         {/* Content View */}
         <div className="content-view">
-          {activeTab === 'Compose' && (
-            <div className="animate-fade-in" style={{ height: '100%' }}>
+          {activeTab === "Compose" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
               <AssemblerTab
                 groups={data.groups}
                 contacts={data.contacts}
@@ -415,19 +494,15 @@ export function MainApp() {
               />
             </div>
           )}
-          {activeTab === 'Personnel' && (
-            <div className="animate-fade-in" style={{ height: '100%' }}>
+          {activeTab === "Personnel" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
-                <PersonnelTab
-                  onCall={data.onCall}
-                  contacts={data.contacts}
-                  groups={data.groups}
-                />
+                <PersonnelTab onCall={data.onCall} contacts={data.contacts} />
               </Suspense>
             </div>
           )}
-          {activeTab === 'People' && (
-            <div className="animate-fade-in" style={{ height: '100%' }}>
+          {activeTab === "People" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
                 <DirectoryTab
                   contacts={data.contacts}
@@ -437,8 +512,8 @@ export function MainApp() {
               </Suspense>
             </div>
           )}
-          {activeTab === 'Weather' && (
-            <div className="animate-fade-in" style={{ height: '100%' }}>
+          {activeTab === "Weather" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
                 <WeatherTab
                   weather={weatherData}
@@ -446,30 +521,29 @@ export function MainApp() {
                   location={weatherLocation}
                   loading={weatherLoading}
                   onLocationChange={setWeatherLocation}
-                  onManualRefresh={(lat: number, lon: number) => fetchWeather(lat, lon)}
+                  onManualRefresh={(lat: number, lon: number) =>
+                    fetchWeather(lat, lon)
+                  }
                 />
               </Suspense>
             </div>
           )}
-          {activeTab === 'Servers' && (
-            <div className="animate-fade-in" style={{ height: '100%' }}>
+          {activeTab === "Servers" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
-                <ServersTab
-                  servers={data.servers}
-                  contacts={data.contacts}
-                />
+                <ServersTab servers={data.servers} contacts={data.contacts} />
               </Suspense>
             </div>
           )}
-          {activeTab === 'Reports' && (
-            <div className="animate-fade-in" style={{ height: '100%' }}>
+          {activeTab === "Reports" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
                 <MetricsTab />
               </Suspense>
             </div>
           )}
-          {activeTab === 'Radar' && (
-            <div className="animate-fade-in" style={{ height: '100%' }}>
+          {activeTab === "Radar" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
                 <RadarTab />
               </Suspense>

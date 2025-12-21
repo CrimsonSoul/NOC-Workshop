@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 import { TactileButton } from "./TactileButton";
 import { Input } from "./Input";
 import { Combobox } from "./Combobox";
-import { v4 as uuidv4 } from "uuid";
+
 import {
   DndContext,
   closestCenter,
@@ -258,7 +258,7 @@ export const MaintainTeamModal: React.FC<MaintainTeamModalProps> = ({
     setRows((prev) => [
       ...prev,
       {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         team: teamName,
         role: "",
         name: "",
