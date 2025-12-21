@@ -146,7 +146,7 @@ const SortableTeamCard = ({
                         {teamRows.map(row => (
                             <div key={row.id} style={{
                                 display: 'grid',
-                                gridTemplateColumns: '60px 1fr 100px 90px',
+                                gridTemplateColumns: '60px 1fr 150px 90px',
                                 gap: '16px',
                                 alignItems: 'center',
                                 padding: '6px 0',
