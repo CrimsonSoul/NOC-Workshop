@@ -203,10 +203,10 @@ const SortableTeamCard = ({
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
-                                    opacity: 0.9,
-                                    background: 'rgba(255,255,255,0.05)',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px'
+                                    padding: row.timeWindow ? '4px 8px' : '0',
+                                    borderRadius: '4px',
+                                    background: row.timeWindow ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                    opacity: row.timeWindow ? 0.9 : 0
                                 }} title={row.timeWindow}>
                                     {row.timeWindow}
                                 </div>

@@ -25,14 +25,9 @@ const formatSingleNumber = (phone: string): string => {
     }
 
 
-    // Format Cisco 8-digit (7-XXX-XXXX)
+    // Internal Extension: (7) 270-5555
     if (clean.length === 8 && clean.startsWith('7')) {
-        return `7-${clean.slice(1, 4)}-${clean.slice(4)}`;
-    }
-
-    // Format Cisco 5-digit (7-XXXX)
-    if (clean.length === 5 && clean.startsWith('7')) {
-        return `7-${clean.slice(1)}`;
+        return `(7) ${clean.slice(1, 4)}-${clean.slice(4)}`;
     }
 
     // Format US 10-digit: (XXX) XXX-XXXX
@@ -40,24 +35,53 @@ const formatSingleNumber = (phone: string): string => {
         return `(${clean.slice(0, 3)}) ${clean.slice(3, 6)}-${clean.slice(6)}`;
     }
 
-    // Format US 11-digit starting with 1
-    if (clean.length === 11 && (clean.startsWith('1') || (hasPlus && phone.startsWith('+1')))) {
-        const d = clean.startsWith('1') ? clean.slice(1) : clean;
-        return `+1 (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
-    }
-
-    // International fallback or catch-all for custom lengths (8, 9, 11, 12, etc.)
-    if (hasPlus || clean.length > 10 || (clean.length > 7 && clean.length < 10)) {
-        const p = hasPlus ? '+' : '';
-        // For 8 or 9 digits, group in the middle
-        if (clean.length === 8) return `${p}${clean.slice(0, 4)} ${clean.slice(4)}`;
-        if (clean.length === 9) return `${p}${clean.slice(0, 3)} ${clean.slice(3, 6)} ${clean.slice(6)}`;
-
-        // Group everything else by the last 4 and the 3 before it
-        if (clean.length > 7) {
-            return `${p}${clean.slice(0, clean.length - 7)} ${clean.slice(clean.length - 7, clean.length - 4)} ${clean.slice(clean.length - 4)}`;
+    // International / Long numbers
+    // Goal: Use brackets for country code if possible.
+    // Heuristic: If it starts with +, treat the first 1-3 digits as country code?
+    // User example: "(1) ..." or "(25) ...".
+    // If we have a plus, we try to parse it. 
+    // This is tricky without a full lib, but let's try a best-effort approach based on user request.
+    if (hasPlus || clean.length > 10) {
+        // If 11 digits and starts with 1 -> +1 (US) -> (1) ...
+        if (clean.length === 11 && clean.startsWith('1')) {
+            const rest = clean.slice(1);
+            return `(1) (${rest.slice(0, 3)}) ${rest.slice(3, 6)}-${rest.slice(6)}`;
         }
-        return p + clean;
+
+        // Generic International: (CC) ...
+        // Assume country code is 1-3 digits. 
+        // For now, let's just format strictly as user requested if we can identify the code.
+        // If it starts with +, use the digits after + until some logic? 
+        // Let's just group visually: (CC) XXX...
+
+        let formatted = hasPlus ? '+' + clean : clean;
+
+        if (clean.length > 10) {
+            // Try to guess country code length? 
+            // For 12 digits: (XX) XXX...
+            // For 11 digits (non-1): (X) ...
+            // Let's apply a generic grouping with brackets for the first part.
+            const codeLen = clean.length % 10 || 1; // Fallback
+            // Actually, let's just support the explicit user examples and standard grouping.
+
+            if (hasPlus) {
+                // +923122016023 -> (92) 312 201 6023
+                // How many digits is CC? Hard to know. 
+                // Let's assume 2 digits if length is 12, 1 if length is 11?
+                // Standard is difficult.
+                // Let's stick to the user's specific "Internal" request first which was clear: (7) 270-5555.
+                // For international: "(1) or (25)".
+                // Let's just wrap the prefix in brackets if it exceeds 10 digits.
+                const excess = clean.length - 10;
+                if (excess > 0 && excess < 4) {
+                    const code = clean.slice(0, excess);
+                    const rest = clean.slice(excess);
+                    // Format the rest as US-like if 10 digits?
+                    const formattedRest = `${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
+                    return `(${code}) ${formattedRest}`;
+                }
+            }
+        }
     }
 
     // Format US 7-digit (local)
