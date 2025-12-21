@@ -3,8 +3,8 @@ import { OnCallEntry, Contact, GroupMap } from '@shared/ipc';
 import { TactileButton } from './TactileButton';
 import { Modal } from './Modal';
 import { Input } from './Input';
-import { Tooltip } from './Tooltip';
 import { ContextMenu, ContextMenuItem } from './ContextMenu';
+import { ConfirmModal } from './ConfirmModal';
 import {
     DndContext,
     closestCenter,
@@ -123,7 +123,7 @@ const SortableTeamCard = ({
                         items: [
                             { label: 'Edit Assignments', onClick: () => setEditingTeam(team) },
                             { label: 'Rename Team', onClick: () => setRenamingTeam({ old: team, new: team }) },
-                            { label: 'Remove Team', danger: true, onClick: () => { if (confirm(`Remove ${team}?`)) onRemoveTeam(team); } }
+                            { label: 'Remove Team', danger: true, onClick: () => setConfirmRemove(team) }
                         ]
                     });
                 }}
@@ -214,8 +214,8 @@ const getWeekRange = () => {
     const now = new Date();
     const day = now.getDay();
     const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
-    const monday = new Date(now.setDate(diff));
-    const sunday = new Date(now.setDate(diff + 6));
+    const monday = new Date(now.getFullYear(), now.getMonth(), diff);
+    const sunday = new Date(now.getFullYear(), now.getMonth(), diff + 6);
 
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
     return `${monday.toLocaleDateString(undefined, options)} - ${sunday.toLocaleDateString(undefined, options)}, ${sunday.getFullYear()}`;
@@ -239,6 +239,7 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
     const [renamingTeam, setRenamingTeam] = useState<{ old: string, new: string } | null>(null);
     const [localOnCall, setLocalOnCall] = useState<OnCallEntry[]>(onCall);
     const [menu, setMenu] = useState<{ x: number, y: number, items: ContextMenuItem[] } | null>(null);
+    const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -667,6 +668,21 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
                     y={menu.y}
                     items={menu.items}
                     onClose={() => setMenu(null)}
+                />
+            )}
+
+            {confirmRemove && (
+                <ConfirmModal
+                    isOpen={!!confirmRemove}
+                    onClose={() => setConfirmRemove(null)}
+                    onConfirm={() => {
+                        onRemoveTeam(confirmRemove);
+                        setConfirmRemove(null);
+                    }}
+                    title="Remove Team"
+                    message={`Are you sure you want to remove "${confirmRemove}"?`}
+                    confirmLabel="Remove"
+                    isDanger
                 />
             )}
         </div >

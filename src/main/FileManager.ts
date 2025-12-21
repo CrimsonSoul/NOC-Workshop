@@ -1590,7 +1590,6 @@ export class FileManager {
 
       // Create folder and copy files
       await fs.mkdir(backupPath, { recursive: true });
-      // console.log(`[FileManager] Creating backup (${reason}): ${backupPath}`);
 
       const filesToBackup = [...GROUP_FILES, ...CONTACT_FILES, ...SERVER_FILES, ...ONCALL_FILES];
       for (const file of filesToBackup) {

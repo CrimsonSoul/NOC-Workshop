@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 type Tab = 'Compose' | 'Personnel' | 'People' | 'Reports' | 'Radar' | 'Servers' | 'Weather';
 
@@ -72,6 +72,10 @@ const SidebarButton = ({
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpenSettings }) => {
+  // Easter egg click tracking - use refs to avoid window mutations
+  const lastClickTimeRef = useRef<number>(0);
+  const clickCountRef = useRef<number>(0);
+
   return (
     <div style={{
       width: window.api?.platform === 'darwin' ? '72px' : 'var(--sidebar-width-collapsed)',
@@ -91,13 +95,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
         onClick={() => {
           // Check for rapid clicks (Easter Egg)
           const now = Date.now();
-          const timeDiff = now - (window as any).lastAppIconClickTime || 0;
-          (window as any).lastAppIconClickTime = now;
+          const timeDiff = now - lastClickTimeRef.current;
+          lastClickTimeRef.current = now;
 
           if (timeDiff > 500) {
-            (window as any).appIconClickCount = 1;
+            clickCountRef.current = 1;
           } else {
-            (window as any).appIconClickCount = ((window as any).appIconClickCount || 0) + 1;
+            clickCountRef.current += 1;
           }
 
           // Trigger visual feedback (Lightning/Storm effect)
@@ -113,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
             iconEl.style.filter = 'brightness(1.3)'; // Extra flash
 
             // Flash text/paths
-            pathResults.forEach((p: any) => p.style.stroke = '#fff');
+            pathResults.forEach((p) => (p as HTMLElement).style.stroke = '#fff');
 
             setTimeout(() => {
               iconEl.style.transform = '';
@@ -121,11 +125,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
               iconEl.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2), inset 0 0 12px rgba(59, 130, 246, 0.1)';
               iconEl.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.05) 100%)';
               iconEl.style.filter = '';
-              pathResults.forEach((p: any) => p.style.stroke = 'url(#relay-icon-grad)');
+              pathResults.forEach((p) => (p as HTMLElement).style.stroke = 'url(#relay-icon-grad)');
             }, 120);
           }
 
-          if ((window as any).appIconClickCount >= 3) {
+          if (clickCountRef.current >= 3) {
             // Final Big Flash
             if (iconEl) {
               iconEl.style.transition = 'all 0.05s ease';
@@ -138,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
             } else {
               onTabChange('Weather');
             }
-            (window as any).appIconClickCount = 0;
+            clickCountRef.current = 0;
           } else {
             onTabChange('Compose');
           }
@@ -160,7 +164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onOpen
           marginBottom: '4px'
         }}
         onMouseEnter={(e) => {
-          if (!(window as any).appIconClickCount) { // Only styling hover if not actively clicking
+          if (!clickCountRef.current) { // Only styling hover if not actively clicking
             e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.1) 100%)';
             e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.5)';
             e.currentTarget.style.transform = 'scale(1.05) translateY(-1px)';
