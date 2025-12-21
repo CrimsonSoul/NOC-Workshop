@@ -54,10 +54,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, items }
           zIndex: 99999,
           padding: 'var(--space-1)',
           minWidth: '180px',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           gap: '1px'
-          // overflow: 'hidden' // Removed to allow hover effects (scale/shadow) to spill out
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -84,27 +84,24 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, items }
               display: 'flex',
               alignItems: 'center',
               gap: 'var(--space-2)',
-              transition: 'all var(--transition-smooth)',
+              transition: 'all var(--transition-micro)',
               fontWeight: 500,
               letterSpacing: '-0.01em',
               position: 'relative',
-              overflow: 'hidden',
               opacity: item.disabled ? 0.5 : 1,
-              transformOrigin: 'left center'
             }}
             onMouseEnter={e => {
               if (!item.disabled) {
-                e.currentTarget.style.background = item.danger ? 'var(--color-accent-blue-subtle)' : 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.transform = 'translateX(4px) scale(1.02)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
                 if (item.danger) {
                   e.currentTarget.style.color = 'var(--color-danger-hover)';
+                  e.currentTarget.style.background = 'rgba(232, 17, 35, 0.1)';
                 }
               }
             }}
             onMouseLeave={e => {
               if (!item.disabled) {
                 e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.transform = 'translateX(0) scale(1)';
                 if (item.danger) {
                   e.currentTarget.style.color = 'var(--color-danger)';
                 }

@@ -84,7 +84,7 @@ const SortableTeamCard = ({
 
     // Check if any row in this team has a time window to determine grid layout
     const hasAnyTimeWindow = useMemo(() => teamRows.some(r => r.timeWindow && r.timeWindow.trim()), [teamRows]);
-    const rowGridTemplate = hasAnyTimeWindow ? '60px 1fr 150px 90px' : '60px 1fr 150px';
+    const rowGridTemplate = hasAnyTimeWindow ? '60px 1fr auto auto' : '60px 1fr auto';
 
     return (
         <>
@@ -102,11 +102,11 @@ const SortableTeamCard = ({
                         border: '1px solid rgba(255, 255, 255, 0.06)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '16px',
+                        gap: '12px',
                         position: 'relative',
                         overflow: 'hidden',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        minHeight: '200px'
+                        minHeight: '160px'
                     }}
                     onContextMenu={(e) => {
                         e.preventDefault();
@@ -156,7 +156,7 @@ const SortableTeamCard = ({
                                 gridTemplateColumns: rowGridTemplate,
                                 gap: '16px',
                                 alignItems: 'center',
-                                padding: '6px 0',
+                                padding: '4px 0',
                             }}>
                                 <div style={{
                                     color: 'var(--color-text-tertiary)',
@@ -199,7 +199,8 @@ const SortableTeamCard = ({
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
-                                    fontWeight: 500
+                                    fontWeight: 500,
+                                    width: '150px'
                                 }} title={row.contact}>
                                     {formatPhoneNumber(row.contact)}
                                 </div>
@@ -214,7 +215,8 @@ const SortableTeamCard = ({
                                         padding: row.timeWindow ? '4px 8px' : '0',
                                         borderRadius: '4px',
                                         background: row.timeWindow ? 'rgba(255,255,255,0.05)' : 'transparent',
-                                        opacity: row.timeWindow ? 0.9 : 0
+                                        opacity: row.timeWindow ? 0.9 : 0,
+                                        width: '90px'
                                     }} title={row.timeWindow}>
                                         {row.timeWindow}
                                     </div>
@@ -378,7 +380,7 @@ export const PersonnelTab: React.FC<{
 
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(550px, 1fr))',
                 gap: '24px',
                 paddingBottom: '40px'
             }}>
