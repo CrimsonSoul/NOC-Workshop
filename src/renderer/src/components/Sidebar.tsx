@@ -7,7 +7,8 @@ type Tab =
   | "Reports"
   | "Radar"
   | "Servers"
-  | "Weather";
+  | "Weather"
+  | "AI";
 
 interface SidebarProps {
   activeTab: Tab;
@@ -43,8 +44,8 @@ const SidebarButton = ({
         background: isActive
           ? "var(--color-accent-blue)"
           : isHovered
-          ? "var(--color-accent-blue)"
-          : "rgba(255, 255, 255, 0.03)",
+            ? "var(--color-accent-blue)"
+            : "rgba(255, 255, 255, 0.03)",
         border: "none",
         cursor: "pointer",
         position: "relative",
@@ -277,6 +278,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Pager Buttons */}
               <circle cx="18" cy="9" r="1.5" fill="#60A5FA" />
               <circle cx="18" cy="15" r="1.5" fill="#60A5FA" />
+            </svg>
+          }
+        />
+        <SidebarButton
+          label="AI Chat"
+          isActive={activeTab === "AI"}
+          onClick={() => onTabChange("AI")}
+          icon={
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {/* Chat bubble with sparkle for AI */}
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                stroke="#F472B6"
+              />
+              {/* AI sparkle */}
+              <path d="M12 8v2" stroke="#F472B6" strokeWidth="2" />
+              <path d="M12 12v1" stroke="#F472B6" strokeWidth="2" />
+              <circle cx="12" cy="10" r="0.5" fill="#F472B6" />
             </svg>
           }
         />

@@ -131,6 +131,9 @@ const SettingsModal = lazy(() =>
     default: m.SettingsModal,
   }))
 );
+const AIChatTab = lazy(() =>
+  import("./tabs/AIChatTab").then((m) => ({ default: m.AIChatTab }))
+);
 
 type Tab =
   | "Compose"
@@ -139,7 +142,8 @@ type Tab =
   | "Servers"
   | "Reports"
   | "Radar"
-  | "Weather";
+  | "Weather"
+  | "AI";
 
 // Format data errors for user-friendly display
 function formatDataError(error: DataError): string {
@@ -148,9 +152,8 @@ function formatDataError(error: DataError): string {
     case "validation":
       if (Array.isArray(error.details) && error.details.length > 0) {
         const count = error.details.length;
-        return `Data validation: ${count} issue${
-          count > 1 ? "s" : ""
-        } found${file}`;
+        return `Data validation: ${count} issue${count > 1 ? "s" : ""
+          } found${file}`;
       }
       return error.message;
     case "parse":
@@ -225,7 +228,7 @@ export function MainApp() {
     if (saved) {
       try {
         setWeatherLocation(JSON.parse(saved));
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -313,7 +316,7 @@ export function MainApp() {
           (style.overflowX === "auto" || style.overflowX === "scroll") &&
           (style.overflowY === "hidden" ||
             horizontalContainer.scrollHeight <=
-              horizontalContainer.clientHeight);
+            horizontalContainer.clientHeight);
 
         if (isHorizontalOnly) {
           horizontalContainer.scrollLeft += e.deltaY;
@@ -550,6 +553,13 @@ export function MainApp() {
             <div className="animate-fade-in" style={{ height: "100%" }}>
               <Suspense fallback={<TabFallback />}>
                 <RadarTab />
+              </Suspense>
+            </div>
+          )}
+          {activeTab === "AI" && (
+            <div className="animate-fade-in" style={{ height: "100%" }}>
+              <Suspense fallback={<TabFallback />}>
+                <AIChatTab />
               </Suspense>
             </div>
           )}

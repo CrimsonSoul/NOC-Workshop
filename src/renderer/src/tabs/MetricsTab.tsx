@@ -5,6 +5,7 @@ import { ToolbarButton } from '../components/ToolbarButton';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { TactileButton } from '../components/TactileButton';
+import { CollapsibleHeader, useCollapsibleHeader } from '../components/CollapsibleHeader';
 
 export const MetricsTab: React.FC = () => {
     const [metrics, setMetrics] = useState<MetricsData | null>(null);
@@ -12,6 +13,7 @@ export const MetricsTab: React.FC = () => {
     const { showToast } = useToast();
 
     const [error, setError] = useState<string | null>(null);
+    const { isCollapsed, scrollContainerRef } = useCollapsibleHeader(30);
 
     const fetchMetrics = async () => {
         try {
@@ -70,7 +72,7 @@ export const MetricsTab: React.FC = () => {
     );
 
     return (
-        <div style={{
+        <div ref={scrollContainerRef} style={{
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
@@ -79,17 +81,17 @@ export const MetricsTab: React.FC = () => {
             overflowY: 'auto'
         }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
-                <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Reports & Analytics</h1>
-                    <p style={{ fontSize: '16px', color: 'var(--color-text-tertiary)', margin: '8px 0 0 0', fontWeight: 500 }}>Mission logging and bridge metrics</p>
-                </div>
+            <CollapsibleHeader
+                title="Reports & Analytics"
+                subtitle="Mission logging and bridge metrics"
+                isCollapsed={isCollapsed}
+            >
                 <ToolbarButton
                     label="RESET HISTORY"
                     onClick={() => setIsResetModalOpen(true)}
-                    style={{ padding: '12px 24px', fontSize: '12px' }}
+                    style={{ padding: isCollapsed ? '8px 16px' : '12px 24px', fontSize: '11px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
                 />
-            </div>
+            </CollapsibleHeader>
 
             {/* Content Area */}
             <div style={{ flex: 1, minHeight: 0 }}>

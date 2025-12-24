@@ -15,6 +15,7 @@ import { ContextMenu, ContextMenuItem } from "../components/ContextMenu";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { getColorForString } from "../utils/colors";
 import { useToast } from "../components/Toast";
+import { CollapsibleHeader, useCollapsibleHeader } from "../components/CollapsibleHeader";
 
 import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack.min.css";
@@ -324,6 +325,9 @@ export const PersonnelTab: React.FC<{
     new: string;
   } | null>(null);
 
+  // Collapsible header
+  const { isCollapsed, scrollContainerRef } = useCollapsibleHeader(30);
+
   // Date range state
   const [weekRange, setWeekRange] = useState(getWeekRange());
   const [currentDay, setCurrentDay] = useState(new Date().getDay());
@@ -551,16 +555,17 @@ export const PersonnelTab: React.FC<{
       alerts.push(<div key="general" onClick={() => dismissAlert('general')} title="Click to dismiss" style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-on-accent)', background: 'var(--color-accent-primary)', padding: '4px 8px', borderRadius: '4px', marginLeft: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}>Update Weekly Schedule</div>);
     }
     if (currentDay === 3 && !dismissedAlerts.has(getAlertKey('sql'))) {
-      alerts.push(<div key="sql" onClick={() => dismissAlert('sql')} title="Click to dismiss" style={{ fontSize: '12px', fontWeight: 700, color: '#fff', background: '#8fbce6', padding: '4px 8px', borderRadius: '4px', marginLeft: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}>Update SQL DBA</div>);
+      alerts.push(<div key="sql" onClick={() => dismissAlert('sql')} title="Click to dismiss" style={{ fontSize: '12px', fontWeight: 700, color: '#fff', background: '#EF4444', padding: '4px 8px', borderRadius: '4px', marginLeft: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}>Update SQL DBA</div>);
     }
     if (currentDay === 4 && !dismissedAlerts.has(getAlertKey('oracle'))) {
-      alerts.push(<div key="oracle" onClick={() => dismissAlert('oracle')} title="Click to dismiss" style={{ fontSize: '12px', fontWeight: 700, color: '#fff', background: '#e68f8f', padding: '4px 8px', borderRadius: '4px', marginLeft: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}>Update Oracle DBA</div>);
+      alerts.push(<div key="oracle" onClick={() => dismissAlert('oracle')} title="Click to dismiss" style={{ fontSize: '12px', fontWeight: 700, color: '#fff', background: '#EF4444', padding: '4px 8px', borderRadius: '4px', marginLeft: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', userSelect: 'none' }}>Update Oracle DBA</div>);
     }
     return alerts;
   };
 
   return (
     <div
+      ref={scrollContainerRef}
       style={{
         height: "100%",
         display: "flex",
@@ -572,49 +577,19 @@ export const PersonnelTab: React.FC<{
     >
       <style>{gridStackStyles}</style>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "32px",
-        }}
+      <CollapsibleHeader
+        title="On-Call Schedule"
+        subtitle={<>{weekRange}{renderAlerts()}</>}
+        isCollapsed={isCollapsed}
       >
-        <div>
-          <h1
-            style={{
-              fontSize: "32px",
-              fontWeight: 800,
-              margin: 0,
-              color: "var(--color-text-primary)",
-            }}
-          >
-            On-Call Schedule
-          </h1>
-          <p
-            style={{
-              fontSize: "16px",
-              color: "var(--color-text-tertiary)",
-              margin: "8px 0 0 0",
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            {weekRange}
-            {renderAlerts()}
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <TactileButton
-            variant="primary"
-            style={{ padding: "12px 24px", fontSize: "14px" }}
-            onClick={() => setIsAddingTeam(true)}
-          >
-            + ADD TEAM
-          </TactileButton>
-        </div>
-      </div>
+        <TactileButton
+          variant="primary"
+          style={{ padding: isCollapsed ? '8px 16px' : '12px 24px', fontSize: isCollapsed ? '12px' : '14px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          onClick={() => setIsAddingTeam(true)}
+        >
+          + ADD TEAM
+        </TactileButton>
+      </CollapsibleHeader>
 
       <div
         ref={gridRef}

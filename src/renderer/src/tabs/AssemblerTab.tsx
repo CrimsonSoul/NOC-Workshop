@@ -7,6 +7,7 @@ import { AddContactModal } from "../components/AddContactModal";
 import { useToast } from "../components/Toast";
 import { ToolbarButton } from "../components/ToolbarButton";
 import { ContextMenu } from "../components/ContextMenu";
+import { CollapsibleHeader } from "../components/CollapsibleHeader";
 
 import {
   AssemblerTabProps,
@@ -53,6 +54,8 @@ export const AssemblerTab: React.FC<AssemblerTabProps> = ({
     const saved = localStorage.getItem("assembler_sidebar_collapsed");
     return saved ? JSON.parse(saved) : false;
   });
+
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(
@@ -245,63 +248,35 @@ export const AssemblerTab: React.FC<AssemblerTabProps> = ({
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            marginBottom: "24px",
-          }}
+        <CollapsibleHeader
+          title="Data Composition"
+          subtitle="Assemble bridge recipients and manage emergency communications"
+          isCollapsed={isHeaderCollapsed}
         >
-          <div>
-            <h1
-              style={{
-                fontSize: "32px",
-                fontWeight: 800,
-                margin: 0,
-                color: "var(--color-text-primary)",
-              }}
-            >
-              Data Composition
-            </h1>
-            <p
-              style={{
-                fontSize: "16px",
-                color: "var(--color-text-tertiary)",
-                margin: "8px 0 0 0",
-                fontWeight: 500,
-              }}
-            >
-              Assemble bridge recipients and manage emergency communications
-            </p>
-          </div>
-
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {manualRemoves.length > 0 && (
-              <ToolbarButton
-                label="UNDO"
-                onClick={onUndoRemove}
-                style={{ padding: "12px 20px", fontSize: "12px" }}
-              />
-            )}
+          {manualRemoves.length > 0 && (
             <ToolbarButton
-              label="RESET"
-              onClick={onResetManual}
-              style={{ padding: "12px 20px", fontSize: "12px" }}
+              label="UNDO"
+              onClick={onUndoRemove}
+              style={{ padding: isHeaderCollapsed ? '8px 14px' : '12px 20px', fontSize: '12px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
             />
-            <ToolbarButton
-              label="COPY"
-              onClick={handleCopy}
-              style={{ padding: "12px 20px", fontSize: "12px" }}
-            />
-            <ToolbarButton
-              label="DRAFT BRIDGE"
-              onClick={() => setIsBridgeReminderOpen(true)}
-              primary
-              style={{ padding: "12px 24px", fontSize: "12px" }}
-            />
-          </div>
-        </div>
+          )}
+          <ToolbarButton
+            label="RESET"
+            onClick={onResetManual}
+            style={{ padding: isHeaderCollapsed ? '8px 14px' : '12px 20px', fontSize: '12px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          />
+          <ToolbarButton
+            label="COPY"
+            onClick={handleCopy}
+            style={{ padding: isHeaderCollapsed ? '8px 14px' : '12px 20px', fontSize: '12px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          />
+          <ToolbarButton
+            label="DRAFT BRIDGE"
+            onClick={() => setIsBridgeReminderOpen(true)}
+            primary
+            style={{ padding: isHeaderCollapsed ? '8px 16px' : '12px 24px', fontSize: '12px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
+          />
+        </CollapsibleHeader>
 
         {/* List Container */}
         <div
@@ -335,6 +310,7 @@ export const AssemblerTab: React.FC<AssemblerTabProps> = ({
                   itemSize={104}
                   width={width}
                   itemData={itemData}
+                  onScroll={({ scrollOffset }) => setIsHeaderCollapsed(scrollOffset > 30)}
                 >
                   {VirtualRow}
                 </List>
@@ -366,30 +342,30 @@ export const AssemblerTab: React.FC<AssemblerTabProps> = ({
           items={[
             ...(compositionContextMenu.isUnknown
               ? [
-                  {
-                    label: "Save to Contacts",
-                    onClick: () => {
-                      handleAddToContacts(compositionContextMenu.email);
-                      setCompositionContextMenu(null);
-                    },
-                    icon: (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M16 11h6m-3-3v6"></path>
-                      </svg>
-                    ),
+                {
+                  label: "Save to Contacts",
+                  onClick: () => {
+                    handleAddToContacts(compositionContextMenu.email);
+                    setCompositionContextMenu(null);
                   },
-                ]
+                  icon: (
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M16 11h6m-3-3v6"></path>
+                    </svg>
+                  ),
+                },
+              ]
               : []),
             {
               label: "Remove from List",

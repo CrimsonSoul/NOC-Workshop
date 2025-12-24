@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import type { WebviewTag } from 'electron';
 import { ToolbarButton } from '../components/ToolbarButton';
+import { CollapsibleHeader } from '../components/CollapsibleHeader';
 
 export const RadarTab: React.FC = () => {
   const [url, setUrl] = useState('https://cw-intra-web/CWDashboard/Home/Radar');
@@ -27,36 +28,33 @@ export const RadarTab: React.FC = () => {
     }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '32px', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Dispatcher Radar</h1>
-          <p style={{ fontSize: '16px', color: 'var(--color-text-tertiary)', margin: '8px 0 0 0', fontWeight: 500 }}>Live CW intra-web monitoring</p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <ToolbarButton
-            onClick={handleRefresh}
-            label={isLoading ? 'REFRESHING' : 'REFRESH'}
-            style={{ padding: '12px 24px', fontSize: '12px' }}
-            icon={
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={isLoading ? 'spin' : ''}
-                style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }}
-              >
-                <path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
-            }
-          />
-        </div>
-      </div>
+      <CollapsibleHeader
+        title="Dispatcher Radar"
+        subtitle="Live CW intra-web monitoring"
+        isCollapsed={true}
+      >
+        <ToolbarButton
+          onClick={handleRefresh}
+          label={isLoading ? 'REFRESHING' : 'REFRESH'}
+          style={{ padding: '8px 16px', fontSize: '11px' }}
+          icon={
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={isLoading ? 'spin' : ''}
+              style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }}
+            >
+              <path d="M23 4v6h-6" /><path d="M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          }
+        />
+      </CollapsibleHeader>
 
       {/* Webview Container - Full Bleed */}
       <div style={{

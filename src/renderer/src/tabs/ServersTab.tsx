@@ -9,6 +9,7 @@ import { AddServerModal } from '../components/AddServerModal';
 import { ToolbarButton } from '../components/ToolbarButton';
 import { TactileButton } from '../components/TactileButton';
 import { ServerCard } from '../components/ServerCard';
+import { CollapsibleHeader } from '../components/CollapsibleHeader';
 
 interface ServersTabProps {
   servers: Server[];
@@ -43,6 +44,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, server: Server } | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | undefined>(undefined);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   const contactLookup = useMemo(() => {
     const map = new Map<string, Contact>();
@@ -113,22 +115,20 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
       overflow: 'hidden'
     }}>
       {/* Hero Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '32px', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Infrastructure Hub</h1>
-          <p style={{ fontSize: '16px', color: 'var(--color-text-tertiary)', margin: '8px 0 0 0', fontWeight: 500 }}>
-            Management and status of distributed node infrastructure
-          </p>
-        </div>
+      <CollapsibleHeader
+        title="Infrastructure Hub"
+        subtitle="Management and status of distributed node infrastructure"
+        isCollapsed={isHeaderCollapsed}
+      >
         <TactileButton
           onClick={() => { setEditingServer(undefined); setIsAddModalOpen(true); }}
           variant="primary"
-          style={{ padding: '12px 24px', fontSize: '13px' }}
+          style={{ padding: isHeaderCollapsed ? '8px 16px' : '12px 24px', fontSize: '13px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>}
         >
           ADD SERVER
         </TactileButton>
-      </div>
+      </CollapsibleHeader>
 
       {/* Secondary Action Row */}
       <div style={{
@@ -194,6 +194,7 @@ export const ServersTab: React.FC<ServersTabProps> = ({ servers, contacts }) => 
               itemCount={filteredServers.length}
               itemSize={104} // Standardized card height + gap
               itemData={itemData}
+              onScroll={({ scrollOffset }) => setIsHeaderCollapsed(scrollOffset > 30)}
             >
               {VirtualRow}
             </List>

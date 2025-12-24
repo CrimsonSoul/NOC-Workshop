@@ -18,6 +18,7 @@ import { ContextMenu } from '../components/ContextMenu';
 import { ResizableHeader } from '../components/ResizableHeader';
 import { scaleColumns, reverseScale } from '../utils/columnSizing';
 import { loadColumnWidths, saveColumnWidths, loadColumnOrder, saveColumnOrder } from '../utils/columnStorage';
+import { CollapsibleHeader } from '../components/CollapsibleHeader';
 
 // Custom PointerSensor that ignores resize handles
 class CustomPointerSensor extends PointerSensor {
@@ -235,6 +236,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
   const listContainerRef = useRef<HTMLDivElement>(null);
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   // Use state for base widths (pixels), but scale them on render if needed
   const [baseWidths, setBaseWidths] = useState(() =>
@@ -598,22 +600,20 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
       overflow: 'hidden'
     }}>
       {/* Hero Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '32px', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Personnel Directory</h1>
-          <p style={{ fontSize: '16px', color: 'var(--color-text-tertiary)', margin: '8px 0 0 0', fontWeight: 500 }}>
-            Global search and management of organization contacts
-          </p>
-        </div>
+      <CollapsibleHeader
+        title="Personnel Directory"
+        subtitle="Global search and management of organization contacts"
+        isCollapsed={isHeaderCollapsed}
+      >
         <TactileButton
           variant="primary"
-          style={{ padding: '12px 24px', fontSize: '13px' }}
+          style={{ padding: isHeaderCollapsed ? '8px 16px' : '12px 24px', fontSize: '13px', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)' }}
           onClick={() => setIsAddModalOpen(true)}
           icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>}
         >
           ADD CONTACT
         </TactileButton>
-      </div>
+      </CollapsibleHeader>
 
       {/* Secondary Action Row */}
       <div style={{
@@ -689,6 +689,7 @@ export const DirectoryTab: React.FC<Props> = ({ contacts, groups, onAddToAssembl
               width={width}
               itemData={itemData}
               style={{ outline: 'none' }}
+              onScroll={({ scrollOffset }) => setIsHeaderCollapsed(scrollOffset > 30)}
               onItemsRendered={() => {
                 // Ensure focused item is visible when list updates
                 if (focusedIndex >= 0) {
