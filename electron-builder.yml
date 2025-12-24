@@ -1,10 +1,8 @@
 appId: com.operators.relay
 productName: "Relay"
 asar: true
-asarUnpack:
-  # Unpack critical files for faster first access on Windows
-  - "dist/main/**"
-  - "dist/preload/**"
+electronLanguages:
+  - en-US
 files:
   - dist/**
   - package.json
@@ -20,6 +18,7 @@ directories:
   output: release
   buildResources: resources
 npmRebuild: false
+removePackageScripts: true
 extraResources:
   - from: data
     to: data
@@ -36,7 +35,7 @@ win:
   requestedExecutionLevel: "asInvoker"
   # Use NSIS for better startup performance than portable in some cases
   # But keeping portable as requested - it's already optimized
-compression: "store" # No compression = faster startup
+compression: "normal" # Balanced: smaller build, good startup
 # Electron download optimizations
 electronDownload:
   cache: ".electron"

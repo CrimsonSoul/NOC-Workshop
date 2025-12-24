@@ -33,6 +33,7 @@ interface SortableTeamCardProps {
     setEditingTeam: (team: string) => void;
     setRenamingTeam: (val: { old: string, new: string }) => void;
     onRemoveTeam: (team: string) => void;
+    setConfirmRemove: (team: string | null) => void;
     setMenu: (menu: { x: number, y: number, items: ContextMenuItem[] } | null) => void;
 }
 
@@ -54,6 +55,7 @@ const SortableTeamCard = ({
     setEditingTeam,
     setRenamingTeam,
     onRemoveTeam,
+    setConfirmRemove,
     setMenu
 }: SortableTeamCardProps) => {
     const {
@@ -68,8 +70,8 @@ const SortableTeamCard = ({
     const colorScheme = getColorForString(team);
 
     const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
+        transform: CSS.Translate.toString(transform),
+        transition: isDragging ? 'none' : transition,
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 999 : 'auto',
         minWidth: '260px',
@@ -468,6 +470,7 @@ export const OnCallPanel: React.FC<OnCallPanelProps> = ({
                                     setEditingTeam={setEditingTeam}
                                     setRenamingTeam={setRenamingTeam}
                                     onRemoveTeam={onRemoveTeam}
+                                    setConfirmRemove={setConfirmRemove}
                                     setMenu={setMenu}
                                 />
                             );

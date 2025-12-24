@@ -1,925 +1,422 @@
-import React, { useMemo, useState, memo, useRef, useEffect, useCallback } from 'react';
-import { GroupMap, Contact, OnCallEntry } from '@shared/ipc';
-import { useDebounce } from '../hooks/useDebounce';
-import { useGroupMaps } from '../hooks/useGroupMaps';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { ContactCard } from '../components/ContactCard';
-import { AddContactModal } from '../components/AddContactModal';
-import { Modal } from '../components/Modal';
-import { useToast } from '../components/Toast';
-import { ToolbarButton } from '../components/ToolbarButton';
-import { Input } from '../components/Input';
-import { TactileButton } from '../components/TactileButton';
-import { SidebarItem } from '../components/SidebarItem';
-import { ContextMenu } from '../components/ContextMenu';
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { GroupMap, Contact, OnCallEntry } from "@shared/ipc";
+import { useGroupMaps } from "../hooks/useGroupMaps";
+import { FixedSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { AddContactModal } from "../components/AddContactModal";
+import { useToast } from "../components/Toast";
+import { ToolbarButton } from "../components/ToolbarButton";
+import { ContextMenu } from "../components/ContextMenu";
 
-type Props = {
-    groups: GroupMap;
-    contacts: Contact[];
-    onCall: OnCallEntry[];
-    selectedGroups: string[];
-    manualAdds: string[];
-    manualRemoves: string[];
-    onToggleGroup: (group: string) => void;
-    onAddManual: (email: string) => void;
-    onRemoveManual: (email: string) => void;
-    onUndoRemove: () => void;
-    onResetManual: () => void;
-};
+import {
+  AssemblerTabProps,
+  SortConfig,
+  VirtualRow,
+  AssemblerSidebar,
+  BridgeReminderModal,
+} from "./assembler";
 
-type SortConfig = {
-    key: 'name' | 'title' | 'email' | 'phone' | 'groups';
-    direction: 'asc' | 'desc';
-};
-
-// Row component for virtualization
-const VirtualRow = memo(({ index, style, data }: ListChildComponentProps<{
-    log: { email: string, source: string }[],
-    contactMap: Map<string, Contact>,
-    groupMap: Map<string, string[]>,
-    onRemoveManual: (email: string) => void,
-    onAddToContacts: (email: string) => void,
-    onContextMenu: (e: React.MouseEvent, email: string, isUnknown: boolean) => void
-}>) => {
-    const { log, contactMap, groupMap, onRemoveManual, onAddToContacts, onContextMenu } = data;
-    const { email, source } = log[index];
-    const contact = contactMap.get(email.toLowerCase());
-    const name = contact ? contact.name : email.split('@')[0];
-    const title = contact?.title;
-    const phone = contact?.phone;
-    const membership = groupMap.get(email.toLowerCase()) || [];
-    const isUnknown = !contact;
-
-    return (
-        <div style={style} onContextMenu={(e) => onContextMenu(e, email, isUnknown)}>
-            <ContactCard
-                key={email}
-                name={name}
-                email={email}
-                title={title}
-                phone={phone}
-                groups={membership}
-                sourceLabel={source === 'manual' ? 'MANUAL' : undefined}
-                style={{ height: '100%' }}
-            />
-        </div>
-    );
-});
-
-const SortableHeader = ({
-    label,
-    sortKey,
-    currentSort,
-    onSort,
-    flex,
-    width,
-    align = 'left',
-    paddingLeft
-}: {
-    label: string,
-    sortKey?: SortConfig['key'],
-    currentSort: SortConfig,
-    onSort: (key: SortConfig['key']) => void,
-    flex?: number | string,
-    width?: string,
-    align?: 'left' | 'right',
-    paddingLeft?: string
+export const AssemblerTab: React.FC<AssemblerTabProps> = ({
+  groups,
+  contacts,
+  onCall,
+  selectedGroups,
+  manualAdds,
+  manualRemoves,
+  onToggleGroup,
+  onAddManual,
+  onRemoveManual,
+  onUndoRemove,
+  onResetManual,
 }) => {
-    const isSorted = sortKey && currentSort.key === sortKey;
+  const { showToast } = useToast();
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: "name",
+    direction: "asc",
+  });
+  const [isBridgeReminderOpen, setIsBridgeReminderOpen] = useState(false);
 
-    return (
-        <div
-            style={{
-                flex: flex,
-                width: width,
-                textAlign: align,
-                paddingLeft: paddingLeft,
-                cursor: sortKey ? 'pointer' : 'default',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                userSelect: 'none'
-            }}
-            onClick={() => sortKey && onSort(sortKey)}
-        >
-            {label}
-            {isSorted && (
-                <span style={{ fontSize: '10px', color: 'var(--color-text-primary)' }}>
-                    {currentSort.direction === 'asc' ? '▲' : '▼'}
-                </span>
-            )}
-        </div>
+  // Add Contact Modal State
+  const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+
+  // Composition Context Menu State
+  const [compositionContextMenu, setCompositionContextMenu] = useState<{
+    x: number;
+    y: number;
+    email: string;
+    isUnknown: boolean;
+  } | null>(null);
+
+  // Sidebar collapse state sync
+  const [isGroupSidebarCollapsed, setIsGroupSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem("assembler_sidebar_collapsed");
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      "assembler_sidebar_collapsed",
+      JSON.stringify(isGroupSidebarCollapsed)
     );
-};
+  }, [isGroupSidebarCollapsed]);
 
-export const AssemblerTab: React.FC<Props> = ({ groups, contacts, onCall, selectedGroups, manualAdds, manualRemoves, onToggleGroup, onAddManual, onRemoveManual, onUndoRemove, onResetManual }) => {
-    const { showToast } = useToast();
-    const [adhocInput, setAdhocInput] = useState('');
-    const debouncedAdhocInput = useDebounce(adhocInput, 300);
-    const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
-    const [pendingEmail, setPendingEmail] = useState('');
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const suggestionWrapperRef = useRef<HTMLDivElement>(null);
+  const handleToggleSidebarCollapse = useCallback(() => {
+    setIsGroupSidebarCollapsed((prev: boolean) => !prev);
+  }, []);
 
-    const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
-    const [newGroupName, setNewGroupName] = useState('');
+  // Optimized contact lookup map
+  const contactMap = useMemo(() => {
+    const map = new Map<string, Contact>();
+    contacts.forEach((c) => map.set(c.email.toLowerCase(), c));
+    return map;
+  }, [contacts]);
 
-    const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+  const { groupMap, groupStringMap } = useGroupMaps(groups);
 
-    // Group Context Menu State
-    const [groupContextMenu, setGroupContextMenu] = useState<{ x: number, y: number, group: string } | null>(null);
-    const [groupToRename, setGroupToRename] = useState<string | null>(null);
-    const [renamedGroupName, setRenamedGroupName] = useState('');
-    const [renameConflict, setRenameConflict] = useState<string | null>(null);
-    const [sidebarContextMenu, setSidebarContextMenu] = useState<{ x: number, y: number } | null>(null);
+  // Build composition log
+  const log = useMemo(() => {
+    const fromGroups = selectedGroups.flatMap((g) => groups[g] || []);
+    const union = new Set([...fromGroups, ...manualAdds]);
+    manualRemoves.forEach((r) => union.delete(r));
+    let result = Array.from(union).map((email) => ({
+      email,
+      source: manualAdds.includes(email) ? "manual" : "group",
+    }));
 
-    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
+    return result.sort((a, b) => {
+      const contactA = contactMap.get(a.email.toLowerCase());
+      const contactB = contactMap.get(b.email.toLowerCase());
+      const dir = sortConfig.direction === "asc" ? 1 : -1;
 
-    const [isBridgeReminderOpen, setIsBridgeReminderOpen] = useState(false);
+      if (sortConfig.key === "groups") {
+        const strA = groupStringMap.get(a.email.toLowerCase()) || "";
+        const strB = groupStringMap.get(b.email.toLowerCase()) || "";
+        return strA.localeCompare(strB) * dir;
+      }
 
-    // Group Sidebar State
-    const [isGroupSidebarCollapsed, setIsGroupSidebarCollapsed] = useState(() => {
-        const saved = localStorage.getItem('assembler_sidebar_collapsed');
-        return saved ? JSON.parse(saved) : true;
+      let valA = "";
+      let valB = "";
+
+      if (sortConfig.key === "name") {
+        valA = (contactA?.name || a.email.split("@")[0]).toLowerCase();
+        valB = (contactB?.name || b.email.split("@")[0]).toLowerCase();
+      } else if (sortConfig.key === "title") {
+        valA = (contactA?.title || "").toLowerCase();
+        valB = (contactB?.title || "").toLowerCase();
+      } else if (sortConfig.key === "email") {
+        valA = a.email.toLowerCase();
+        valB = b.email.toLowerCase();
+      } else if (sortConfig.key === "phone") {
+        valA = (contactA?.phone || "").toLowerCase();
+        valB = (contactB?.phone || "").toLowerCase();
+      }
+
+      return valA.localeCompare(valB) * dir;
     });
+  }, [
+    groups,
+    selectedGroups,
+    manualAdds,
+    manualRemoves,
+    contactMap,
+    sortConfig,
+    groupStringMap,
+  ]);
 
-    useEffect(() => {
-        localStorage.setItem('assembler_sidebar_collapsed', JSON.stringify(isGroupSidebarCollapsed));
-    }, [isGroupSidebarCollapsed]);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(log.map((m) => m.email).join("; "));
+    showToast("Copied to clipboard", "success");
+  };
 
-    // Optimized contact lookup map
-    const contactMap = useMemo(() => {
-        const map = new Map<string, Contact>();
-        contacts.forEach(c => map.set(c.email.toLowerCase(), c));
-        return map;
-    }, [contacts]);
+  const executeDraftBridge = () => {
+    const date = new Date();
+    const dateStr = `${date.getMonth() + 1}/${date.getDate()} -`;
+    const attendees = log.map((m) => m.email).join(",");
+    const params = new URLSearchParams({
+      subject: dateStr,
+      attendees: attendees,
+    });
+    const url = `https://teams.microsoft.com/l/meeting/new?${params.toString()}`;
+    window.api?.openExternal(url);
+    window.api?.logBridge(selectedGroups);
+    showToast("Bridge drafted", "success");
+  };
 
-    const { groupMap, groupStringMap } = useGroupMaps(groups);
+  const handleQuickAdd = useCallback(
+    (email: string) => {
+      onAddManual(email);
+      showToast(`Added ${email}`, "success");
+    },
+    [onAddManual, showToast]
+  );
 
-    // Suggestions Logic
-    const suggestions = useMemo(() => {
-        // Bolt: Use debounced input to prevent filtering on every keystroke
-        if (!debouncedAdhocInput || !showSuggestions) return [];
-        const lower = debouncedAdhocInput.toLowerCase();
-        // Simple filter: match name or email, limit to 5
-        return contacts
-            .filter(c => c._searchString.includes(lower))
-            .slice(0, 5);
-    }, [debouncedAdhocInput, showSuggestions, contacts]);
+  const handleAddToContacts = useCallback((email: string) => {
+    setPendingEmail(email);
+    setIsAddContactModalOpen(true);
+  }, []);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (suggestionWrapperRef.current && !suggestionWrapperRef.current.contains(event.target as Node)) {
-                setShowSuggestions(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+  const handleCompositionContextMenu = useCallback(
+    (e: React.MouseEvent, email: string, isUnknown: boolean) => {
+      e.preventDefault();
+      setCompositionContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        email,
+        isUnknown,
+      });
+    },
+    []
+  );
 
+  useEffect(() => {
+    if (compositionContextMenu) {
+      const handler = () => setCompositionContextMenu(null);
+      window.addEventListener("click", handler);
+      return () => window.removeEventListener("click", handler);
+    }
+  }, [compositionContextMenu]);
 
-    const log = useMemo(() => {
-        const fromGroups = selectedGroups.flatMap(g => groups[g] || []);
-        const union = new Set([...fromGroups, ...manualAdds]);
-        manualRemoves.forEach(r => union.delete(r));
-        let result = Array.from(union).map(email => ({
-            email,
-            source: manualAdds.includes(email) ? 'manual' : 'group'
-        }));
+  const itemData = useMemo(
+    () => ({
+      log,
+      contactMap,
+      groupMap,
+      onRemoveManual,
+      onAddToContacts: handleAddToContacts,
+      onContextMenu: handleCompositionContextMenu,
+    }),
+    [
+      log,
+      contactMap,
+      groupMap,
+      onRemoveManual,
+      handleAddToContacts,
+      handleCompositionContextMenu,
+    ]
+  );
 
-        return result.sort((a, b) => {
-            const contactA = contactMap.get(a.email.toLowerCase());
-            const contactB = contactMap.get(b.email.toLowerCase());
-            const dir = sortConfig.direction === 'asc' ? 1 : -1;
+  const handleContactSaved = async (contact: Partial<Contact>) => {
+    const success = await window.api?.addContact(contact);
+    if (success) {
+      if (contact.email) {
+        onAddManual(contact.email);
+      }
+      showToast("Contact created successfully", "success");
+    } else {
+      showToast("Failed to create contact", "error");
+    }
+  };
 
-            if (sortConfig.key === 'groups') {
-                // Bolt: Use pre-calculated joined strings for O(1) access
-                const strA = groupStringMap.get(a.email.toLowerCase()) || '';
-                const strB = groupStringMap.get(b.email.toLowerCase()) || '';
-                return strA.localeCompare(strB) * dir;
-            }
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: isGroupSidebarCollapsed ? "24px 1fr" : "240px 1fr",
+        gap: "0px",
+        height: "100%",
+        alignItems: "start",
+        transition: "grid-template-columns 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        overflow: "visible",
+      }}
+    >
+      {/* Sidebar Controls */}
+      <AssemblerSidebar
+        groups={groups}
+        contacts={contacts}
+        selectedGroups={selectedGroups}
+        onToggleGroup={onToggleGroup}
+        onQuickAdd={handleQuickAdd}
+        isCollapsed={isGroupSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebarCollapse}
+      />
 
-            let valA = '';
-            let valB = '';
-
-            if (sortConfig.key === 'name') {
-                valA = (contactA?.name || a.email.split('@')[0]).toLowerCase();
-                valB = (contactB?.name || b.email.split('@')[0]).toLowerCase();
-            } else if (sortConfig.key === 'title') {
-                valA = (contactA?.title || '').toLowerCase();
-                valB = (contactB?.title || '').toLowerCase();
-            } else if (sortConfig.key === 'email') {
-                valA = a.email.toLowerCase();
-                valB = b.email.toLowerCase();
-            } else if (sortConfig.key === 'phone') {
-                valA = (contactA?.phone || '').toLowerCase();
-                valB = (contactB?.phone || '').toLowerCase();
-            }
-
-            return valA.localeCompare(valB) * dir;
-        });
-    }, [groups, selectedGroups, manualAdds, manualRemoves, contactMap, sortConfig, groupStringMap]);
-
-    const handleSort = (key: SortConfig['key']) => {
-        setSortConfig(current => {
-            if (current.key === key) {
-                return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' };
-            }
-            return { key, direction: 'asc' };
-        });
-    };
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(log.map(m => m.email).join('; '));
-        showToast('Copied to clipboard', 'success');
-    };
-
-    const executeDraftBridge = () => {
-        const date = new Date();
-        const dateStr = `${date.getMonth() + 1}/${date.getDate()} -`;
-        const attendees = log.map(m => m.email).join(',');
-        // Use URLSearchParams for proper URL encoding to prevent injection
-        const params = new URLSearchParams({
-            subject: dateStr,
-            attendees: attendees
-        });
-        const url = `https://teams.microsoft.com/l/meeting/new?${params.toString()}`;
-        window.api?.openExternal(url);
-        window.api?.logBridge(selectedGroups);
-        showToast('Bridge drafted', 'success');
-    };
-
-    const handleDraftBridge = () => {
-        setIsBridgeReminderOpen(true);
-    };
-
-    const handleQuickAdd = (emailOverride?: string) => {
-        const email = emailOverride || adhocInput.trim();
-        if (!email) return;
-
-        // Check if exists
-        if (contactMap.has(email.toLowerCase())) {
-            onAddManual(email);
-            setAdhocInput('');
-            setShowSuggestions(false);
-            showToast(`Added ${email}`, 'success');
-        } else {
-            // Add as manual entry directly
-            onAddManual(email);
-            setAdhocInput('');
-            setShowSuggestions(false);
-            showToast(`Added ${email}`, 'success');
-        }
-    };
-
-    const handleAddToContacts = useCallback((email: string) => {
-        setPendingEmail(email);
-        setIsAddContactModalOpen(true);
-    }, []);
-
-    const [compositionContextMenu, setCompositionContextMenu] = useState<{ x: number, y: number, email: string, isUnknown: boolean } | null>(null);
-
-    const handleCompositionContextMenu = useCallback((e: React.MouseEvent, email: string, isUnknown: boolean) => {
-        e.preventDefault();
-        setCompositionContextMenu({ x: e.clientX, y: e.clientY, email, isUnknown });
-    }, []);
-
-    useEffect(() => {
-        if (compositionContextMenu) {
-            const handler = () => setCompositionContextMenu(null);
-            window.addEventListener('click', handler);
-            return () => window.removeEventListener('click', handler);
-        }
-    }, [compositionContextMenu]);
-
-    const itemData = useMemo(() => ({
-        log,
-        contactMap,
-        groupMap,
-        onRemoveManual,
-        onAddToContacts: handleAddToContacts,
-        onContextMenu: handleCompositionContextMenu
-    }), [log, contactMap, groupMap, onRemoveManual, handleAddToContacts, handleCompositionContextMenu]);
-
-    const handleContactSaved = async (contact: Partial<Contact>) => {
-        // Save to backend
-        const success = await window.api?.addContact(contact);
-
-        if (success) {
-            // Add to manual list immediately (optimistic, but safe since we just saved it)
-            if (contact.email) {
-                onAddManual(contact.email);
-            }
-            setAdhocInput(''); // Clear input
-            showToast('Contact created successfully', 'success');
-        } else {
-            showToast('Failed to create contact', 'error');
-        }
-    };
-
-    const handleCreateGroup = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newGroupName) return;
-        const success = await window.api?.addGroup(newGroupName);
-        if (success) {
-            setIsGroupModalOpen(false);
-            setNewGroupName('');
-            showToast(`Group "${newGroupName}" created`, 'success');
-        } else {
-            showToast('Failed to create group', 'error');
-        }
-    };
-
-    // Bolt: Memoize sorted group keys to prevent re-sorting on every render
-    const sortedGroupKeys = useMemo(() => Object.keys(groups).sort(), [groups]);
-
-    // Bolt: Stable callback for toggling groups to prevent SidebarItem re-renders
-    const handleGroupToggle = onToggleGroup;
-
-    // Bolt: Stable callback for context menu to prevent SidebarItem re-renders
-    const handleGroupContextMenu = useCallback((e: React.MouseEvent, group: string) => {
-        e.preventDefault();
-        setGroupContextMenu({ x: e.clientX, y: e.clientY, group });
-    }, []);
-
-    return (
-        <div style={{
-            display: 'grid',
-            gridTemplateColumns: isGroupSidebarCollapsed ? '24px 1fr' : '240px 1fr',
-            gap: '0px',
-            height: '100%',
-            alignItems: 'start',
-            transition: 'grid-template-columns 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            overflow: 'visible' // Allow shadow to spill out if needed
-        }}>
-
-            {/* Sidebar Controls - Compact */}
-            <div
-                onContextMenu={(e) => {
-                    e.preventDefault();
-                    if (!groupContextMenu) {
-                        setSidebarContextMenu({ x: e.clientX, y: e.clientY });
-                    }
-                }}
-                style={{
-                    display: 'flex',
-                    padding: '0',
-                    height: '100%',
-                    position: 'relative',
-                    background: 'transparent',
-                    zIndex: 20
-                }}
+      {/* Main Listing Area */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          padding: "20px 24px 24px 24px",
+          background: "var(--color-bg-app)",
+          overflow: "hidden",
+          position: "relative",
+          zIndex: 5,
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            marginBottom: "24px",
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                fontSize: "32px",
+                fontWeight: 800,
+                margin: 0,
+                color: "var(--color-text-primary)",
+              }}
             >
-                <div style={{
-                    display: 'flex',
-                    height: '100%',
-                    width: '100%',
-                    overflow: 'visible', // Allow shadow to spill right
-                    justifyContent: 'flex-end' // Pin toggle to right, slide content left
-                }}>
-                    {/* Flexible Content Area */}
-                    <div style={{
-                        width: '216px', // Lock width to prevent layout smear/reflow during collapse
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                        opacity: isGroupSidebarCollapsed ? 0 : 1,
-                        visibility: isGroupSidebarCollapsed ? 'hidden' : 'visible',
-                        transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s',
-                        flexShrink: 0
-                    }}>
-                        <div style={{
-                            flex: 1,
-                            overflowY: 'auto',
-                            overflowX: 'hidden',
-                            padding: '40px 20px 16px 20px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center'
-                        }}>
-                            {/* Quick Add Section */}
-                            <div ref={suggestionWrapperRef} style={{ position: 'relative', marginBottom: '0', width: '100%' }}>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-start',
-                                    alignItems: 'center',
-                                    height: '24px',
-                                    marginBottom: '12px',
-                                    padding: '0'
-                                }}>
-                                    <div style={{
-                                        fontSize: '11px',
-                                        fontWeight: 700,
-                                        color: 'var(--color-text-tertiary)',
-                                        letterSpacing: '0.1em',
-                                        textTransform: 'uppercase'
-                                    }}>Quick Add</div>
-                                </div>
-                                <Input
-                                    placeholder="Add by email..."
-                                    value={adhocInput}
-                                    style={{
-                                        fontSize: '14px',
-                                        padding: '8px 12px',
-                                        height: '42px',
-                                        borderRadius: '8px'
-                                    }}
-                                    onChange={(e) => {
-                                        setAdhocInput(e.target.value);
-                                        setShowSuggestions(true);
-                                    }}
-                                    onFocus={() => setShowSuggestions(true)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleQuickAdd();
-                                            e.currentTarget.blur();
-                                        }
-                                    }}
-                                />
+              Data Composition
+            </h1>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "var(--color-text-tertiary)",
+                margin: "8px 0 0 0",
+                fontWeight: 500,
+              }}
+            >
+              Assemble bridge recipients and manage emergency communications
+            </p>
+          </div>
 
-                                {/* Suggestions Dropdown */}
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '100%',
-                                        left: 0,
-                                        right: 0,
-                                        marginTop: '4px',
-                                        background: 'var(--color-bg-surface)',
-                                        border: 'var(--border-subtle)',
-                                        borderRadius: '6px',
-                                        zIndex: 100,
-                                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {suggestions.map(c => (
-                                            <div
-                                                key={c.email}
-                                                onClick={() => handleQuickAdd(c.email)}
-                                                style={{
-                                                    padding: '10px 12px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '14px',
-                                                    color: 'var(--color-text-primary)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px'
-                                                }}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                            >
-                                                <div style={{
-                                                    width: '24px', height: '24px', borderRadius: '4px',
-                                                    background: 'rgba(59, 130, 246, 0.2)', color: '#3B82F6',
-                                                    fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                }}>
-                                                    {c.name ? c.name[0].toUpperCase() : c.email[0].toUpperCase()}
-                                                </div>
-                                                <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {c.name || c.email}
-                                                    {c.name && <span style={{ color: 'var(--color-text-tertiary)', marginLeft: '6px', fontSize: '12px' }}>{c.email}</span>}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Groups Selection */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, marginTop: '16px', width: '100%' }}>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-start',
-                                    alignItems: 'center',
-                                    height: '24px',
-                                    marginBottom: '12px',
-                                    padding: '0'
-                                }}>
-                                    <div style={{
-                                        fontSize: '11px',
-                                        fontWeight: 700,
-                                        color: 'var(--color-text-tertiary)',
-                                        letterSpacing: '0.1em',
-                                        textTransform: 'uppercase'
-                                    }}>Groups</div>
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                    {sortedGroupKeys.map(g => {
-                                        const isSelected = selectedGroups.includes(g);
-                                        return (
-                                            <SidebarItem
-                                                key={g}
-                                                label={g}
-                                                count={groups[g].length}
-                                                active={isSelected}
-                                                onClick={handleGroupToggle}
-                                                onContextMenu={handleGroupContextMenu}
-                                            />
-                                        );
-                                    })}
-                                    {sortedGroupKeys.length === 0 && (
-                                        <div style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', fontStyle: 'italic', paddingLeft: '4px' }}>
-                                            No groups.
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Floating Pill Toggle Handle */}
-                    <div
-                        onClick={() => setIsGroupSidebarCollapsed(!isGroupSidebarCollapsed)}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
-                            e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
-                            e.currentTarget.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.25)';
-                            e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.05)';
-                            const icon = e.currentTarget.querySelector('svg');
-                            if (icon) icon.style.color = 'white';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                            e.currentTarget.style.boxShadow = 'none';
-                            e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
-                            const icon = e.currentTarget.querySelector('svg');
-                            if (icon) icon.style.color = 'var(--color-text-tertiary)';
-                        }}
-                        style={{
-                            position: 'absolute',
-                            left: '100%', // Locked to the seam
-                            top: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            width: '24px',
-                            height: '56px', // Slightly taller for better 10ft target
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            zIndex: 100,
-                            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                            backdropFilter: 'blur(16px)',
-                            boxSizing: 'border-box'
-                        }}
-                        title={isGroupSidebarCollapsed ? "Expand Groups" : "Collapse Groups"}
-                    >
-                        <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            style={{
-                                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                                transform: isGroupSidebarCollapsed ? 'rotate(180deg)' : 'rotate(0deg)',
-                                color: 'var(--color-text-tertiary)'
-                            }}
-                        >
-                            <polyline points="15 18 9 12 15 6" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Listing Area */}
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                padding: '20px 24px 24px 24px',
-                background: 'var(--color-bg-app)',
-                overflow: 'hidden',
-                position: 'relative',
-                zIndex: 5
-            }}>
-                {/* 10FT HEADER */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
-                    <div>
-                        <h1 style={{ fontSize: '32px', fontWeight: 800, margin: 0, color: 'var(--color-text-primary)' }}>Data Composition</h1>
-                        <p style={{ fontSize: '16px', color: 'var(--color-text-tertiary)', margin: '8px 0 0 0', fontWeight: 500 }}>Assemble bridge recipients and manage emergency communications</p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {manualRemoves.length > 0 && (
-                            <ToolbarButton label="UNDO" onClick={onUndoRemove} style={{ padding: '12px 20px', fontSize: '12px' }} />
-                        )}
-                        <ToolbarButton label="RESET" onClick={onResetManual} style={{ padding: '12px 20px', fontSize: '12px' }} />
-                        <ToolbarButton label="COPY" onClick={handleCopy} style={{ padding: '12px 20px', fontSize: '12px' }} />
-                        <ToolbarButton label="DRAFT BRIDGE" onClick={handleDraftBridge} primary style={{ padding: '12px 24px', fontSize: '12px' }} />
-                    </div>
-                </div>
-
-                {/* List Container */}
-                <div style={{
-                    flex: 1,
-                    overflow: 'hidden', // AutoSizer handles scrolling
-                    position: 'relative'
-                }}>
-                    {log.length === 0 ? (
-                        <div style={{
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexDirection: 'column',
-                            gap: '16px',
-                            color: 'var(--color-text-tertiary)'
-                        }}>
-                            <div style={{ fontSize: '48px', opacity: 0.1 }}>∅</div>
-                            <div>No recipients selected</div>
-                        </div>
-                    ) : (
-                        <AutoSizer>
-                            {({ height, width }) => (
-                                <List
-                                    height={height}
-                                    itemCount={log.length}
-                                    itemSize={104}
-                                    width={width}
-                                    itemData={itemData}
-                                >
-                                    {VirtualRow}
-                                </List>
-                            )}
-                        </AutoSizer>
-                    )}
-                </div>
-            </div>
-
-            <AddContactModal
-                isOpen={isAddContactModalOpen}
-                onClose={() => setIsAddContactModalOpen(false)}
-                initialEmail={pendingEmail}
-                onSave={handleContactSaved}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {manualRemoves.length > 0 && (
+              <ToolbarButton
+                label="UNDO"
+                onClick={onUndoRemove}
+                style={{ padding: "12px 20px", fontSize: "12px" }}
+              />
+            )}
+            <ToolbarButton
+              label="RESET"
+              onClick={onResetManual}
+              style={{ padding: "12px 20px", fontSize: "12px" }}
             />
+            <ToolbarButton
+              label="COPY"
+              onClick={handleCopy}
+              style={{ padding: "12px 20px", fontSize: "12px" }}
+            />
+            <ToolbarButton
+              label="DRAFT BRIDGE"
+              onClick={() => setIsBridgeReminderOpen(true)}
+              primary
+              style={{ padding: "12px 24px", fontSize: "12px" }}
+            />
+          </div>
+        </div>
 
-            {/* Bridge Reminder Modal */}
-            <Modal
-                isOpen={isBridgeReminderOpen}
-                onClose={() => setIsBridgeReminderOpen(false)}
-                title="Meeting Recording"
-                width="400px"
+        {/* List Container */}
+        <div
+          style={{
+            flex: 1,
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          {log.length === 0 ? (
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+                gap: "16px",
+                color: "var(--color-text-tertiary)",
+              }}
             >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
-                        Please ensure meeting recording is enabled.
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                        <TactileButton
-                            onClick={() => setIsBridgeReminderOpen(false)}
-                        >
-                            Cancel
-                        </TactileButton>
-                        <TactileButton
-                            onClick={() => {
-                                executeDraftBridge();
-                                setIsBridgeReminderOpen(false);
-                            }}
-                            variant="primary"
-                        >
-                            I Understand
-                        </TactileButton>
-                    </div>
-                </div>
-            </Modal>
+              <div style={{ fontSize: "48px", opacity: 0.1 }}>∅</div>
+              <div>No recipients selected</div>
+            </div>
+          ) : (
+            <AutoSizer>
+              {({ height, width }) => (
+                <List
+                  height={height}
+                  itemCount={log.length}
+                  itemSize={104}
+                  width={width}
+                  itemData={itemData}
+                >
+                  {VirtualRow}
+                </List>
+              )}
+            </AutoSizer>
+          )}
+        </div>
+      </div>
 
-            {/* Simple Create Group Modal */}
-            <Modal
-                isOpen={isGroupModalOpen}
-                onClose={() => setIsGroupModalOpen(false)}
-                title="Create Group"
-                width="400px"
-            >
-                <form onSubmit={handleCreateGroup}>
-                    <label style={{ display: 'block', fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>Group Name</label>
-                    <Input
-                        autoFocus
-                        value={newGroupName}
-                        onChange={e => setNewGroupName(e.target.value)}
-                        placeholder="e.g. Marketing"
-                        required
-                        style={{ marginBottom: '16px' }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                        <TactileButton type="button" onClick={() => setIsGroupModalOpen(false)}>Cancel</TactileButton>
-                        <TactileButton type="submit" variant="primary">Create</TactileButton>
-                    </div>
-                </form>
-            </Modal>
+      <AddContactModal
+        isOpen={isAddContactModalOpen}
+        onClose={() => setIsAddContactModalOpen(false)}
+        initialEmail={pendingEmail}
+        onSave={handleContactSaved}
+      />
 
-            {/* Delete Confirmation Modal */}
-            <Modal
-                isOpen={!!groupToDelete}
-                onClose={() => setGroupToDelete(null)}
-                title="Delete Group"
-                width="400px"
-            >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
-                        Are you sure you want to delete <span style={{ fontWeight: 600 }}>{groupToDelete}</span>?
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
-                        This will remove the group tag from all contacts. The contacts themselves will not be deleted.
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                        <TactileButton
-                            onClick={() => setGroupToDelete(null)}
-                        >
-                            Cancel
-                        </TactileButton>
-                        <TactileButton
-                            onClick={async () => {
-                                if (groupToDelete) {
-                                    const success = await window.api?.removeGroup(groupToDelete);
-                                    if (success) {
-                                        if (selectedGroups.includes(groupToDelete)) {
-                                            onToggleGroup(groupToDelete);
-                                        }
-                                        showToast(`Group "${groupToDelete}" deleted`, 'success');
-                                    } else {
-                                        showToast('Failed to delete group', 'error');
-                                    }
-                                }
-                                setGroupToDelete(null);
-                            }}
-                            variant="danger"
-                        >
-                            Delete Group
-                        </TactileButton>
-                    </div>
-                </div>
-            </Modal>
+      <BridgeReminderModal
+        isOpen={isBridgeReminderOpen}
+        onClose={() => setIsBridgeReminderOpen(false)}
+        onConfirm={executeDraftBridge}
+      />
 
-            {/* Rename Group Modal */}
-            <Modal
-                isOpen={!!groupToRename}
-                onClose={() => {
-                    setGroupToRename(null);
-                    setRenameConflict(null);
-                }}
-                title="Rename Group"
-                width="400px"
-            >
-                {renameConflict ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
-                            Group <span style={{ fontWeight: 600 }}>{renameConflict}</span> already exists.
-                        </div>
-                        <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>
-                            Do you want to merge <span style={{ fontWeight: 600 }}>{groupToRename}</span> into <span style={{ fontWeight: 600 }}>{renameConflict}</span>? All contacts will be moved.
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                            <TactileButton
-                                onClick={() => setRenameConflict(null)}
-                            >
-                                Cancel
-                            </TactileButton>
-                            <TactileButton
-                                onClick={async () => {
-                                    if (groupToRename && renameConflict) {
-                                        const success = await window.api?.renameGroup(groupToRename, renameConflict);
-                                        if (success) {
-                                            if (selectedGroups.includes(groupToRename)) {
-                                                onToggleGroup(groupToRename);
-                                            }
-                                            if (!selectedGroups.includes(renameConflict)) {
-                                                onToggleGroup(renameConflict);
-                                            }
-                                            showToast(`Merged "${groupToRename}" into "${renameConflict}"`, 'success');
-                                        } else {
-                                            showToast('Failed to merge groups', 'error');
-                                        }
-                                    }
-                                    setGroupToRename(null);
-                                    setRenameConflict(null);
-                                }}
-                                variant="primary"
-                            >
-                                Merge Groups
-                            </TactileButton>
-                        </div>
-                    </div>
-                ) : (
-                    <form onSubmit={async (e) => {
-                        e.preventDefault();
-                        if (groupToRename && renamedGroupName && renamedGroupName !== groupToRename) {
-                            if (groups[renamedGroupName]) {
-                                setRenameConflict(renamedGroupName);
-                                return;
-                            }
-
-                            const success = await window.api?.renameGroup(groupToRename, renamedGroupName);
-                            if (success) {
-                                if (selectedGroups.includes(groupToRename)) {
-                                    onToggleGroup(groupToRename);
-                                    onToggleGroup(renamedGroupName);
-                                }
-                                showToast(`Renamed "${groupToRename}" to "${renamedGroupName}"`, 'success');
-                            } else {
-                                showToast('Failed to rename group', 'error');
-                            }
-                        }
-                        setGroupToRename(null);
-                    }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>Group Name</label>
-                        <Input
-                            autoFocus
-                            value={renamedGroupName}
-                            onChange={e => setRenamedGroupName(e.target.value)}
-                            required
-                            style={{ marginBottom: '16px' }}
-                        />
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                            <TactileButton type="button" onClick={() => setGroupToRename(null)}>Cancel</TactileButton>
-                            <TactileButton type="submit" variant="primary">Save</TactileButton>
-                        </div>
-                    </form>
-                )}
-            </Modal>
-
-            {/* Group Context Menu */}
+      {/* Composition List Context Menu */}
+      {compositionContextMenu && (
+        <ContextMenu
+          x={compositionContextMenu.x}
+          y={compositionContextMenu.y}
+          onClose={() => setCompositionContextMenu(null)}
+          items={[
+            ...(compositionContextMenu.isUnknown
+              ? [
+                  {
+                    label: "Save to Contacts",
+                    onClick: () => {
+                      handleAddToContacts(compositionContextMenu.email);
+                      setCompositionContextMenu(null);
+                    },
+                    icon: (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M16 11h6m-3-3v6"></path>
+                      </svg>
+                    ),
+                  },
+                ]
+              : []),
             {
-                groupContextMenu && (
-                    <ContextMenu
-                        x={groupContextMenu.x}
-                        y={groupContextMenu.y}
-                        onClose={() => setGroupContextMenu(null)}
-                        items={[
-                            {
-                                label: 'Rename',
-                                onClick: () => {
-                                    setGroupToRename(groupContextMenu.group);
-                                    setRenamedGroupName(groupContextMenu.group);
-                                },
-                                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            },
-                            {
-                                label: 'Delete Group',
-                                onClick: () => setGroupToDelete(groupContextMenu.group),
-                                danger: true,
-                                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            }
-                        ]}
-                    />
-                )
-            }
-            {/* Sidebar Context Menu */}
-            {
-                sidebarContextMenu && (
-                    <ContextMenu
-                        x={sidebarContextMenu.x}
-                        y={sidebarContextMenu.y}
-                        onClose={() => setSidebarContextMenu(null)}
-                        items={[
-                            {
-                                label: 'Add New Group',
-                                onClick: () => setIsGroupModalOpen(true),
-                                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            }
-                        ]}
-                    />
-                )
-            }
-
-            {/* Composition List Context Menu */}
-            {
-                compositionContextMenu && (
-                    <ContextMenu
-                        x={compositionContextMenu.x}
-                        y={compositionContextMenu.y}
-                        onClose={() => setCompositionContextMenu(null)}
-                        items={[
-                            ...(compositionContextMenu.isUnknown ? [{
-                                label: 'Save to Contacts',
-                                onClick: () => {
-                                    handleAddToContacts(compositionContextMenu.email);
-                                    setCompositionContextMenu(null);
-                                },
-                                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M16 11h6m-3-3v6"></path></svg>
-                            }] : []),
-                            {
-                                label: 'Remove from List',
-                                onClick: () => {
-                                    onRemoveManual(compositionContextMenu.email);
-                                    setCompositionContextMenu(null);
-                                },
-                                danger: true,
-                                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                            }
-                        ]}
-                    />
-                )
-            }
-
-        </div >
-    );
+              label: "Remove from List",
+              onClick: () => {
+                onRemoveManual(compositionContextMenu.email);
+                setCompositionContextMenu(null);
+              },
+              danger: true,
+              icon: (
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              ),
+            },
+          ]}
+        />
+      )}
+    </div>
+  );
 };
